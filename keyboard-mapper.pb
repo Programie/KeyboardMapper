@@ -69,18 +69,37 @@ Procedure UpdateMainGadgetSizes()
 EndProcedure
 
 Procedure OpenSettingsWindow()
-  If OpenWindow(#Window_Settings, 0, 0, 400, 170, "Settings", #PB_Window_WindowCentered, WindowID(#Window_Main))
-    FrameGadget(#Gadget_Settings_KeyboardInputDevice, 10, 10, 380, 60, "Keyboard input device")
-    StringGadget(#Gadget_Settings_KeyboardInputDevice_Path, 20, 30, 260, 20, config\keyboardInputDevice, #PB_String_ReadOnly)
-    ButtonGadget(#Gadget_Settings_KeyboardInputDevice_Browse, 290, 30, 0, 20, "Browse...")
+  If OpenWindow(#Window_Settings, 0, 0, 500, 270, "Settings", #PB_Window_WindowCentered, WindowID(#Window_Main))
+    FrameGadget(#Gadget_Settings_KeyboardInputDevice_Frame, 10, 10, 480, 120, "Keyboard input device")
+    ListViewGadget(#Gadget_Settings_KeyboardInputDevice_List, 20, 30, 460, 100)
     
-    FrameGadget(#Gadget_Settings_Tray, 10, 80, 380, 80, "Tray icon")
-    CheckBoxGadget(#Gadget_Settings_Tray_Enable, 20, 100, 0, 20, "Enable")
-    CheckBoxGadget(#Gadget_Settings_Tray_DarkTheme, 20, 130, 0, 20, "Use for dark theme")
+    FrameGadget(#Gadget_Settings_Tray_Frame, 10, 140, 480, 80, "Tray icon")
+    CheckBoxGadget(#Gadget_Settings_Tray_Enable, 20, 160, 0, 20, "Enable")
+    CheckBoxGadget(#Gadget_Settings_Tray_DarkTheme, 20, 190, 0, 20, "Use for dark theme")
+    
+    ButtonGadget(#Gadget_Settings_Save, 280, 230, 100, 30, "Save")
+    ButtonGadget(#Gadget_Settings_Cancel, 390, 230, 100, 30, "Cancel")
     
     AddKeyboardShortcut(#Window_Settings, #PB_Shortcut_Escape, #Menu_Settings_Close)
     
     DisableWindow(#Window_Main, #True)
+    
+    Protected devicesDir.s = "/dev/input/by-id"
+    Protected dir = ExamineDirectory(#PB_Any, devicesDir, "")
+    If IsDirectory(dir)
+      While NextDirectoryEntry(dir)
+        If DirectoryEntryType(dir) = #PB_DirectoryEntry_File
+          Protected filename.s = DirectoryEntryName(dir)
+          
+          AddGadgetItem(#Gadget_Settings_KeyboardInputDevice_List, -1, filename)
+          
+          If devicesDir + "/" + filename = config\keyboardInputDevice
+            SetGadgetState(#Gadget_Settings_KeyboardInputDevice_List, CountGadgetItems(#Gadget_Settings_KeyboardInputDevice_List) - 1)
+          EndIf
+        EndIf
+      Wend
+      FinishDirectory(dir)
+    EndIf
     
     SetGadgetState(#Gadget_Settings_Tray_Enable, config\trayIconEnable)
     
@@ -105,26 +124,21 @@ Procedure OpenSettingsWindow()
           EndSelect
         Case #PB_Event_Gadget
           Select EventGadget()
-            Case #Gadget_Settings_KeyboardInputDevice_Browse
-              Protected file.s = OpenFileRequester("Select keyboard input device file", GetGadgetText(#Gadget_Settings_KeyboardInputDevice_Path), "*.*", 0)
-              If file
-                config\keyboardInputDevice = file
-                SetGadgetText(#Gadget_Settings_KeyboardInputDevice_Path, file)
-                SaveConfig()
-                RestartInputEventListener()
-              EndIf
             Case #Gadget_Settings_Tray_Enable
-              config\trayIconEnable = GetGadgetState(#Gadget_Settings_Tray_Enable)
-              
-              SaveConfig()
-              UpdateTrayIcon()
-              
-              If config\trayIconEnable
+              If GetGadgetState(#Gadget_Settings_Tray_Enable)
                 DisableGadget(#Gadget_Settings_Tray_DarkTheme, #False)
               Else
                 DisableGadget(#Gadget_Settings_Tray_DarkTheme, #True)
               EndIf
-            Case #Gadget_Settings_Tray_DarkTheme
+            Case #Gadget_Settings_Save
+              If GetGadgetState(#Gadget_Settings_KeyboardInputDevice_List) = -1
+                MessageRequester("No keyboard input device selected", "Please selected the input device to use!", #PB_MessageRequester_Error)
+                Continue
+              EndIf
+              
+              config\keyboardInputDevice = devicesDir + "/" + GetGadgetText(#Gadget_Settings_KeyboardInputDevice_List)
+              config\trayIconEnable = GetGadgetState(#Gadget_Settings_Tray_Enable)
+              
               If GetGadgetState(#Gadget_Settings_Tray_DarkTheme)
                 config\trayIcon = "bright"
               Else
@@ -132,7 +146,11 @@ Procedure OpenSettingsWindow()
               EndIf
               
               SaveConfig()
+              RestartInputEventListener()
               UpdateTrayIcon()
+              Break
+            Case #Gadget_Settings_Cancel
+              Break
           EndSelect
         Case #PB_Event_CloseWindow
           If EventWindow() = #Window_Settings

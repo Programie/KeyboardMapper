@@ -48,12 +48,13 @@ Enumeration
   #Gadget_EditShortcut_Save
   #Gadget_EditShortcut_Cancel
   #Gadget_KeyRequester_Text
-  #Gadget_Settings_KeyboardInputDevice
-  #Gadget_Settings_KeyboardInputDevice_Path
-  #Gadget_Settings_KeyboardInputDevice_Browse
-  #Gadget_Settings_Tray
+  #Gadget_Settings_KeyboardInputDevice_Frame
+  #Gadget_Settings_KeyboardInputDevice_List
+  #Gadget_Settings_Tray_Frame
   #Gadget_Settings_Tray_Enable
   #Gadget_Settings_Tray_DarkTheme
+  #Gadget_Settings_Save
+  #Gadget_Settings_Cancel
 EndEnumeration
 
 Enumeration
