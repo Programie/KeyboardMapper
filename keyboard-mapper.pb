@@ -6,6 +6,47 @@ IncludeFile "common.pbi"
 IncludeFile "editor.pbi"
 IncludeFile "input-handler.pbi"
 IncludeFile "CLI_Helper.pbi"
+IncludeFile "appindicator.pbi"
+
+ProcedureC HandleTrayIconMenuItem(*Widget, item)
+  Select item
+    Case #TrayIcon_Menu_Show
+      HideWindow(#Window_Main, #False)
+    Case #TrayIcon_Menu_Quit
+      quit = #True
+  EndSelect
+EndProcedure
+
+Procedure AddGTKMenuItem(menu, item, label.s)
+  Protected gtkWidget = gtk_menu_item_new_with_label(label)
+  
+  g_signal_connect_data(gtkWidget, "activate", @HandleTrayIconMenuItem(), item)
+  
+  gtk_menu_shell_append_(menu, gtkWidget)
+  gtk_widget_show_(gtkWidget)
+EndProcedure
+
+Procedure CreateTrayIcon()
+  appIndicator = app_indicator_new_with_path("Keyboard Mapper", "appicon-" + config\trayIcon, #APP_INDICATOR_CATEGORY_APPLICATION_STATUS, appPath + "/icons")
+  app_indicator_set_status(appIndicator, #APP_INDICATOR_STATUS_ACTIVE)
+  
+  Protected menu = gtk_menu_new_()
+  
+  AddGTKMenuItem(menu, #TrayIcon_Menu_Show, "Show window")
+  AddGTKMenuItem(menu, #TrayIcon_Menu_Quit, "Quit")
+  
+  app_indicator_set_menu(appIndicator, menu)
+EndProcedure
+
+Procedure UpdateTrayIcon()
+  If config\trayIconEnable
+    If appIndicator
+      app_indicator_set_icon(appIndicator, "appicon-" + config\trayIcon)
+    Else
+      CreateTrayIcon()
+    EndIf
+  EndIf
+EndProcedure
 
 Procedure UpdateListEntry(item, shortcut)
   If item = -1
@@ -25,14 +66,32 @@ Procedure UpdateMainGadgetSizes()
 EndProcedure
 
 Procedure OpenSettingsWindow()
-  If OpenWindow(#Window_Settings, 0, 0, 400, 100, "Settings", #PB_Window_WindowCentered, WindowID(#Window_Main))
+  If OpenWindow(#Window_Settings, 0, 0, 400, 170, "Settings", #PB_Window_WindowCentered, WindowID(#Window_Main))
     FrameGadget(#Gadget_Settings_KeyboardInputDevice, 10, 10, 380, 60, "Keyboard input device")
     StringGadget(#Gadget_Settings_KeyboardInputDevice_Path, 20, 30, 260, 20, config\keyboardInputDevice, #PB_String_ReadOnly)
     ButtonGadget(#Gadget_Settings_KeyboardInputDevice_Browse, 290, 30, 0, 20, "Browse...")
     
+    FrameGadget(#Gadget_Settings_Tray, 10, 80, 380, 80, "Tray icon")
+    CheckBoxGadget(#Gadget_Settings_Tray_Enable, 20, 100, 0, 20, "Enable")
+    CheckBoxGadget(#Gadget_Settings_Tray_DarkTheme, 20, 130, 0, 20, "Use for dark theme")
+    
     AddKeyboardShortcut(#Window_Settings, #PB_Shortcut_Escape, #Menu_Settings_Close)
     
     DisableWindow(#Window_Main, #True)
+    
+    SetGadgetState(#Gadget_Settings_Tray_Enable, config\trayIconEnable)
+    
+    If config\trayIcon = "bright"
+      SetGadgetState(#Gadget_Settings_Tray_DarkTheme, #True)
+    Else
+      SetGadgetState(#Gadget_Settings_Tray_DarkTheme, #False)
+    EndIf
+    
+    If config\trayIconEnable
+      DisableGadget(#Gadget_Settings_Tray_DarkTheme, #False)
+    Else
+      DisableGadget(#Gadget_Settings_Tray_DarkTheme, #True)
+    EndIf
     
     Repeat
       Select WaitWindowEvent()
@@ -51,6 +110,26 @@ Procedure OpenSettingsWindow()
                 SaveConfig()
                 RestartInputEventListener()
               EndIf
+            Case #Gadget_Settings_Tray_Enable
+              config\trayIconEnable = GetGadgetState(#Gadget_Settings_Tray_Enable)
+              
+              SaveConfig()
+              UpdateTrayIcon()
+              
+              If config\trayIconEnable
+                DisableGadget(#Gadget_Settings_Tray_DarkTheme, #False)
+              Else
+                DisableGadget(#Gadget_Settings_Tray_DarkTheme, #True)
+              EndIf
+            Case #Gadget_Settings_Tray_DarkTheme
+              If GetGadgetState(#Gadget_Settings_Tray_DarkTheme)
+                config\trayIcon = "bright"
+              Else
+                config\trayIcon = "dark"
+              EndIf
+              
+              SaveConfig()
+              UpdateTrayIcon()
           EndSelect
         Case #PB_Event_CloseWindow
           If EventWindow() = #Window_Settings
@@ -112,6 +191,8 @@ shortcutsFile = configDir + "/shortcuts.ini"
 LoadConfig()
 LoadShortcutsFromFile()
 
+gtk_init_(0, "")
+
 RestartInputEventListener()
 
 If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_MaximizeGadget | #PB_Window_MinimizeGadget | #PB_Window_ScreenCentered | #PB_Window_Invisible)
@@ -141,6 +222,7 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_Maximi
   AddGadgetColumn(#Gadget_ShortcutList, 1, "Action", 300)
   AddGadgetColumn(#Gadget_ShortcutList, 2, "Key", 100)
   
+  UpdateTrayIcon()
   UpdateMainGadgetSizes()
   UpdateMenuItems()
   
@@ -190,16 +272,21 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_Maximi
         UpdateMainGadgetSizes()
       Case #PB_Event_CloseWindow
         If EventWindow() = #Window_Main
-          Break
+          If config\trayIconEnable
+            HideWindow(#Window_Main, #True)
+          Else
+            Break
+          EndIf
         EndIf
     EndSelect
-  ForEver
+  Until quit
 EndIf
 
 If IsThread(inputEventListenerThread)
   KillThread(inputEventListenerThread)
 EndIf
 ; IDE Options = PureBasic 5.62 (Linux - x64)
-; Folding = -
+; Folding = --
 ; EnableXP
 ; Executable = keyboard-mapper
+; CompileSourceDirectory

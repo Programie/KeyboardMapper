@@ -51,10 +51,22 @@ Enumeration
   #Gadget_Settings_KeyboardInputDevice
   #Gadget_Settings_KeyboardInputDevice_Path
   #Gadget_Settings_KeyboardInputDevice_Browse
+  #Gadget_Settings_Tray
+  #Gadget_Settings_Tray_Enable
+  #Gadget_Settings_Tray_DarkTheme
 EndEnumeration
 
 Enumeration
   #File_InputDevice
+EndEnumeration
+
+Enumeration
+  #Systray
+EndEnumeration
+
+Enumeration
+  #TrayIcon_Menu_Show
+  #TrayIcon_Menu_Quit
 EndEnumeration
 
 Structure Shortcut
@@ -65,6 +77,8 @@ EndStructure
 
 Structure Config
   keyboardInputDevice.s
+  trayIcon.s
+  trayIconEnable.b
 EndStructure
 
 Structure InputEvent
@@ -88,10 +102,39 @@ Global editShortcutItem
 Global inputEventListenerThread
 Global inputEventKey
 Global allowActionHandling.b = #True
+Global quit.b
+Global appIndicator
+Global appPath.s = GetPathPart(ProgramFilename())
+
+ImportC ""
+  gtk_menu_item_new_with_label.i(label.p-utf8)
+  g_signal_connect_data.i(*instance, detailed_signal.p-utf8, *c_handler, *data_=0, *destroy_data=0, *connect_flags=0)
+EndImport
+
+Procedure.b StrToBool(string.s)
+  Select LCase(string)
+    Case "true"
+      ProcedureReturn #True
+    Case "false"
+      ProcedureReturn #False
+    Default
+      ProcedureReturn #Null
+  EndSelect
+EndProcedure
+
+Procedure.s BoolToStr(boolean.b)
+  If boolean
+    ProcedureReturn "true"
+  Else
+    ProcedureReturn "false"
+  EndIf
+EndProcedure
 
 Procedure LoadConfig()
   If OpenPreferences(configFile)
     config\keyboardInputDevice = ReadPreferenceString("keyboard-input-device", "")
+    config\trayIconEnable = StrToBool(ReadPreferenceString("tray-icon-enable", "true"))
+    config\trayIcon = ReadPreferenceString("tray-icon", "dark")
     ClosePreferences()
   EndIf
 EndProcedure
@@ -99,6 +142,8 @@ EndProcedure
 Procedure SaveConfig()
   If CreatePreferences(configFile)
     WritePreferenceString("keyboard-input-device", config\keyboardInputDevice)
+    WritePreferenceString("tray-icon-enable", BoolToStr(config\trayIconEnable))
+    WritePreferenceString("tray-icon", config\trayIcon)
     ClosePreferences()
   EndIf
 EndProcedure
@@ -184,5 +229,7 @@ Procedure KeyRequester()
   ProcedureReturn newKey
 EndProcedure
 ; IDE Options = PureBasic 5.62 (Linux - x64)
+; CursorPosition = 105
+; FirstLine = 77
 ; Folding = --
 ; EnableXP
