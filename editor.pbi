@@ -89,7 +89,7 @@ Procedure EditShortcut(item)
   
   If editShortcutItem = -1
     windowTitle = "Add shortcut"
-    shortcutText = "Press to set shortcut"
+    shortcutText = "Click to set shortcut"
     name = ""
   Else
     windowTitle = "Edit shortcut"
@@ -108,12 +108,12 @@ Procedure EditShortcut(item)
     StringGadget(#Gadget_EditShortcut_Name, 20, 100, 560, 20, name)
     
     FrameGadget(#Gadget_EditShortcut_Action_Frame, 10, 150, 580, 120, "Action")
-    OptionGadget(#Gadget_EditShortcut_Action_ExecuteCommand, 20, 170, 0, 20, "Execute command")
-    OptionGadget(#Gadget_EditShortcut_Action_OpenFolder, 20, 200, 0, 20, "Open folder")
-    OptionGadget(#Gadget_EditShortcut_Action_InputText, 20, 230, 0, 20, "Input text")
+    OptionGadget(#Gadget_EditShortcut_Action_ExecuteCommand, 20, 170, 150, 20, "Execute command")
+    OptionGadget(#Gadget_EditShortcut_Action_OpenFolder, 20, 200, 150, 20, "Open folder")
+    OptionGadget(#Gadget_EditShortcut_Action_InputText, 20, 230, 150, 20, "Input text")
     StringGadget(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine, 200, 170, 380, 20, "")
     StringGadget(#Gadget_EditShortcut_Action_OpenFolder_Path, 200, 200, 250, 20, "", #PB_String_ReadOnly)
-    ButtonGadget(#Gadget_EditShortcut_Action_OpenFolder_Browse, 460, 200, 0, 20, "Browse...")
+    ButtonGadget(#Gadget_EditShortcut_Action_OpenFolder_Browse, 460, 200, 120, 20, "Browse...")
     StringGadget(#Gadget_EditShortcut_Action_InputText_Text, 200, 230, 380, 20, "")
     
     ButtonGadget(#Gadget_EditShortcut_Save, 380, 280, 100, 30, "Save")
@@ -139,6 +139,7 @@ Procedure EditShortcut(item)
     UpdateShortcutActionState()
     
     DisableWindow(#Window_Main, #True)
+    DisableWindow(#Window_EditShortcut, #False); With QT5 the child window is disabled after disabling the parent
     
     allowActionHandling = #False
     

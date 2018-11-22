@@ -74,8 +74,8 @@ Procedure OpenSettingsWindow()
     ListViewGadget(#Gadget_Settings_KeyboardInputDevice_List, 20, 30, 460, 100)
     
     FrameGadget(#Gadget_Settings_Tray_Frame, 10, 140, 480, 80, "Tray icon")
-    CheckBoxGadget(#Gadget_Settings_Tray_Enable, 20, 160, 0, 20, "Enable")
-    CheckBoxGadget(#Gadget_Settings_Tray_DarkTheme, 20, 190, 0, 20, "Use for dark theme")
+    CheckBoxGadget(#Gadget_Settings_Tray_Enable, 20, 160, 460, 20, "Enable")
+    CheckBoxGadget(#Gadget_Settings_Tray_DarkTheme, 20, 190, 460, 20, "Use for dark theme")
     
     ButtonGadget(#Gadget_Settings_Save, 280, 230, 100, 30, "Save")
     ButtonGadget(#Gadget_Settings_Cancel, 390, 230, 100, 30, "Cancel")
@@ -83,6 +83,7 @@ Procedure OpenSettingsWindow()
     AddKeyboardShortcut(#Window_Settings, #PB_Shortcut_Escape, #Menu_Settings_Close)
     
     DisableWindow(#Window_Main, #True)
+    DisableWindow(#Window_Settings, #False); With QT5 the child window is disabled after disabling the parent
     
     Protected devicesDir.s = "/dev/input/by-id"
     Protected dir = ExamineDirectory(#PB_Any, devicesDir, "")
