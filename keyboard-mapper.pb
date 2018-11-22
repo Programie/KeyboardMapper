@@ -1,5 +1,8 @@
 EnableExplicit
 
+ImportC "-no-pie"
+EndImport
+
 Declare UpdateListEntry(item, shortcut)
 
 IncludeFile "common.pbi"
