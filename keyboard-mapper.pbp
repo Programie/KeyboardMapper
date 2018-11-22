@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.62 (Linux - x64)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="Keyboard Mapper"/>
+  </section>
+  <section name="data">
+    <explorer view="" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2018-11-22 19:25" user="programie" host="minty"/>
+  </section>
+  <section name="files">
+    <file name="appindicator.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
+      <fingerprint md5="984fb0ed7d8aefe22b5662d9dbeed52e"/>
+    </file>
+    <file name="CLI_Helper.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
+      <fingerprint md5="3cd3d3555fc828c058e6f73b3733134b"/>
+    </file>
+    <file name="common.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
+      <fingerprint md5="ea57ebfdadd853bcd773ed93fa092ee0"/>
+    </file>
+    <file name="editor.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
+      <fingerprint md5="092a1c898aac9b3ad8965b52d3963542"/>
+    </file>
+    <file name="input-handler.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
+      <fingerprint md5="93ca849bfa952b23afe2a2354c4eb34c"/>
+    </file>
+    <file name="keyboard-mapper.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate=""/>
+      <fingerprint md5="b429f1b2a90b4cbd7abf56fee41b565a"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="Default Target" enabled="1" default="1">
+      <inputfile value="keyboard-mapper.pb"/>
+      <outputfile value="keyboard-mapper"/>
+      <options xpskin="1" debug="1"/>
+      <temporaryexe value="source"/>
+    </target>
+  </section>
+</project>
