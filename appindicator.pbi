@@ -75,6 +75,3 @@ ImportC "/usr/lib/x86_64-linux-gnu/libappindicator3.so.1"
 	app_indicator_set_ordering_index(*indicator, ordering_index.l)
 	app_indicator_set_status(*indicator, status.l)
 EndImport
-; IDE Options = PureBasic 5.62 (Linux - x64)
-; Folding = -
-; EnableXP

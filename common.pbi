@@ -228,8 +228,3 @@ Procedure KeyRequester()
   
   ProcedureReturn newKey
 EndProcedure
-; IDE Options = PureBasic 5.62 (Linux - x64)
-; CursorPosition = 105
-; FirstLine = 77
-; Folding = --
-; EnableXP

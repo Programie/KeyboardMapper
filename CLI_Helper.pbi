@@ -314,6 +314,3 @@ EndProcedure
 CompilerElse
   CompilerError "CLI_Helper needs PureBasic 4.40 or greater. (Maps)"
 CompilerEndIf
-; IDE Options = PureBasic 5.62 (Linux - x64)
-; Folding = --
-; EnableXP

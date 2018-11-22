@@ -73,6 +73,3 @@ Procedure.b RestartInputEventListener()
     ProcedureReturn #False
   EndIf
 EndProcedure
-; IDE Options = PureBasic 5.62 (Linux - x64)
-; Folding = -
-; EnableXP
