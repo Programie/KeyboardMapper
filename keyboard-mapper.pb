@@ -236,6 +236,116 @@ Procedure UpdateShortcutActionState()
   DisableGadget(#Gadget_EditShortcut_Action_InputText_Text, Invert(GetGadgetState(#Gadget_EditShortcut_Action_InputText)))
 EndProcedure
 
+Procedure UpdateListEntry(item, shortcut)
+  If item = -1
+    AddGadgetItem(#Gadget_ShortcutList, -1, shortcuts(Str(shortcut))\name)
+    item = CountGadgetItems(#Gadget_ShortcutList) - 1
+  Else
+    SetGadgetItemText(#Gadget_ShortcutList, item, shortcuts(Str(shortcut))\name)
+  EndIf
+  
+  SetGadgetItemText(#Gadget_ShortcutList, item, ActionToString(shortcuts(Str(shortcut))\action) + ": " + shortcuts(Str(shortcut))\actionData, 1)
+  SetGadgetItemText(#Gadget_ShortcutList, item, Str(shortcut), 2)
+  SetGadgetItemData(#Gadget_ShortcutList, item, shortcut)
+EndProcedure
+
+Procedure KeyRequester()
+  inputEventKey = 0
+  
+  Protected newKey
+  
+  If OpenWindow(#Window_KeyRequester, 0, 0, 200, 100, "Configure key", #PB_Window_WindowCentered, WindowID(#Window_EditShortcut))
+    TextGadget(#Gadget_KeyRequester_Text, 10, 10, 180, 80, "Press the key to use.", #PB_Text_Center)
+    
+    DisableWindow(#Window_EditShortcut, #True)
+    
+    Repeat
+      Select WaitWindowEvent(10)
+        Case #PB_Event_CloseWindow
+          If EventWindow() = #Window_KeyRequester
+            Break
+          EndIf
+      EndSelect
+      
+      If inputEventKey
+        newKey = inputEventKey
+        Break
+      EndIf
+    ForEver
+    
+    CloseWindow(#Window_KeyRequester)
+    DisableWindow(#Window_EditShortcut, #False)
+  EndIf
+  
+  ProcedureReturn newKey
+EndProcedure
+
+Procedure SaveShortcut()
+  Protected shortcut.Shortcut
+  Protected key = GetGadgetData(#Gadget_EditShortcut_Shortcut)
+  Protected oldKey = -1
+  
+  If Not key
+    MessageRequester("Missing shortcut", "Please specify a shortcut to use!", #PB_MessageRequester_Error)
+    ProcedureReturn #False
+  EndIf
+  
+  If editShortcutItem <> -1
+    oldKey = GetGadgetItemData(#Gadget_ShortcutList, editShortcutItem)
+  EndIf
+  
+  Protected item
+  For item = 0 To CountGadgetItems(#Gadget_ShortcutList) - 1
+    If item = editShortcutItem
+      Continue
+    EndIf
+    
+    If GetGadgetItemData(#Gadget_ShortcutList, item) = key
+      MessageRequester("Duplicate entry", "An entry for shortcut '" + Str(key) + "' already exists!", #PB_MessageRequester_Error)
+      ProcedureReturn #False
+    EndIf
+  Next
+  
+  shortcut\name = GetGadgetText(#Gadget_EditShortcut_Name)
+  
+  If GetGadgetState(#Gadget_EditShortcut_Action_ExecuteCommand)
+    shortcut\action = #Action_ExecuteCommand
+    shortcut\actionData = Trim(GetGadgetText(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine))
+    
+    If shortcut\actionData = ""
+      MessageRequester("Missing command", "Please specify the command to execute!", #PB_MessageRequester_Error)
+      ProcedureReturn #False
+    EndIf
+  ElseIf GetGadgetState(#Gadget_EditShortcut_Action_OpenFolder)
+    shortcut\action = #Action_OpenFolder
+    shortcut\actionData = GetGadgetText(#Gadget_EditShortcut_Action_OpenFolder_Path)
+    
+    If shortcut\actionData = ""
+      MessageRequester("Missing folder path", "Please selected the path to the folder to open!", #PB_MessageRequester_Error)
+      ProcedureReturn #False
+    EndIf
+  ElseIf GetGadgetState(#Gadget_EditShortcut_Action_InputText)
+    shortcut\action = #Action_InputText
+    shortcut\actionData = GetGadgetText(#Gadget_EditShortcut_Action_InputText_Text)
+    
+    If shortcut\actionData = ""
+      MessageRequester("Missing text", "Please specify the text to input!", #PB_MessageRequester_Error)
+      ProcedureReturn #False
+    EndIf
+  EndIf
+  
+  If oldKey <> -1 And oldKey <> key
+    DeleteMapElement(shortcuts(), Str(oldKey))
+  EndIf
+  
+  shortcuts(Str(key)) = shortcut
+  
+  UpdateListEntry(editShortcutItem, key)
+  SaveShortcutsToFile()
+  
+  ProcedureReturn #True
+EndProcedure
+
 Procedure EditShortcut(item)
   If config\keyboardInputDevice = ""
     MessageRequester("Missing keyboard input device", "Please configure the input device to use first!", #PB_MessageRequester_Error)
@@ -304,23 +414,100 @@ Procedure EditShortcut(item)
     DisableWindow(#Window_Main, #True)
     
     allowActionHandling = #False
+    
+    Repeat
+      Select WaitWindowEvent()
+        Case #PB_Event_Menu
+          Select EventMenu()
+            Case #Menu_EditShortcut_Save
+              If SaveShortcut()
+                Break
+              EndIf
+            Case #Menu_EditShortcut_Cancel
+              Break
+          EndSelect
+        Case #PB_Event_Gadget
+          Select EventGadget()
+            Case #Gadget_EditShortcut_Shortcut
+              Protected newKey = KeyRequester()
+              If newKey
+                SetGadgetData(#Gadget_EditShortcut_Shortcut, newKey)
+                SetGadgetText(#Gadget_EditShortcut_Shortcut, "Key " + Str(newKey))
+              EndIf
+            Case #Gadget_EditShortcut_Action_ExecuteCommand
+              UpdateShortcutActionState()
+            Case #Gadget_EditShortcut_Action_OpenFolder
+              UpdateShortcutActionState()
+            Case #Gadget_EditShortcut_Action_InputText
+              UpdateShortcutActionState()
+            Case #Gadget_EditShortcut_Action_OpenFolder_Browse
+              Protected path.s = PathRequester("Select the folder to open", GetGadgetText(#Gadget_EditShortcut_Action_OpenFolder_Path))
+              If path
+                SetGadgetText(#Gadget_EditShortcut_Action_OpenFolder_Path, path)
+              EndIf
+            Case #Gadget_EditShortcut_Save
+              If SaveShortcut()
+                Break
+              EndIf
+            Case #Gadget_EditShortcut_Cancel
+              Break
+          EndSelect
+        Case #PB_Event_CloseWindow
+          If EventWindow() = #Window_EditShortcut
+            Break
+          EndIf
+      EndSelect
+    ForEver
+    
+    CloseWindow(#Window_EditShortcut)
+    DisableWindow(#Window_Main, #False)
+    
+    allowActionHandling = #True
   EndIf
-EndProcedure
-
-Procedure CloseEditShortcutWindow()
-  CloseWindow(#Window_EditShortcut)
-  DisableWindow(#Window_Main, #False)
-  
-  allowActionHandling = #True
-EndProcedure
-
-Procedure CloseSettingsWindow()
-  CloseWindow(#Window_Settings)
-  DisableWindow(#Window_Main, #False)
 EndProcedure
 
 Procedure UpdateMainGadgetSizes()
   ResizeGadget(#Gadget_ShortcutList, 10, 10, WindowWidth(#Window_Main) - 20, WindowHeight(#Window_Main) - ToolBarHeight(#Toolbar_Main) - MenuHeight() - 20)
+EndProcedure
+
+Procedure OpenSettingsWindow()
+  If OpenWindow(#Window_Settings, 0, 0, 400, 100, "Settings", #PB_Window_WindowCentered, WindowID(#Window_Main))
+    FrameGadget(#Gadget_Settings_KeyboardInputDevice, 10, 10, 380, 60, "Keyboard input device")
+    StringGadget(#Gadget_Settings_KeyboardInputDevice_Path, 20, 30, 260, 20, config\keyboardInputDevice, #PB_String_ReadOnly)
+    ButtonGadget(#Gadget_Settings_KeyboardInputDevice_Browse, 290, 30, 0, 20, "Browse...")
+    
+    AddKeyboardShortcut(#Window_Settings, #PB_Shortcut_Escape, #Menu_Settings_Close)
+    
+    DisableWindow(#Window_Main, #True)
+    
+    Repeat
+      Select WaitWindowEvent()
+        Case #PB_Event_Menu
+          Select EventMenu()
+            Case #Menu_Settings_Close
+              Break
+          EndSelect
+        Case #PB_Event_Gadget
+          Select EventGadget()
+            Case #Gadget_Settings_KeyboardInputDevice_Browse
+              Protected file.s = OpenFileRequester("Select keyboard input device file", GetGadgetText(#Gadget_Settings_KeyboardInputDevice_Path), "*.*", 0)
+              If file
+                config\keyboardInputDevice = file
+                SetGadgetText(#Gadget_Settings_KeyboardInputDevice_Path, file)
+                SaveConfig()
+                RestartInputEventListener()
+              EndIf
+          EndSelect
+        Case #PB_Event_CloseWindow
+          If EventWindow() = #Window_Settings
+            Break
+          EndIf
+      EndSelect
+    ForEver
+    
+    CloseWindow(#Window_Settings)
+    DisableWindow(#Window_Main, #False)
+  EndIf
 EndProcedure
 
 Procedure UpdateMenuItems()
@@ -337,137 +524,6 @@ Procedure UpdateMenuItems()
   DisableMenuItem(#Menu_Main, #Menu_RemoveShortcut, Invert(itemFound))
   DisableToolBarButton(#Toolbar_Main, #Menu_EditShortcut, Invert(itemFound))
   DisableToolBarButton(#Toolbar_Main, #Menu_RemoveShortcut, Invert(itemFound))
-EndProcedure
-
-Procedure UpdateListEntry(item, shortcut)
-  If item = -1
-    AddGadgetItem(#Gadget_ShortcutList, -1, shortcuts(Str(shortcut))\name)
-    item = CountGadgetItems(#Gadget_ShortcutList) - 1
-  Else
-    SetGadgetItemText(#Gadget_ShortcutList, item, shortcuts(Str(shortcut))\name)
-  EndIf
-  
-  SetGadgetItemText(#Gadget_ShortcutList, item, ActionToString(shortcuts(Str(shortcut))\action) + ": " + shortcuts(Str(shortcut))\actionData, 1)
-  SetGadgetItemText(#Gadget_ShortcutList, item, Str(shortcut), 2)
-  SetGadgetItemData(#Gadget_ShortcutList, item, shortcut)
-EndProcedure
-
-Procedure SaveShortcut()
-  Protected shortcut.Shortcut
-  Protected key = GetGadgetData(#Gadget_EditShortcut_Shortcut)
-  Protected oldKey = -1
-  
-  If Not key
-    MessageRequester("Missing shortcut", "Please specify a shortcut to use!", #PB_MessageRequester_Error)
-    ProcedureReturn
-  EndIf
-  
-  If editShortcutItem <> -1
-    oldKey = GetGadgetItemData(#Gadget_ShortcutList, editShortcutItem)
-  EndIf
-  
-  Protected item
-  For item = 0 To CountGadgetItems(#Gadget_ShortcutList) - 1
-    If item = editShortcutItem
-      Continue
-    EndIf
-    
-    If GetGadgetItemData(#Gadget_ShortcutList, item) = key
-      MessageRequester("Duplicate entry", "An entry for shortcut '" + Str(key) + "' already exists!", #PB_MessageRequester_Error)
-      ProcedureReturn
-    EndIf
-  Next
-  
-  shortcut\name = GetGadgetText(#Gadget_EditShortcut_Name)
-  
-  If GetGadgetState(#Gadget_EditShortcut_Action_ExecuteCommand)
-    shortcut\action = #Action_ExecuteCommand
-    shortcut\actionData = Trim(GetGadgetText(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine))
-    
-    If shortcut\actionData = ""
-      MessageRequester("Missing command", "Please specify the command to execute!", #PB_MessageRequester_Error)
-      ProcedureReturn
-    EndIf
-  ElseIf GetGadgetState(#Gadget_EditShortcut_Action_OpenFolder)
-    shortcut\action = #Action_OpenFolder
-    shortcut\actionData = GetGadgetText(#Gadget_EditShortcut_Action_OpenFolder_Path)
-    
-    If shortcut\actionData = ""
-      MessageRequester("Missing folder path", "Please selected the path to the folder to open!", #PB_MessageRequester_Error)
-      ProcedureReturn
-    EndIf
-  ElseIf GetGadgetState(#Gadget_EditShortcut_Action_InputText)
-    shortcut\action = #Action_InputText
-    shortcut\actionData = GetGadgetText(#Gadget_EditShortcut_Action_InputText_Text)
-    
-    If shortcut\actionData = ""
-      MessageRequester("Missing text", "Please specify the text to input!", #PB_MessageRequester_Error)
-      ProcedureReturn
-    EndIf
-  EndIf
-  
-  If oldKey <> -1 And oldKey <> key
-    DeleteMapElement(shortcuts(), Str(oldKey))
-  EndIf
-  
-  shortcuts(Str(key)) = shortcut
-  
-  UpdateListEntry(editShortcutItem, key)
-  SaveShortcutsToFile()
-  CloseEditShortcutWindow()
-EndProcedure
-
-Procedure OpenSettingsWindow()
-  If OpenWindow(#Window_Settings, 0, 0, 400, 100, "Settings", #PB_Window_WindowCentered, WindowID(#Window_Main))
-    FrameGadget(#Gadget_Settings_KeyboardInputDevice, 10, 10, 380, 60, "Keyboard input device")
-    StringGadget(#Gadget_Settings_KeyboardInputDevice_Path, 20, 30, 260, 20, config\keyboardInputDevice, #PB_String_ReadOnly)
-    ButtonGadget(#Gadget_Settings_KeyboardInputDevice_Browse, 290, 30, 0, 20, "Browse...")
-    
-    AddKeyboardShortcut(#Window_Settings, #PB_Shortcut_Escape, #Menu_Settings_Close)
-    
-    DisableWindow(#Window_Main, #True)
-  EndIf
-EndProcedure
-
-Procedure KeyRequester()
-  inputEventKey = 0
-  
-  Protected newKey
-  
-  If OpenWindow(#Window_KeyRequester, 0, 0, 200, 100, "Configure key", #PB_Window_WindowCentered, WindowID(#Window_EditShortcut))
-    TextGadget(#Gadget_KeyRequester_Text, 10, 10, 180, 80, "Press the key to use.", #PB_Text_Center)
-    
-    DisableWindow(#Window_EditShortcut, #True)
-    
-    Repeat
-      Select WaitWindowEvent(10)
-        Case #PB_Event_CloseWindow
-          If EventWindow() = #Window_KeyRequester
-            Break
-          EndIf
-      EndSelect
-      
-      If inputEventKey
-        newKey = inputEventKey
-        Break
-      EndIf
-    ForEver
-    
-    CloseWindow(#Window_KeyRequester)
-    DisableWindow(#Window_EditShortcut, #False)
-  EndIf
-  
-  ProcedureReturn newKey
-EndProcedure
-
-Procedure.l GetProgramParameter(name.s)
-  Protected index
-  
-  For index = 0 To CountProgramParameters() -1
-    If ProgramParameter(index) = name
-      ProcedureReturn index
-    EndIf
-  Next
 EndProcedure
 
 Define defaultConfigDir.s = GetHomeDirectory() + ".config/keyboard-mapper"
@@ -562,12 +618,6 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_Maximi
               RemoveGadgetItem(#Gadget_ShortcutList, item)
               SaveShortcutsToFile()
             EndIf
-          Case #Menu_EditShortcut_Save
-            SaveShortcut()
-          Case #Menu_EditShortcut_Cancel
-            CloseEditShortcutWindow()
-          Case #Menu_Settings_Close
-            CloseSettingsWindow()
         EndSelect
       Case #PB_Event_Gadget
         Select EventGadget()
@@ -581,47 +631,13 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_Maximi
                   EditShortcut(item)
                 EndIf
             EndSelect
-          Case #Gadget_EditShortcut_Shortcut
-            Define newKey = KeyRequester()
-            If newKey
-              SetGadgetData(#Gadget_EditShortcut_Shortcut, newKey)
-              SetGadgetText(#Gadget_EditShortcut_Shortcut, "Key " + Str(newKey))
-            EndIf
-          Case #Gadget_EditShortcut_Action_ExecuteCommand
-            UpdateShortcutActionState()
-          Case #Gadget_EditShortcut_Action_OpenFolder
-            UpdateShortcutActionState()
-          Case #Gadget_EditShortcut_Action_InputText
-            UpdateShortcutActionState()
-          Case #Gadget_EditShortcut_Action_OpenFolder_Browse
-            Define path.s = PathRequester("Select the folder to open", GetGadgetText(#Gadget_EditShortcut_Action_OpenFolder_Path))
-            If path
-              SetGadgetText(#Gadget_EditShortcut_Action_OpenFolder_Path, path)
-            EndIf
-          Case #Gadget_EditShortcut_Save
-            SaveShortcut()
-          Case #Gadget_EditShortcut_Cancel
-            CloseEditShortcutWindow()
-          Case #Gadget_Settings_KeyboardInputDevice_Browse
-            Define file.s = OpenFileRequester("Select keyboard input device file", GetGadgetText(#Gadget_Settings_KeyboardInputDevice_Path), "*.*", 0)
-            If file
-              config\keyboardInputDevice = file
-              SetGadgetText(#Gadget_Settings_KeyboardInputDevice_Path, file)
-              SaveConfig()
-              RestartInputEventListener()
-            EndIf
         EndSelect
       Case #PB_Event_SizeWindow
         UpdateMainGadgetSizes()
       Case #PB_Event_CloseWindow
-        Select EventWindow()
-          Case #Window_Main
-            Break
-          Case #Window_EditShortcut
-            CloseEditShortcutWindow()
-          Case #Window_Settings
-            CloseSettingsWindow()
-        EndSelect
+        If EventWindow() = #Window_Main
+          Break
+        EndIf
     EndSelect
   ForEver
 EndIf
@@ -630,8 +646,8 @@ If IsThread(inputEventListenerThread)
   KillThread(inputEventListenerThread)
 EndIf
 ; IDE Options = PureBasic 5.62 (Linux - x64)
-; CursorPosition = 517
-; FirstLine = 497
-; Folding = ----
+; CursorPosition = 526
+; FirstLine = 506
+; Folding = ---
 ; EnableXP
 ; Executable = keyboard-mapper
