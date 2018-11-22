@@ -387,7 +387,7 @@ Procedure EditShortcut(item)
     StringGadget(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine, 200, 170, 380, 20, "")
     StringGadget(#Gadget_EditShortcut_Action_OpenFolder_Path, 200, 200, 250, 20, "", #PB_String_ReadOnly)
     ButtonGadget(#Gadget_EditShortcut_Action_OpenFolder_Browse, 460, 200, 0, 20, "Browse...")
-    StringGadget(#Gadget_EditShortcut_Action_InputText_Text, 200, 300, 380, 20, "")
+    StringGadget(#Gadget_EditShortcut_Action_InputText_Text, 200, 230, 380, 20, "")
     
     ButtonGadget(#Gadget_EditShortcut_Save, 380, 280, 100, 30, "Save")
     ButtonGadget(#Gadget_EditShortcut_Cancel, 490, 280, 100, 30, "Cancel")
