@@ -4,6 +4,20 @@ A tool for Linux desktops to map keys of a dedicated keyboard to specific action
 
 [RSBasic](https://www.rsbasic.de) developed a similar application for Windows which got me to the idea of developing something like that for Linux.
 
+## How does it look like?
+
+Main window:
+
+![](screenshots/Main_Window.png)
+
+Edit shortcut:
+
+![](screenshots/Edit_Shortcut.png)
+
+Settings:
+
+![](screenshots/Settings.png)
+
 ## Installation
 
 Download the latest release from the release page on GitLab.
