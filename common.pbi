@@ -1,89 +1,7 @@
 EnableExplicit
 
-;- Windows
-Enumeration
-  #Window_Main
-  #Window_EditShortcut
-  #Window_KeyRequester
-  #Window_Settings
-EndEnumeration
-
-;- Menus
-Enumeration
-  #Menu_Main
-EndEnumeration
-
-;- Toolbars
-Enumeration
-  #Toolbar_Main
-EndEnumeration
-
-;- Menu items
-Enumeration
-  #Menu_Settings
-  #Menu_Quit
-  #Menu_AddShortcut
-  #Menu_EditShortcut
-  #Menu_RemoveShortcut
-  #Menu_EditShortcut_Save
-  #Menu_EditShortcut_Cancel
-  #Menu_Settings_Close
-EndEnumeration
-
-;- Gadgets
-Enumeration
-  #Gadget_ShortcutList
-  #Gadget_EditShortcut_Shortcut_Frame
-  #Gadget_EditShortcut_Shortcut
-  #Gadget_EditShortcut_Name_Frame
-  #Gadget_EditShortcut_Name
-  #Gadget_EditShortcut_Action_Frame
-  #Gadget_EditShortcut_Action_LaunchApplication
-  #Gadget_EditShortcut_Action_LaunchApplication_List
-  #Gadget_EditShortcut_Action_ExecuteCommand
-  #Gadget_EditShortcut_Action_ExecuteCommand_CommandLine
-  #Gadget_EditShortcut_Action_OpenFolder
-  #Gadget_EditShortcut_Action_OpenFolder_Path
-  #Gadget_EditShortcut_Action_OpenFolder_Browse
-  #Gadget_EditShortcut_Action_InputText
-  #Gadget_EditShortcut_Action_InputText_Text
-  #Gadget_EditShortcut_Save
-  #Gadget_EditShortcut_Cancel
-  #Gadget_KeyRequester_Text
-  #Gadget_KeyRequester_Cancel
-  #Gadget_Settings_KeyboardInputDevice_Frame
-  #Gadget_Settings_KeyboardInputDevice_List
-  #Gadget_Settings_Tray_Frame
-  #Gadget_Settings_Tray_Enable
-  #Gadget_Settings_Tray_DarkTheme
-  #Gadget_Settings_Save
-  #Gadget_Settings_Cancel
-EndEnumeration
-
 Enumeration
   #File_InputDevice
-EndEnumeration
-
-Enumeration
-  #Image_ApplicationListIcon
-EndEnumeration
-
-Enumeration
-  #Library_AppIndicator
-EndEnumeration
-
-Enumeration
-  #TrayIcon_Menu_Show
-  #TrayIcon_Menu_Quit
-EndEnumeration
-
-Enumeration
-  #GTK_ICON_LOOKUP_ALL              = 0; Not gtk-defined, own constant to clearify
-  #GTK_ICON_LOOKUP_NO_SVG           = 1
-  #GTK_ICON_LOOKUP_FORCE_SVG        = 2
-  #GTK_ICON_LOOKUP_USE_BUILTIN      = 4
-  #GTK_ICON_LOOKUP_GENERIC_FALLBACK = 8
-  #GTK_ICON_LOOKUP_FORCE_SIZE       = 16
 EndEnumeration
 
 Structure Shortcut
@@ -117,12 +35,9 @@ Global config.Config
 Global configDir.s
 Global configFile.s
 Global shortcutsFile.s
-Global editShortcutItem
 Global inputEventListenerThread
 Global inputEventKey
 Global allowActionHandling.b = #True
-Global quit.b
-Global appIndicator
 Global appPath.s = GetPathPart(ProgramFilename())
 
 Procedure.b StrToBool(string.s)
