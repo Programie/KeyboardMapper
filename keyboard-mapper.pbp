@@ -1,38 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.62 (Linux - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.70 LTS beta 3 (Linux - x64)">
   <section name="config">
-    <options closefiles="1" openmode="0" name="Keyboard Mapper"/>
+    <options closefiles="1" openmode="3" name="Keyboard Mapper"/>
   </section>
   <section name="data">
     <explorer view="" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2018-11-22 19:25" user="programie" host="minty"/>
+    <lastopen date="2018-11-23 04:50" user="programie" host="minty"/>
   </section>
   <section name="files">
     <file name="appindicator.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="984fb0ed7d8aefe22b5662d9dbeed52e"/>
+      <fingerprint md5="1375b7e84fbf515af2c888796fee855f"/>
     </file>
     <file name="CLI_Helper.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="3cd3d3555fc828c058e6f73b3733134b"/>
+      <fingerprint md5="cec779c63a4717087db78be7a45993ce"/>
     </file>
     <file name="common.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="ea57ebfdadd853bcd773ed93fa092ee0"/>
+      <fingerprint md5="dcafa28aa5936d0e260e0bf7f570373a"/>
+    </file>
+    <file name="desktop-entry.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
+      <fingerprint md5="90b340685de6a8a99bcb945c68693af6"/>
     </file>
     <file name="editor.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="092a1c898aac9b3ad8965b52d3963542"/>
+      <fingerprint md5="f5750ceb7d449dfe9b99504b97482762"/>
     </file>
     <file name="input-handler.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="93ca849bfa952b23afe2a2354c4eb34c"/>
+      <fingerprint md5="eeb2d78eb2b92db9798f0bc9356cf220"/>
     </file>
     <file name="keyboard-mapper.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate=""/>
-      <fingerprint md5="b429f1b2a90b4cbd7abf56fee41b565a"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
+      <fingerprint md5="28b25c20e91ae6704e01c8ddf41d088b"/>
     </file>
   </section>
   <section name="targets">

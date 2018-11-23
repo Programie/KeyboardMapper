@@ -3,8 +3,11 @@ EnableExplicit
 ImportC "-no-pie"
 EndImport
 
+Declare.b IsStringFieldInStringField(string1.s, string2.s, separator1.s, separator2.s)
+Declare.b StrToBool(string.s)
 Declare UpdateListEntry(item, shortcut)
 
+IncludeFile "desktop-entry.pbi"
 IncludeFile "common.pbi"
 IncludeFile "editor.pbi"
 IncludeFile "input-handler.pbi"
@@ -51,17 +54,31 @@ Procedure UpdateTrayIcon()
   EndIf
 EndProcedure
 
-Procedure UpdateListEntry(item, shortcut)
+Procedure UpdateListEntry(item, shortcutKey)
+  Protected shortcut.Shortcut = shortcuts(Str(shortcutKey))
+  
   If item = -1
-    AddGadgetItem(#Gadget_ShortcutList, -1, shortcuts(Str(shortcut))\name)
+    AddGadgetItem(#Gadget_ShortcutList, -1, shortcut\name)
     item = CountGadgetItems(#Gadget_ShortcutList) - 1
   Else
-    SetGadgetItemText(#Gadget_ShortcutList, item, shortcuts(Str(shortcut))\name)
+    SetGadgetItemText(#Gadget_ShortcutList, item, shortcut\name)
   EndIf
   
-  SetGadgetItemText(#Gadget_ShortcutList, item, ActionToString(shortcuts(Str(shortcut))\action) + ": " + shortcuts(Str(shortcut))\actionData, 1)
-  SetGadgetItemText(#Gadget_ShortcutList, item, Str(shortcut), 2)
-  SetGadgetItemData(#Gadget_ShortcutList, item, shortcut)
+  Protected actionDetails.s
+  
+  Select shortcut\action
+    Case #Action_LaunchApplication
+      Protected desktopEntry.DesktopEntry
+      
+      ReadDesktopFile(shortcut\actionData, desktopEntry)
+      actionDetails = desktopEntry\name
+    Default
+      actionDetails = shortcut\actionData
+  EndSelect
+  
+  SetGadgetItemText(#Gadget_ShortcutList, item, ActionToString(shortcut\action) + ": " + actionDetails, 1)
+  SetGadgetItemText(#Gadget_ShortcutList, item, Str(shortcutKey), 2)
+  SetGadgetItemData(#Gadget_ShortcutList, item, shortcutKey)
 EndProcedure
 
 Procedure UpdateMainGadgetSizes()
@@ -216,6 +233,8 @@ LoadShortcutsFromFile()
 gtk_init_(0, "")
 
 RestartInputEventListener()
+
+UsePNGImageDecoder()
 
 If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_MaximizeGadget | #PB_Window_MinimizeGadget | #PB_Window_ScreenCentered | #PB_Window_Invisible)
   If CreateMenu(#Menu_Main, WindowID(#Window_Main))

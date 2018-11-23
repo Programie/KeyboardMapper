@@ -29,8 +29,9 @@ After that, you can start the application and select the input device in the set
 
 Add your first entry by clicking the "Add shortcut" button in the toolbar or selecting it from the application menu.
 
-There are three possible actions available for each shortcut:
+There are four possible actions available for each shortcut:
 
+* Launch application: Select one of your installed applications to launch
 * Execute command: Execute the specified command (including all arguments which should be passed to it)
 * Open folder: Select any folder you would like to open in your default file explorer
 * Input text: Send any text to the currently active window (**not implemented yet!**)

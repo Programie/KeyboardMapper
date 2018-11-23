@@ -1,10 +1,29 @@
 EnableExplicit
 
+Procedure UpdateLaunchApplicationActionToolTip()
+  Protected item = GetGadgetState(#Gadget_EditShortcut_Action_LaunchApplication_List)
+  
+  If item = -1
+    GadgetToolTip(#Gadget_EditShortcut_Action_LaunchApplication_List, "")
+  Else
+    SelectElement(applicationList(), item)
+    GadgetToolTip(#Gadget_EditShortcut_Action_LaunchApplication_List, applicationList()\exec)
+  EndIf
+EndProcedure
+
 Procedure UpdateShortcutActionState()
+  DisableGadget(#Gadget_EditShortcut_Action_LaunchApplication_List, Invert(GetGadgetState(#Gadget_EditShortcut_Action_LaunchApplication)))
   DisableGadget(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine, Invert(GetGadgetState(#Gadget_EditShortcut_Action_ExecuteCommand)))
   DisableGadget(#Gadget_EditShortcut_Action_OpenFolder_Path, Invert(GetGadgetState(#Gadget_EditShortcut_Action_OpenFolder)))
   DisableGadget(#Gadget_EditShortcut_Action_OpenFolder_Browse, Invert(GetGadgetState(#Gadget_EditShortcut_Action_OpenFolder)))
   DisableGadget(#Gadget_EditShortcut_Action_InputText_Text, Invert(GetGadgetState(#Gadget_EditShortcut_Action_InputText)))
+EndProcedure
+
+Procedure LoadApplicationList()
+  ClearList(applicationList())
+  LoadApplicationDesktopFiles("/usr/share/applications", applicationList())
+  LoadApplicationDesktopFiles(GetHomeDirectory() + ".local/share/applications", applicationList())
+  SortStructuredList(applicationList(), 0, OffsetOf(DesktopEntry\name), TypeOf(DesktopEntry\name))
 EndProcedure
 
 Procedure SaveShortcut()
@@ -35,7 +54,18 @@ Procedure SaveShortcut()
   
   shortcut\name = GetGadgetText(#Gadget_EditShortcut_Name)
   
-  If GetGadgetState(#Gadget_EditShortcut_Action_ExecuteCommand)
+  If GetGadgetState(#Gadget_EditShortcut_Action_LaunchApplication)
+    item = GetGadgetState(#Gadget_EditShortcut_Action_LaunchApplication_List)
+    
+    If item = -1
+      MessageRequester("Missing application", "Please selected the application to launch!", #PB_MessageRequester_Error)
+      ProcedureReturn #False
+    EndIf
+    
+    SelectElement(applicationList(), item)
+    shortcut\action = #Action_LaunchApplication
+    shortcut\actionData = applicationList()\filename
+  ElseIf GetGadgetState(#Gadget_EditShortcut_Action_ExecuteCommand)
     shortcut\action = #Action_ExecuteCommand
     shortcut\actionData = Trim(GetGadgetText(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine))
     
@@ -100,29 +130,61 @@ Procedure EditShortcut(item)
     name = shortcut\name
   EndIf
   
-  If OpenWindow(#Window_EditShortcut, 0, 0, 600, 320, windowTitle, #PB_Window_WindowCentered, WindowID(#Window_Main))
+  If OpenWindow(#Window_EditShortcut, 0, 0, 600, 350, windowTitle, #PB_Window_WindowCentered, WindowID(#Window_Main))
     FrameGadget(#Gadget_EditShortcut_Shortcut_Frame, 10, 10, 580, 60, "Shortcut")
     ButtonGadget(#Gadget_EditShortcut_Shortcut, 20, 30, 560, 20, shortcutText)
     
     FrameGadget(#Gadget_EditShortcut_Name_Frame, 10, 80, 580, 60, "Name")
     StringGadget(#Gadget_EditShortcut_Name, 20, 100, 560, 20, name)
     
-    FrameGadget(#Gadget_EditShortcut_Action_Frame, 10, 150, 580, 120, "Action")
-    OptionGadget(#Gadget_EditShortcut_Action_ExecuteCommand, 20, 170, 150, 20, "Execute command")
-    OptionGadget(#Gadget_EditShortcut_Action_OpenFolder, 20, 200, 150, 20, "Open folder")
-    OptionGadget(#Gadget_EditShortcut_Action_InputText, 20, 230, 150, 20, "Input text")
-    StringGadget(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine, 200, 170, 380, 20, "")
-    StringGadget(#Gadget_EditShortcut_Action_OpenFolder_Path, 200, 200, 250, 20, "", #PB_String_ReadOnly)
-    ButtonGadget(#Gadget_EditShortcut_Action_OpenFolder_Browse, 460, 200, 120, 20, "Browse...")
-    StringGadget(#Gadget_EditShortcut_Action_InputText_Text, 200, 230, 380, 20, "")
+    FrameGadget(#Gadget_EditShortcut_Action_Frame, 10, 150, 580, 150, "Action")
+    OptionGadget(#Gadget_EditShortcut_Action_LaunchApplication, 20, 170, 150, 20, "Launch application")
+    OptionGadget(#Gadget_EditShortcut_Action_ExecuteCommand, 20, 200, 150, 20, "Execute command")
+    OptionGadget(#Gadget_EditShortcut_Action_OpenFolder, 20, 230, 150, 20, "Open folder")
+    OptionGadget(#Gadget_EditShortcut_Action_InputText, 20, 260, 150, 20, "Input text")
+    ComboBoxGadget(#Gadget_EditShortcut_Action_LaunchApplication_List, 200, 170, 380, 20, #PB_ComboBox_Image)
+    StringGadget(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine, 200, 200, 380, 20, "")
+    StringGadget(#Gadget_EditShortcut_Action_OpenFolder_Path, 200, 230, 250, 20, "", #PB_String_ReadOnly)
+    ButtonGadget(#Gadget_EditShortcut_Action_OpenFolder_Browse, 460, 230, 120, 20, "Browse...")
+    StringGadget(#Gadget_EditShortcut_Action_InputText_Text, 200, 260, 380, 20, "")
     
-    ButtonGadget(#Gadget_EditShortcut_Save, 380, 280, 100, 30, "Save")
-    ButtonGadget(#Gadget_EditShortcut_Cancel, 490, 280, 100, 30, "Cancel")
+    ButtonGadget(#Gadget_EditShortcut_Save, 380, 310, 100, 30, "Save")
+    ButtonGadget(#Gadget_EditShortcut_Cancel, 490, 310, 100, 30, "Cancel")
     
     AddKeyboardShortcut(#Window_EditShortcut, #PB_Shortcut_Return, #Menu_EditShortcut_Save)
     AddKeyboardShortcut(#Window_EditShortcut, #PB_Shortcut_Escape, #Menu_EditShortcut_Cancel)
     
+    If Not ListSize(applicationList())
+      LoadApplicationList()
+    EndIf
+    
+    ForEach applicationList()
+      Protected imageID = 0
+      
+      If applicationList()\icon
+        If Mid(applicationList()\icon, 1, 1) = "/"
+          If LoadImage(#Image_ApplicationListIcon, applicationList()\icon)
+            ResizeImage(#Image_ApplicationListIcon, 20, 20)
+            imageID = ImageID(#Image_ApplicationListIcon)
+          EndIf
+        Else
+          imageID = IconTheme_LoadIconFromName(applicationList()\icon, 20, 16)
+        EndIf
+      EndIf
+      
+      AddGadgetItem(#Gadget_EditShortcut_Action_LaunchApplication_List, -1, applicationList()\name, imageID)
+    Next
+    
     Select shortcut\action
+      Case #Action_LaunchApplication
+        SetGadgetState(#Gadget_EditShortcut_Action_LaunchApplication, #True)
+        
+        ForEach applicationList()
+          If applicationList()\filename = shortcut\actionData
+            SetGadgetState(#Gadget_EditShortcut_Action_LaunchApplication_List, ListIndex(applicationList()))
+            Break
+          EndIf
+        Next
       Case #Action_ExecuteCommand
         SetGadgetState(#Gadget_EditShortcut_Action_ExecuteCommand, #True)
         SetGadgetText(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine, shortcut\actionData)
@@ -136,6 +198,7 @@ Procedure EditShortcut(item)
     
     SetGadgetData(#Gadget_EditShortcut_Shortcut, shortcutKey)
     
+    UpdateLaunchApplicationActionToolTip()
     UpdateShortcutActionState()
     
     DisableWindow(#Window_Main, #True)
@@ -162,12 +225,19 @@ Procedure EditShortcut(item)
                 SetGadgetData(#Gadget_EditShortcut_Shortcut, newKey)
                 SetGadgetText(#Gadget_EditShortcut_Shortcut, "Key " + Str(newKey))
               EndIf
+            Case #Gadget_EditShortcut_Action_LaunchApplication
+              UpdateShortcutActionState()
             Case #Gadget_EditShortcut_Action_ExecuteCommand
               UpdateShortcutActionState()
             Case #Gadget_EditShortcut_Action_OpenFolder
               UpdateShortcutActionState()
             Case #Gadget_EditShortcut_Action_InputText
               UpdateShortcutActionState()
+            Case #Gadget_EditShortcut_Action_LaunchApplication_List
+              Select EventType()
+                Case #PB_EventType_Change
+                  UpdateLaunchApplicationActionToolTip()
+              EndSelect
             Case #Gadget_EditShortcut_Action_OpenFolder_Browse
               Protected path.s = PathRequester("Select the folder to open", GetGadgetText(#Gadget_EditShortcut_Action_OpenFolder_Path))
               If path

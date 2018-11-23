@@ -38,6 +38,8 @@ Enumeration
   #Gadget_EditShortcut_Name_Frame
   #Gadget_EditShortcut_Name
   #Gadget_EditShortcut_Action_Frame
+  #Gadget_EditShortcut_Action_LaunchApplication
+  #Gadget_EditShortcut_Action_LaunchApplication_List
   #Gadget_EditShortcut_Action_ExecuteCommand
   #Gadget_EditShortcut_Action_ExecuteCommand_CommandLine
   #Gadget_EditShortcut_Action_OpenFolder
@@ -63,12 +65,21 @@ Enumeration
 EndEnumeration
 
 Enumeration
-  #Systray
+  #Image_ApplicationListIcon
 EndEnumeration
 
 Enumeration
   #TrayIcon_Menu_Show
   #TrayIcon_Menu_Quit
+EndEnumeration
+
+Enumeration
+  #GTK_ICON_LOOKUP_ALL              = 0; Not gtk-defined, own constant to clearify
+  #GTK_ICON_LOOKUP_NO_SVG           = 1
+  #GTK_ICON_LOOKUP_FORCE_SVG        = 2
+  #GTK_ICON_LOOKUP_USE_BUILTIN      = 4
+  #GTK_ICON_LOOKUP_GENERIC_FALLBACK = 8
+  #GTK_ICON_LOOKUP_FORCE_SIZE       = 16
 EndEnumeration
 
 Structure Shortcut
@@ -91,11 +102,13 @@ Structure InputEvent
 EndStructure
 
 ;- Actions
+#Action_LaunchApplication = "launchApplication"
 #Action_ExecuteCommand = "executeCommand"
 #Action_OpenFolder = "openFolder"
 #Action_InputText = "inputText"
 
 Global NewMap shortcuts.Shortcut()
+Global NewList applicationList.DesktopEntry()
 Global config.Config
 Global configDir.s
 Global configFile.s
@@ -111,6 +124,7 @@ Global appPath.s = GetPathPart(ProgramFilename())
 ImportC ""
   gtk_menu_item_new_with_label.i(label.p-utf8)
   g_signal_connect_data.i(*instance, detailed_signal.p-utf8, *c_handler, *data_=0, *destroy_data=0, *connect_flags=0)
+  gtk_icon_theme_load_icon(*icon_theme.GtkIconTheme, icon_name.p-utf8, size, flags, *error.GError)
 EndImport
 
 Procedure.b StrToBool(string.s)
@@ -130,6 +144,30 @@ Procedure.s BoolToStr(boolean.b)
   Else
     ProcedureReturn "false"
   EndIf
+EndProcedure
+
+Procedure.b IsStringFieldInStringField(string1.s, string2.s, separator1.s, separator2.s)
+  Protected index1
+  Protected index2
+  
+  For index1 = 0 To CountString(string1, separator1)
+    Protected field1.s = StringField(string1, index1 + 1, separator1)
+    
+    For index2 = 0 To CountString(string2, separator2)
+      If field1 = StringField(string2, index2 + 1, separator2)
+        ProcedureReturn #True
+      EndIf
+    Next
+  Next
+  
+  ProcedureReturn #False
+EndProcedure
+
+Procedure IconTheme_LoadIconFromName(iconName.s, iconSize, flags)
+  Protected *error.GError
+  Protected *buffer = gtk_icon_theme_load_icon(gtk_icon_theme_get_default_(), iconName, iconSize, flags, @*error)
+  
+  ProcedureReturn *buffer
 EndProcedure
 
 Procedure LoadConfig()
@@ -191,6 +229,8 @@ EndProcedure
 
 Procedure.s ActionToString(action.s)
   Select action
+    Case #Action_LaunchApplication
+      ProcedureReturn "Launch application"
     Case #Action_ExecuteCommand
       ProcedureReturn "Execute command"
     Case #Action_OpenFolder

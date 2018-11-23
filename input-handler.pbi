@@ -8,8 +8,17 @@ Procedure ExecuteActionForKey(key)
   EndIf
   
   Protected shortcut.Shortcut = shortcuts(keyString)
+  Debug shortcut\actionData
   
   Select shortcut\action
+    Case #Action_LaunchApplication
+      ; Workaround as gtk-launch only wants the filename, not the full path
+      Protected tempDesktopFile.s = GetHomeDirectory() + "/.local/share/applications/keyboard-mapper-tmp.desktop"
+      CopyFile(shortcut\actionData, tempDesktopFile)
+      
+      RunProgram("gtk-launch", GetFilePart(tempDesktopFile), "", #PB_Program_Wait)
+      
+      DeleteFile(tempDesktopFile)
     Case #Action_ExecuteCommand
       Protected firstSpace = FindString(shortcut\actionData, " ")
       Protected program.s
