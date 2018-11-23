@@ -50,28 +50,15 @@ CompilerElse
 Structure AppIndicatorIndicatorPrivate
 EndStructure
 CompilerEndIf
-ImportC "/usr/lib/x86_64-linux-gnu/libappindicator3.so.1"
-	app_indicator_new.i(id.p-utf8, icon_name.p-utf8, category.l)
-	app_indicator_new_with_path.i(id.p-utf8, icon_name.p-utf8, category.l, icon_theme_path.p-utf8)
-	app_indicator_build_menu_from_desktop(*indicator, desktop_file.p-utf8, desktop_profile.p-utf8)
-	app_indicator_get_attention_icon.i(*indicator)
-	app_indicator_get_attention_icon_desc.i(*indicator)
-	app_indicator_get_category.l(*indicator)
-	app_indicator_get_icon.i(*indicator)
-	app_indicator_get_icon_desc.i(*indicator)
-	app_indicator_get_icon_theme_path.i(*indicator)
-	app_indicator_get_id.i(*indicator)
-	app_indicator_get_label.i(*indicator)
-	app_indicator_get_label_guide.i(*indicator)
-	app_indicator_get_ordering_index.l(*indicator)
-	app_indicator_get_status.l(*indicator)
-	app_indicator_set_attention_icon(*indicator, icon_name.p-utf8)
-	app_indicator_set_attention_icon_full(*indicator, icon_name.p-utf8, icon_desc.p-utf8)
-	app_indicator_set_icon(*indicator, icon_name.p-utf8)
-	app_indicator_set_icon_full(*indicator, icon_name.p-utf8, icon_desc.p-utf8)
-	app_indicator_set_icon_theme_path(*indicator, icon_theme_path.p-utf8)
-	app_indicator_set_label(*indicator, label.p-utf8, guide.p-utf8)
-	app_indicator_set_menu(*indicator, *menu)
-	app_indicator_set_ordering_index(*indicator, ordering_index.l)
-	app_indicator_set_status(*indicator, status.l)
-EndImport
+
+Prototype.i app_indicator_new_with_path(id.p-utf8, icon_name.p-utf8, category.l, icon_theme_path.p-utf8)
+Prototype app_indicator_set_icon(*indicator, icon_name.p-utf8)
+Prototype app_indicator_set_status(*indicator, status.l)
+Prototype app_indicator_set_menu(*indicator, *menu)
+
+If OpenLibrary(#Library_AppIndicator, "libappindicator3.so.1")
+  Global app_indicator_new_with_path.app_indicator_new_with_path = GetFunction(#Library_AppIndicator, "app_indicator_new_with_path")
+  Global app_indicator_set_icon.app_indicator_set_icon = GetFunction(#Library_AppIndicator, "app_indicator_set_icon")
+  Global app_indicator_set_status.app_indicator_set_status = GetFunction(#Library_AppIndicator, "app_indicator_set_status")
+  Global app_indicator_set_menu.app_indicator_set_menu = GetFunction(#Library_AppIndicator, "app_indicator_set_menu")
+EndIf

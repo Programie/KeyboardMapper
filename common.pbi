@@ -69,6 +69,10 @@ Enumeration
 EndEnumeration
 
 Enumeration
+  #Library_AppIndicator
+EndEnumeration
+
+Enumeration
   #TrayIcon_Menu_Show
   #TrayIcon_Menu_Quit
 EndEnumeration

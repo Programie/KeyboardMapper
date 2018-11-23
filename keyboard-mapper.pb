@@ -46,10 +46,17 @@ EndProcedure
 
 Procedure UpdateTrayIcon()
   If config\trayIconEnable
-    If appIndicator
-      app_indicator_set_icon(appIndicator, "appicon-" + config\trayIcon)
+    If IsLibrary(#Library_AppIndicator)
+      If appIndicator
+        app_indicator_set_icon(appIndicator, "appicon-" + config\trayIcon)
+      Else
+        CreateTrayIcon()
+      EndIf
     Else
-      CreateTrayIcon()
+      MessageRequester("Keyboard Mapper", "Can't add tray icon: App Indicator not available!", #PB_MessageRequester_Error)
+      
+      config\trayIconEnable = #False
+      SaveConfig()
     EndIf
   EndIf
 EndProcedure
@@ -117,6 +124,12 @@ Procedure OpenSettingsWindow()
         EndIf
       Wend
       FinishDirectory(dir)
+    EndIf
+    
+    If Not IsLibrary(#Library_AppIndicator)
+      config\trayIconEnable = #False
+      DisableGadget(#Gadget_Settings_Tray_Enable, #True)
+      GadgetToolTip(#Gadget_Settings_Tray_Frame, "App Indicator not avilable")
     EndIf
     
     SetGadgetState(#Gadget_Settings_Tray_Enable, config\trayIconEnable)
