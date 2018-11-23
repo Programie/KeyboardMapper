@@ -125,12 +125,6 @@ Global quit.b
 Global appIndicator
 Global appPath.s = GetPathPart(ProgramFilename())
 
-ImportC ""
-  gtk_menu_item_new_with_label.i(label.p-utf8)
-  g_signal_connect_data.i(*instance, detailed_signal.p-utf8, *c_handler, *data_=0, *destroy_data=0, *connect_flags=0)
-  gtk_icon_theme_load_icon(*icon_theme.GtkIconTheme, icon_name.p-utf8, size, flags, *error.GError)
-EndImport
-
 Procedure.b StrToBool(string.s)
   Select LCase(string)
     Case "true"
@@ -165,13 +159,6 @@ Procedure.b IsStringFieldInStringField(string1.s, string2.s, separator1.s, separ
   Next
   
   ProcedureReturn #False
-EndProcedure
-
-Procedure IconTheme_LoadIconFromName(iconName.s, iconSize, flags)
-  Protected *error.GError
-  Protected *buffer = gtk_icon_theme_load_icon(gtk_icon_theme_get_default_(), iconName, iconSize, flags, @*error)
-  
-  ProcedureReturn *buffer
 EndProcedure
 
 Procedure LoadConfig()
@@ -242,42 +229,4 @@ Procedure.s ActionToString(action.s)
     Case #Action_InputText
       ProcedureReturn "Input text"
   EndSelect
-EndProcedure
-
-Procedure KeyRequester()
-  inputEventKey = 0
-  
-  Protected newKey
-  
-  If OpenWindow(#Window_KeyRequester, 0, 0, 200, 100, "Configure key", #PB_Window_WindowCentered, WindowID(#Window_EditShortcut))
-    TextGadget(#Gadget_KeyRequester_Text, 10, 10, 180, 50, "Press the key to use.", #PB_Text_Center)
-    ButtonGadget(#Gadget_KeyRequester_Cancel, 10, 60, 180, 30, "Cancel")
-    
-    DisableWindow(#Window_EditShortcut, #True)
-    DisableWindow(#Window_KeyRequester, #False); With QT5 the child window is disabled after disabling the parent
-    
-    Repeat
-      Select WaitWindowEvent(10)
-        Case #PB_Event_Gadget
-          Select EventGadget()
-            Case #Gadget_KeyRequester_Cancel
-              Break
-          EndSelect
-        Case #PB_Event_CloseWindow
-          If EventWindow() = #Window_KeyRequester
-            Break
-          EndIf
-      EndSelect
-      
-      If inputEventKey
-        newKey = inputEventKey
-        Break
-      EndIf
-    ForEver
-    
-    CloseWindow(#Window_KeyRequester)
-    DisableWindow(#Window_EditShortcut, #False)
-  EndIf
-  
-  ProcedureReturn newKey
 EndProcedure

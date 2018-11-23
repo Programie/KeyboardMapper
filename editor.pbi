@@ -1,5 +1,50 @@
 EnableExplicit
 
+Procedure IconTheme_LoadIconFromName(iconName.s, iconSize, flags)
+  Protected *error.GError
+  Protected *buffer = gtk_icon_theme_load_icon(gtk_icon_theme_get_default_(), iconName, iconSize, flags, @*error)
+  
+  ProcedureReturn *buffer
+EndProcedure
+
+Procedure KeyRequester()
+  inputEventKey = 0
+  
+  Protected newKey
+  
+  If OpenWindow(#Window_KeyRequester, 0, 0, 200, 100, "Configure key", #PB_Window_WindowCentered, WindowID(#Window_EditShortcut))
+    TextGadget(#Gadget_KeyRequester_Text, 10, 10, 180, 50, "Press the key to use.", #PB_Text_Center)
+    ButtonGadget(#Gadget_KeyRequester_Cancel, 10, 60, 180, 30, "Cancel")
+    
+    DisableWindow(#Window_EditShortcut, #True)
+    DisableWindow(#Window_KeyRequester, #False); With QT5 the child window is disabled after disabling the parent
+    
+    Repeat
+      Select WaitWindowEvent(10)
+        Case #PB_Event_Gadget
+          Select EventGadget()
+            Case #Gadget_KeyRequester_Cancel
+              Break
+          EndSelect
+        Case #PB_Event_CloseWindow
+          If EventWindow() = #Window_KeyRequester
+            Break
+          EndIf
+      EndSelect
+      
+      If inputEventKey
+        newKey = inputEventKey
+        Break
+      EndIf
+    ForEver
+    
+    CloseWindow(#Window_KeyRequester)
+    DisableWindow(#Window_EditShortcut, #False)
+  EndIf
+  
+  ProcedureReturn newKey
+EndProcedure
+
 Procedure UpdateLaunchApplicationActionToolTip()
   Protected item = GetGadgetState(#Gadget_EditShortcut_Action_LaunchApplication_List)
   

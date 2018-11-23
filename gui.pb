@@ -3,6 +3,12 @@ EnableExplicit
 ImportC "-no-pie"
 EndImport
 
+ImportC ""
+  gtk_menu_item_new_with_label.i(label.p-utf8)
+  g_signal_connect_data.i(*instance, detailed_signal.p-utf8, *c_handler, *data_=0, *destroy_data=0, *connect_flags=0)
+  gtk_icon_theme_load_icon(*icon_theme.GtkIconTheme, icon_name.p-utf8, size, flags, *error.GError)
+EndImport
+
 Declare.b IsStringFieldInStringField(string1.s, string2.s, separator1.s, separator2.s)
 Declare.b StrToBool(string.s)
 Declare UpdateListEntry(item, shortcut)

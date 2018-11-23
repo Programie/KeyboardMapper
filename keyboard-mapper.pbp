@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.70 LTS beta 3 (Linux - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.62 (Linux - x64)">
   <section name="config">
     <options closefiles="1" openmode="3" name="Keyboard Mapper"/>
   </section>
   <section name="data">
     <explorer view="" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2018-11-23 04:50" user="programie" host="minty"/>
+    <lastopen date="2018-11-23 20:07" user="programie" host="minty"/>
   </section>
   <section name="files">
     <file name="appindicator.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="1375b7e84fbf515af2c888796fee855f"/>
+      <fingerprint md5="b5c271fc51ae665dd40c45b2158cf529"/>
     </file>
     <file name="CLI_Helper.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
@@ -20,7 +20,11 @@
     </file>
     <file name="common.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="dcafa28aa5936d0e260e0bf7f570373a"/>
+      <fingerprint md5="0b9536df972d175972f602f6f1352da0"/>
+    </file>
+    <file name="console.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
+      <fingerprint md5="a22c61f88a4adb46b762ce180c9f83c7"/>
     </file>
     <file name="desktop-entry.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
@@ -28,23 +32,32 @@
     </file>
     <file name="editor.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="f5750ceb7d449dfe9b99504b97482762"/>
+      <fingerprint md5="5fb13f73eb21add41e28eefe28b7b5a3"/>
+    </file>
+    <file name="gui.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
+      <fingerprint md5="64755000ccb7d9e7e1851f4cdcb351bb"/>
     </file>
     <file name="input-handler.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
       <fingerprint md5="eeb2d78eb2b92db9798f0bc9356cf220"/>
     </file>
-    <file name="keyboard-mapper.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="28b25c20e91ae6704e01c8ddf41d088b"/>
-    </file>
   </section>
   <section name="targets">
-    <target name="Default Target" enabled="1" default="1">
-      <inputfile value="keyboard-mapper.pb"/>
+    <target name="GUI" enabled="1" default="1">
+      <inputfile value="gui.pb"/>
       <outputfile value="keyboard-mapper"/>
+      <executable value="keyboard-mapper"/>
       <options xpskin="1" debug="1"/>
       <temporaryexe value="source"/>
+    </target>
+    <target name="Console" enabled="1" default="0">
+      <inputfile value="console.pb"/>
+      <outputfile value="keyboard-mapper-nogui"/>
+      <executable value="keyboard-mapper-nogui"/>
+      <options debug="1"/>
+      <temporaryexe value="source"/>
+      <format exe="console" cpu="0"/>
     </target>
   </section>
 </project>
