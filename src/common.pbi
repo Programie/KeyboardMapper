@@ -150,8 +150,8 @@ Procedure.b Invert(boolean.b)
   EndIf
 EndProcedure
 
-Procedure.i RunStandardProgram(filename.s, workingDirectory.s, flags = 0, senderProgram = 0)
-  Protected.i result
+Procedure RunStandardProgram(filename.s, workingDirectory.s, flags = 0, senderProgram = 0)
+  Protected result
   
   result = RunProgram("xdg-open", filename, workingDirectory, flags, senderProgram)
   If result
