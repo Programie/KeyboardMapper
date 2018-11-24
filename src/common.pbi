@@ -150,6 +150,17 @@ Procedure.b Invert(boolean.b)
   EndIf
 EndProcedure
 
+Procedure.i RunStandardProgram(filename.s, workingDirectory.s, flags = 0, senderProgram = 0)
+  Protected.i result
+  
+  result = RunProgram("xdg-open", filename, workingDirectory, flags, senderProgram)
+  If result
+    ProcedureReturn result
+  EndIf
+  
+  ProcedureReturn RunProgram("gnome-open", filename, workingDirectory, flags, senderProgram)
+EndProcedure
+
 Procedure.s ActionToString(action.s)
   Select action
     Case #Action_LaunchApplication

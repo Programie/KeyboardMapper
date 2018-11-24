@@ -34,7 +34,7 @@ Procedure ExecuteActionForKey(key)
       
       RunProgram(program, parameters, "")
     Case #Action_OpenFolder
-      RunProgram("xdg-open", shortcut\actionData, "")
+      RunStandardProgram(shortcut\actionData, "")
     Case #Action_InputText
       ; TODO: Send keys to active application
   EndSelect

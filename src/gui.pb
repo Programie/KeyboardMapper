@@ -474,7 +474,7 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_Maximi
               SaveShortcutsToFile()
             EndIf
           Case #Menu_Help
-            RunProgram("xdg-open", "https://gitlab.com/Programie/keyboard-mapper", "")
+            RunStandardProgram("https://gitlab.com/Programie/keyboard-mapper", "")
           Case #Menu_About
             ShowAbout()
         EndSelect
