@@ -59,6 +59,18 @@ Procedure.s BoolToStr(boolean.b)
   EndIf
 EndProcedure
 
+Procedure.s StringToUtf8(string.s)
+  Protected *memory
+  Protected utf8String.s
+  
+  *memory = AllocateMemory(StringByteLength(string, #PB_Unicode) + 2)
+  PokeS(*memory, string, -1,  #PB_UTF8)
+  utf8String = PeekS(*memory)
+  FreeMemory(*memory)
+  
+  ProcedureReturn utf8String
+EndProcedure
+
 Procedure.b IsStringFieldInStringField(string1.s, string2.s, separator1.s, separator2.s)
   Protected index1
   Protected index2

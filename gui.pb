@@ -25,6 +25,8 @@ Enumeration
   #Menu_AddShortcut
   #Menu_EditShortcut
   #Menu_RemoveShortcut
+  #Menu_Help
+  #Menu_About
   #Menu_EditShortcut_Save
   #Menu_EditShortcut_Cancel
   #Menu_Settings_Close
@@ -61,6 +63,7 @@ Enumeration
 EndEnumeration
 
 Enumeration
+  #Image_AppIcon
   #Image_ApplicationListIcon
 EndEnumeration
 
@@ -82,6 +85,24 @@ Enumeration
   #GTK_ICON_LOOKUP_FORCE_SIZE       = 16
 EndEnumeration
 
+Enumeration
+  #GTK_LICENSE_UNKNOWN
+  #GTK_LICENSE_CUSTOM
+  #GTK_LICENSE_GPL_2_0
+  #GTK_LICENSE_GPL_3_0
+  #GTK_LICENSE_LGPL_2_1
+  #GTK_LICENSE_LGPL_3_0
+  #GTK_LICENSE_BSD
+  #GTK_LICENSE_MIT_X11
+  #GTK_LICENSE_ARTISTIC
+  #GTK_LICENSE_GPL_2_0_ONLY
+  #GTK_LICENSE_GPL_3_0_ONLY
+  #GTK_LICENSE_LGPL_2_1_ONLY
+  #GTK_LICENSE_LGPL_3_0_ONLY
+  #GTK_LICENSE_AGPL_3_0
+  #GTK_LICENSE_AGPL_3_0_ONLY
+EndEnumeration
+
 ImportC "-no-pie"
 EndImport
 
@@ -89,6 +110,19 @@ ImportC ""
   gtk_menu_item_new_with_label.i(label.p-utf8)
   g_signal_connect_data.i(*instance, detailed_signal.p-utf8, *c_handler, *data_=0, *destroy_data=0, *connect_flags=0)
   gtk_icon_theme_load_icon(*icon_theme.GtkIconTheme, icon_name.p-utf8, size, flags, *error.GError)
+  gtk_about_dialog_new()
+  gtk_about_dialog_set_program_name(*about, name.p-utf8)
+  gtk_about_dialog_set_version(*about, version.p-utf8)
+  gtk_about_dialog_set_copyright(*about, copyright.p-utf8)
+  gtk_about_dialog_set_comments(*about, comments.p-utf8)
+  gtk_about_dialog_set_license_type(*about, license_type)
+  gtk_about_dialog_set_website(*about, website.p-utf8)
+  gtk_about_dialog_set_website_label(*about, website_label.p-utf8)
+  gtk_about_dialog_set_logo(*about, *logo)
+  gtk_about_dialog_add_credit_section(*about, section_name.p-utf8, *people)
+  gtk_about_dialog_set_documenters(*about, *documenters)
+  gtk_about_dialog_set_authors(*about, *authors)
+  gtk_about_dialog_set_translator_credits(*about, translator_credits.p-utf8)
 EndImport
 
 Declare.b IsStringFieldInStringField(string1.s, string2.s, separator1.s, separator2.s)
@@ -287,6 +321,36 @@ Procedure OpenSettingsWindow()
   EndIf
 EndProcedure
 
+Procedure ShowAbout()
+  Protected *about
+  
+  Protected Dim AboutAuthors.s(1)
+  AboutAuthors(0) = StringToUtf8("Programie")
+  
+  *about = gtk_about_dialog_new()
+  gtk_window_set_transient_for_(*about, WindowID(#Window_Main))
+  gtk_about_dialog_set_program_name(*about, "Keyboard Mapper")
+  gtk_about_dialog_set_version(*about, "v1.0")
+  gtk_about_dialog_set_copyright(*about, Chr($A9) + " by Michael Wieland (Programie)")
+  gtk_about_dialog_set_comments(*about, "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions.")
+  gtk_about_dialog_set_license_type(*about, #GTK_LICENSE_MIT_X11)
+  gtk_about_dialog_set_website(*about, "https://selfcoders.com")
+  gtk_about_dialog_set_website_label(*about, "Website")
+  gtk_about_dialog_set_authors(*about, @AboutAuthors())
+  
+  If IsImage(#Image_AppIcon)
+    Protected image = CopyImage(#Image_AppIcon, #PB_Any)
+    If IsImage(image)
+      ResizeImage(image, 128, 128)
+      gtk_about_dialog_set_logo(*about, ImageID(image))
+      FreeImage(image)
+    EndIf
+  EndIf
+  
+  gtk_dialog_run_(*about)
+  gtk_widget_destroy_(*about)
+EndProcedure
+
 Procedure UpdateMenuItems()
   Protected item = GetGadgetState(#Gadget_ShortcutList)
   Protected itemFound.b
@@ -341,6 +405,10 @@ RestartInputEventListener()
 
 UsePNGImageDecoder()
 
+If LoadImage(#Image_AppIcon, appPath + "/icons/appicon-dark.png")
+  gtk_window_set_default_icon_(ImageID(#Image_AppIcon))
+EndIf
+
 If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_MaximizeGadget | #PB_Window_MinimizeGadget | #PB_Window_ScreenCentered | #PB_Window_Invisible)
   If CreateMenu(#Menu_Main, WindowID(#Window_Main))
     MenuTitle("File")
@@ -352,6 +420,11 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_Maximi
     MenuItem(#Menu_AddShortcut, "Add shortcut...")
     MenuItem(#Menu_EditShortcut, "Edit shortcut...")
     MenuItem(#Menu_RemoveShortcut, "Remove shortcut")
+    
+    MenuTitle("Help")
+    MenuItem(#Menu_Help, "Help" + Chr(9) + "F1")
+    MenuBar()
+    MenuItem(#Menu_About, "About")
   EndIf
   
   If CreateToolBar(#Toolbar_Main, WindowID(#Window_Main))
@@ -400,6 +473,10 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_Maximi
               RemoveGadgetItem(#Gadget_ShortcutList, item)
               SaveShortcutsToFile()
             EndIf
+          Case #Menu_Help
+            RunProgram("xdg-open", "https://gitlab.com/Programie/keyboard-mapper", "")
+          Case #Menu_About
+            ShowAbout()
         EndSelect
       Case #PB_Event_Gadget
         Select EventGadget()

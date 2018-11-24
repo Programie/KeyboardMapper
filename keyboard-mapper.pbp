@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2018-11-23 20:07" user="programie" host="minty"/>
+    <lastopen date="2018-11-24 17:14" user="programie" host="minty"/>
   </section>
   <section name="files">
     <file name="appindicator.pbi">
@@ -20,7 +20,7 @@
     </file>
     <file name="common.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="0b9536df972d175972f602f6f1352da0"/>
+      <fingerprint md5="b61a9361142e0daff11fb18eb9ead646"/>
     </file>
     <file name="console.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
@@ -36,7 +36,7 @@
     </file>
     <file name="gui.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="64755000ccb7d9e7e1851f4cdcb351bb"/>
+      <fingerprint md5="90a0dddef1a1925fb850e1b4c2478912"/>
     </file>
     <file name="input-handler.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
