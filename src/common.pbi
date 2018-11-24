@@ -40,6 +40,11 @@ Global inputEventKey
 Global allowActionHandling.b = #True
 Global appPath.s = GetPathPart(ProgramFilename())
 
+; Temporary (test) executable is created in "src" directory
+CompilerIf Not #PB_Editor_CreateExecutable
+  appPath = GetPathPart(RTrim(appPath, "/"))
+CompilerEndIf
+
 Procedure.b StrToBool(string.s)
   Select LCase(string)
     Case "true"
