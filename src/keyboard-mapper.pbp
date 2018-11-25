@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2018-11-24 17:14" user="programie" host="minty"/>
+    <lastopen date="2018-11-26 00:03" user="programie" host="minty"/>
   </section>
   <section name="files">
     <file name="appindicator.pbi">
@@ -20,7 +20,7 @@
     </file>
     <file name="common.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="b61a9361142e0daff11fb18eb9ead646"/>
+      <fingerprint md5="57a4a108aa6f09e5d6b5a34c2a3efe04"/>
     </file>
     <file name="console.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
@@ -35,29 +35,31 @@
       <fingerprint md5="5fb13f73eb21add41e28eefe28b7b5a3"/>
     </file>
     <file name="gui.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="90a0dddef1a1925fb850e1b4c2478912"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate=""/>
+      <fingerprint md5="e4282f874b7d1f96ecc1d917c69a870a"/>
     </file>
     <file name="input-handler.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="eeb2d78eb2b92db9798f0bc9356cf220"/>
+      <fingerprint md5="8bc28fd4015a83f51ca7745be2942f4d"/>
     </file>
   </section>
   <section name="targets">
     <target name="GUI" enabled="1" default="1">
       <inputfile value="gui.pb"/>
-      <outputfile value="keyboard-mapper"/>
-      <executable value="keyboard-mapper"/>
+      <outputfile value="../keyboard-mapper"/>
+      <executable value="../keyboard-mapper"/>
       <options xpskin="1" debug="1"/>
       <temporaryexe value="source"/>
+      <execonstant enable="1"/>
     </target>
     <target name="Console" enabled="1" default="0">
       <inputfile value="console.pb"/>
-      <outputfile value="keyboard-mapper-nogui"/>
-      <executable value="keyboard-mapper-nogui"/>
+      <outputfile value="../keyboard-mapper-nogui"/>
+      <executable value="../keyboard-mapper-nogui"/>
       <options debug="1"/>
       <temporaryexe value="source"/>
       <format exe="console" cpu="0"/>
+      <execonstant enable="1"/>
     </target>
   </section>
 </project>
