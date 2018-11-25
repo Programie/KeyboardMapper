@@ -55,9 +55,10 @@ Enumeration
   #Gadget_KeyRequester_Cancel
   #Gadget_Settings_KeyboardInputDevice_Frame
   #Gadget_Settings_KeyboardInputDevice_List
-  #Gadget_Settings_Tray_Frame
-  #Gadget_Settings_Tray_Enable
-  #Gadget_Settings_Tray_DarkTheme
+  #Gadget_Settings_IconTheme_Frame
+  #Gadget_Settings_IconTheme_List
+  #Gadget_Settings_EnableTrayIcon
+  #Gadget_Settings_CreateDesktopFile
   #Gadget_Settings_Save
   #Gadget_Settings_Cancel
 EndEnumeration
@@ -102,6 +103,10 @@ Enumeration
   #GTK_LICENSE_AGPL_3_0
   #GTK_LICENSE_AGPL_3_0_ONLY
 EndEnumeration
+
+#Application_Name = "Keyboard Mapper"
+#Application_Description = "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions"
+#Application_Version = "1.0"
 
 ImportC "-no-pie"
 EndImport
@@ -159,7 +164,7 @@ Procedure AddGTKMenuItem(menu, item, label.s)
 EndProcedure
 
 Procedure CreateTrayIcon()
-  appIndicator = app_indicator_new_with_path("Keyboard Mapper", "appicon-" + config\trayIcon, #APP_INDICATOR_CATEGORY_APPLICATION_STATUS, appPath + "/icons")
+  appIndicator = app_indicator_new_with_path(#Application_Name, "appicon-" + config\icons, #APP_INDICATOR_CATEGORY_APPLICATION_STATUS, appPath + "/icons")
   app_indicator_set_status(appIndicator, #APP_INDICATOR_STATUS_ACTIVE)
   
   Protected menu = gtk_menu_new_()
@@ -171,17 +176,17 @@ Procedure CreateTrayIcon()
 EndProcedure
 
 Procedure UpdateTrayIcon()
-  If config\trayIconEnable
+  If config\useTrayIcon
     If IsLibrary(#Library_AppIndicator)
       If appIndicator
-        app_indicator_set_icon(appIndicator, "appicon-" + config\trayIcon)
+        app_indicator_set_icon(appIndicator, "appicon-" + config\icons)
       Else
         CreateTrayIcon()
       EndIf
     Else
-      MessageRequester("Keyboard Mapper", "Can't add tray icon: App Indicator not available!", #PB_MessageRequester_Error)
+      MessageRequester(#Application_Name, "Can't add tray icon: App Indicator not available!", #PB_MessageRequester_Error)
       
-      config\trayIconEnable = #False
+      config\useTrayIcon = #False
       SaveConfig()
     EndIf
   EndIf
@@ -219,16 +224,23 @@ Procedure UpdateMainGadgetSizes()
 EndProcedure
 
 Procedure OpenSettingsWindow()
-  If OpenWindow(#Window_Settings, 0, 0, 500, 280, "Settings", #PB_Window_WindowCentered, WindowID(#Window_Main))
+  If OpenWindow(#Window_Settings, 0, 0, 500, 320, "Settings", #PB_Window_WindowCentered, WindowID(#Window_Main))
     FrameGadget(#Gadget_Settings_KeyboardInputDevice_Frame, 10, 10, 480, 130, "Keyboard input device")
     ListViewGadget(#Gadget_Settings_KeyboardInputDevice_List, 20, 30, 460, 100)
     
-    FrameGadget(#Gadget_Settings_Tray_Frame, 10, 150, 480, 80, "Tray icon")
-    CheckBoxGadget(#Gadget_Settings_Tray_Enable, 20, 170, 460, 20, "Enable")
-    CheckBoxGadget(#Gadget_Settings_Tray_DarkTheme, 20, 200, 460, 20, "Use for dark theme")
+    FrameGadget(#Gadget_Settings_IconTheme_Frame, 10, 150, 480, 60, "Icon theme")
+    ComboBoxGadget(#Gadget_Settings_IconTheme_List, 20, 170, 460, 20)
+    AddGadgetItem(#Gadget_Settings_IconTheme_List, -1, "bright")
+    AddGadgetItem(#Gadget_Settings_IconTheme_List, -1, "dark")
+    GadgetToolTip(#Gadget_Settings_IconTheme_List, "Used for application and tray icon")
     
-    ButtonGadget(#Gadget_Settings_Save, 280, 240, 100, 30, "Save")
-    ButtonGadget(#Gadget_Settings_Cancel, 390, 240, 100, 30, "Cancel")
+    CheckBoxGadget(#Gadget_Settings_EnableTrayIcon, 10, 220, 460, 20, "Enable tray icon")
+    
+    ButtonGadget(#Gadget_Settings_CreateDesktopFile, 10, 250, 100, 20, "Create desktop file")
+    GadgetToolTip(#Gadget_Settings_CreateDesktopFile, "Create a desktop file in ~/.local/share/applications")
+    
+    ButtonGadget(#Gadget_Settings_Save, 280, 280, 100, 30, "Save")
+    ButtonGadget(#Gadget_Settings_Cancel, 390, 280, 100, 30, "Cancel")
     
     AddKeyboardShortcut(#Window_Settings, #PB_Shortcut_Escape, #Menu_Settings_Close)
     
@@ -253,24 +265,13 @@ Procedure OpenSettingsWindow()
     EndIf
     
     If Not IsLibrary(#Library_AppIndicator)
-      config\trayIconEnable = #False
-      DisableGadget(#Gadget_Settings_Tray_Enable, #True)
-      GadgetToolTip(#Gadget_Settings_Tray_Frame, "App Indicator not avilable")
+      config\useTrayIcon = #False
+      DisableGadget(#Gadget_Settings_EnableTrayIcon, #True)
+      GadgetToolTip(#Gadget_Settings_EnableTrayIcon, "App Indicator not avilable")
     EndIf
     
-    SetGadgetState(#Gadget_Settings_Tray_Enable, config\trayIconEnable)
-    
-    If config\trayIcon = "bright"
-      SetGadgetState(#Gadget_Settings_Tray_DarkTheme, #True)
-    Else
-      SetGadgetState(#Gadget_Settings_Tray_DarkTheme, #False)
-    EndIf
-    
-    If config\trayIconEnable
-      DisableGadget(#Gadget_Settings_Tray_DarkTheme, #False)
-    Else
-      DisableGadget(#Gadget_Settings_Tray_DarkTheme, #True)
-    EndIf
+    SetGadgetText(#Gadget_Settings_IconTheme_List, config\icons)
+    SetGadgetState(#Gadget_Settings_EnableTrayIcon, config\useTrayIcon)
     
     Repeat
       Select WaitWindowEvent()
@@ -281,11 +282,23 @@ Procedure OpenSettingsWindow()
           EndSelect
         Case #PB_Event_Gadget
           Select EventGadget()
-            Case #Gadget_Settings_Tray_Enable
-              If GetGadgetState(#Gadget_Settings_Tray_Enable)
-                DisableGadget(#Gadget_Settings_Tray_DarkTheme, #False)
+            Case #Gadget_Settings_CreateDesktopFile
+              ; Can't use Preferences function as file must be written without BOM
+              Protected desktopFile.s = GetHomeDirectory() + ".local/share/applications/keyboard-mapper.desktop"
+              Protected file = CreateFile(#PB_Any, desktopFile)
+              If IsFile(file)
+                WriteStringN(file, "[Desktop Entry]")
+                WriteStringN(file, "Comment=" + #Application_Description)
+                WriteStringN(file, "Name=" + #Application_Name)
+                WriteStringN(file, "Type=Application")
+                WriteStringN(file, "Categories=System;")
+                WriteStringN(file, "Exec=" + ProgramFilename())
+                WriteStringN(file, "Icon=" + appPath + "icons/appicon-" + config\icons + ".png")
+                CloseFile(file)
+                
+                MessageRequester(GetGadgetText(#Gadget_Settings_CreateDesktopFile), "The desktop file has been written to " + desktopFile, #PB_MessageRequester_Info)
               Else
-                DisableGadget(#Gadget_Settings_Tray_DarkTheme, #True)
+                MessageRequester(GetGadgetText(#Gadget_Settings_CreateDesktopFile), "Can't write desktop file to " + desktopFile, #PB_MessageRequester_Error)
               EndIf
             Case #Gadget_Settings_Save
               If GetGadgetState(#Gadget_Settings_KeyboardInputDevice_List) = -1
@@ -294,13 +307,8 @@ Procedure OpenSettingsWindow()
               EndIf
               
               config\keyboardInputDevice = devicesDir + "/" + GetGadgetText(#Gadget_Settings_KeyboardInputDevice_List)
-              config\trayIconEnable = GetGadgetState(#Gadget_Settings_Tray_Enable)
-              
-              If GetGadgetState(#Gadget_Settings_Tray_DarkTheme)
-                config\trayIcon = "bright"
-              Else
-                config\trayIcon = "dark"
-              EndIf
+              config\icons = GetGadgetText(#Gadget_Settings_IconTheme_List)
+              config\useTrayIcon = GetGadgetState(#Gadget_Settings_EnableTrayIcon)
               
               SaveConfig()
               RestartInputEventListener()
@@ -329,10 +337,10 @@ Procedure ShowAbout()
   
   *about = gtk_about_dialog_new()
   gtk_window_set_transient_for_(*about, WindowID(#Window_Main))
-  gtk_about_dialog_set_program_name(*about, "Keyboard Mapper")
-  gtk_about_dialog_set_version(*about, "v1.0")
+  gtk_about_dialog_set_program_name(*about, #Application_Name)
+  gtk_about_dialog_set_version(*about, #Application_Version)
   gtk_about_dialog_set_copyright(*about, Chr($A9) + " by Michael Wieland (Programie)")
-  gtk_about_dialog_set_comments(*about, "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions.")
+  gtk_about_dialog_set_comments(*about, #Application_Description)
   gtk_about_dialog_set_license_type(*about, #GTK_LICENSE_MIT_X11)
   gtk_about_dialog_set_website(*about, "https://selfcoders.com")
   gtk_about_dialog_set_website_label(*about, "Website")
@@ -409,7 +417,7 @@ If LoadImage(#Image_AppIcon, appPath + "/icons/appicon-dark.png")
   gtk_window_set_default_icon_(ImageID(#Image_AppIcon))
 EndIf
 
-If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_MaximizeGadget | #PB_Window_MinimizeGadget | #PB_Window_ScreenCentered | #PB_Window_Invisible)
+If OpenWindow(#Window_Main, 0, 0, 600, 400, #Application_Name, #PB_Window_MaximizeGadget | #PB_Window_MinimizeGadget | #PB_Window_ScreenCentered | #PB_Window_Invisible)
   If CreateMenu(#Menu_Main, WindowID(#Window_Main))
     MenuTitle("File")
     MenuItem(#Menu_Settings, "Settings...")
@@ -495,7 +503,7 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, "Keyboard Mapper", #PB_Window_Maximi
         UpdateMainGadgetSizes()
       Case #PB_Event_CloseWindow
         If EventWindow() = #Window_Main
-          If config\trayIconEnable
+          If config\useTrayIcon
             HideWindow(#Window_Main, #True)
           Else
             Break

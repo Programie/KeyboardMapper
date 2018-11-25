@@ -12,8 +12,8 @@ EndStructure
 
 Structure Config
   keyboardInputDevice.s
-  trayIcon.s
-  trayIconEnable.b
+  icons.s
+  useTrayIcon.b
 EndStructure
 
 Structure InputEvent
@@ -96,8 +96,8 @@ EndProcedure
 Procedure LoadConfig()
   If OpenPreferences(configFile)
     config\keyboardInputDevice = ReadPreferenceString("keyboard-input-device", "")
-    config\trayIconEnable = StrToBool(ReadPreferenceString("tray-icon-enable", "true"))
-    config\trayIcon = ReadPreferenceString("tray-icon", "dark")
+    config\icons = ReadPreferenceString("icons", "dark")
+    config\useTrayIcon = StrToBool(ReadPreferenceString("use-tray-icon", "true"))
     ClosePreferences()
   EndIf
 EndProcedure
@@ -105,8 +105,8 @@ EndProcedure
 Procedure SaveConfig()
   If CreatePreferences(configFile)
     WritePreferenceString("keyboard-input-device", config\keyboardInputDevice)
-    WritePreferenceString("tray-icon-enable", BoolToStr(config\trayIconEnable))
-    WritePreferenceString("tray-icon", config\trayIcon)
+    WritePreferenceString("icons", config\icons)
+    WritePreferenceString("use-tray-icon", BoolToStr(config\useTrayIcon))
     ClosePreferences()
   EndIf
 EndProcedure
