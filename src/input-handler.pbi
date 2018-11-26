@@ -1,6 +1,6 @@
 EnableExplicit
 
-Procedure ExecuteActionForKey(key)
+Procedure ExecuteActionForKey(key, actionHandling)
   Protected keyString.s = Str(key)
   
   If Not FindMapElement(shortcuts(), keyString)
@@ -8,35 +8,42 @@ Procedure ExecuteActionForKey(key)
   EndIf
   
   Protected shortcut.Shortcut = shortcuts(keyString)
-  
-  Select shortcut\action
-    Case #Action_LaunchApplication
-      ; Workaround as gtk-launch only wants the filename, not the full path
-      Protected tempDesktopFile.s = GetHomeDirectory() + "/.local/share/applications/keyboard-mapper-tmp.desktop"
-      CopyFile(shortcut\actionData, tempDesktopFile)
-      
-      RunProgram("gtk-launch", GetFilePart(tempDesktopFile), "", #PB_Program_Wait)
-      
-      DeleteFile(tempDesktopFile)
-    Case #Action_ExecuteCommand
-      Protected firstSpace = FindString(shortcut\actionData, " ")
-      Protected program.s
-      Protected parameters.s
-      
-      If firstSpace = 0
-        program = shortcut\actionData
-        parameters = ""
-      Else
-        program = Mid(shortcut\actionData, 1, firstSpace - 1)
-        parameters = Mid(shortcut\actionData, firstSpace + 1)
-      EndIf
-      
-      RunProgram(program, parameters, "")
-    Case #Action_OpenFolder
-      RunStandardProgram(shortcut\actionData, "")
-    Case #Action_InputText
-      ; TODO: Send keys to active application
-  EndSelect
+  If actionHandling = #ActionHandling_All Or shortcut\action = #Action_LockKeys
+    Select shortcut\action
+      Case #Action_LaunchApplication
+        ; Workaround as gtk-launch only wants the filename, not the full path
+        Protected tempDesktopFile.s = GetHomeDirectory() + "/.local/share/applications/keyboard-mapper-tmp.desktop"
+        CopyFile(shortcut\actionData, tempDesktopFile)
+        
+        RunProgram("gtk-launch", GetFilePart(tempDesktopFile), "", #PB_Program_Wait)
+        
+        DeleteFile(tempDesktopFile)
+      Case #Action_ExecuteCommand
+        Protected firstSpace = FindString(shortcut\actionData, " ")
+        Protected program.s
+        Protected parameters.s
+        
+        If firstSpace = 0
+          program = shortcut\actionData
+          parameters = ""
+        Else
+          program = Mid(shortcut\actionData, 1, firstSpace - 1)
+          parameters = Mid(shortcut\actionData, firstSpace + 1)
+        EndIf
+        
+        RunProgram(program, parameters, "")
+      Case #Action_OpenFolder
+        RunStandardProgram(shortcut\actionData, "")
+      Case #Action_InputText
+        ; TODO: Send keys to active application
+      Case #Action_LockKeys
+        If actionHandling = #ActionHandling_All
+          allowActionHandling = #ActionHandling_LockKeys
+        Else
+          allowActionHandling = #ActionHandling_All
+        EndIf
+    EndSelect
+  EndIf
 EndProcedure
 
 Procedure InputEventListener(*param)
@@ -58,8 +65,8 @@ Procedure InputEventListener(*param)
     
     inputEventKey = inputEvent\code
     
-    If allowActionHandling
-      ExecuteActionForKey(inputEvent\code)
+    If allowActionHandling <> #ActionHandling_None
+      ExecuteActionForKey(inputEvent\code, allowActionHandling)
     EndIf
   ForEver
 EndProcedure

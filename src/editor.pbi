@@ -134,6 +134,8 @@ Procedure SaveShortcut()
       MessageRequester("Missing text", "Please specify the text to input!", #PB_MessageRequester_Error)
       ProcedureReturn #False
     EndIf
+  ElseIf GetGadgetState(#Gadget_EditShortcut_Action_LockKeys)
+    shortcut\action = #Action_LockKeys
   EndIf
   
   If oldKey <> -1 And oldKey <> key
@@ -175,26 +177,27 @@ Procedure EditShortcut(item)
     name = shortcut\name
   EndIf
   
-  If OpenWindow(#Window_EditShortcut, 0, 0, 600, 350, windowTitle, #PB_Window_WindowCentered, WindowID(#Window_Main))
+  If OpenWindow(#Window_EditShortcut, 0, 0, 600, 370, windowTitle, #PB_Window_WindowCentered, WindowID(#Window_Main))
     FrameGadget(#Gadget_EditShortcut_Shortcut_Frame, 10, 10, 580, 60, "Shortcut")
     ButtonGadget(#Gadget_EditShortcut_Shortcut, 20, 30, 560, 20, shortcutText)
     
     FrameGadget(#Gadget_EditShortcut_Name_Frame, 10, 80, 580, 60, "Name")
     StringGadget(#Gadget_EditShortcut_Name, 20, 100, 560, 20, name)
     
-    FrameGadget(#Gadget_EditShortcut_Action_Frame, 10, 150, 580, 150, "Action")
+    FrameGadget(#Gadget_EditShortcut_Action_Frame, 10, 150, 580, 170, "Action")
     OptionGadget(#Gadget_EditShortcut_Action_LaunchApplication, 20, 170, 150, 20, "Launch application")
     OptionGadget(#Gadget_EditShortcut_Action_ExecuteCommand, 20, 200, 150, 20, "Execute command")
     OptionGadget(#Gadget_EditShortcut_Action_OpenFolder, 20, 230, 150, 20, "Open folder")
     OptionGadget(#Gadget_EditShortcut_Action_InputText, 20, 260, 150, 20, "Input text")
+    OptionGadget(#Gadget_EditShortcut_Action_LockKeys, 20, 290, 150, 20, "Lock keys")
     ComboBoxGadget(#Gadget_EditShortcut_Action_LaunchApplication_List, 200, 170, 380, 20, #PB_ComboBox_Image)
     StringGadget(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine, 200, 200, 380, 20, "")
     StringGadget(#Gadget_EditShortcut_Action_OpenFolder_Path, 200, 230, 250, 20, "", #PB_String_ReadOnly)
     ButtonGadget(#Gadget_EditShortcut_Action_OpenFolder_Browse, 460, 230, 120, 20, "Browse...")
     StringGadget(#Gadget_EditShortcut_Action_InputText_Text, 200, 260, 380, 20, "")
     
-    ButtonGadget(#Gadget_EditShortcut_Save, 380, 310, 100, 30, "Save")
-    ButtonGadget(#Gadget_EditShortcut_Cancel, 490, 310, 100, 30, "Cancel")
+    ButtonGadget(#Gadget_EditShortcut_Save, 380, 330, 100, 30, "Save")
+    ButtonGadget(#Gadget_EditShortcut_Cancel, 490, 330, 100, 30, "Cancel")
     
     AddKeyboardShortcut(#Window_EditShortcut, #PB_Shortcut_Return, #Menu_EditShortcut_Save)
     AddKeyboardShortcut(#Window_EditShortcut, #PB_Shortcut_Escape, #Menu_EditShortcut_Cancel)
@@ -239,6 +242,8 @@ Procedure EditShortcut(item)
       Case #Action_InputText
         SetGadgetState(#Gadget_EditShortcut_Action_InputText, #True)
         SetGadgetText(#Gadget_EditShortcut_Action_InputText_Text, shortcut\actionData)
+      Case #Action_LockKeys
+        SetGadgetState(#Gadget_EditShortcut_Action_LockKeys, #True)
     EndSelect
     
     SetGadgetData(#Gadget_EditShortcut_Shortcut, shortcutKey)
@@ -249,7 +254,7 @@ Procedure EditShortcut(item)
     DisableWindow(#Window_Main, #True)
     DisableWindow(#Window_EditShortcut, #False); With QT5 the child window is disabled after disabling the parent
     
-    allowActionHandling = #False
+    allowActionHandling = #ActionHandling_None
     
     Repeat
       Select WaitWindowEvent()
@@ -278,6 +283,8 @@ Procedure EditShortcut(item)
               UpdateShortcutActionState()
             Case #Gadget_EditShortcut_Action_InputText
               UpdateShortcutActionState()
+            Case #Gadget_EditShortcut_Action_LockKeys
+              UpdateShortcutActionState()
             Case #Gadget_EditShortcut_Action_LaunchApplication_List
               Select EventType()
                 Case #PB_EventType_Change
@@ -305,6 +312,6 @@ Procedure EditShortcut(item)
     CloseWindow(#Window_EditShortcut)
     DisableWindow(#Window_Main, #False)
     
-    allowActionHandling = #True
+    allowActionHandling = #ActionHandling_All
   EndIf
 EndProcedure

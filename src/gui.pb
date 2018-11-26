@@ -49,6 +49,7 @@ Enumeration
   #Gadget_EditShortcut_Action_OpenFolder_Browse
   #Gadget_EditShortcut_Action_InputText
   #Gadget_EditShortcut_Action_InputText_Text
+  #Gadget_EditShortcut_Action_LockKeys
   #Gadget_EditShortcut_Save
   #Gadget_EditShortcut_Cancel
   #Gadget_KeyRequester_Text
@@ -163,8 +164,18 @@ Procedure AddGTKMenuItem(menu, item, label.s)
   gtk_widget_show_(gtkWidget)
 EndProcedure
 
+Procedure.s GetTrayIcon()
+  Protected iconSuffix.s = ""
+  
+  If allowActionHandling = #ActionHandling_LockKeys
+    iconSuffix = "-disabled"
+  EndIf
+  
+  ProcedureReturn "appicon-" + config\icons + iconSuffix
+EndProcedure
+
 Procedure CreateTrayIcon()
-  appIndicator = app_indicator_new_with_path(#Application_Name, "appicon-" + config\icons, #APP_INDICATOR_CATEGORY_APPLICATION_STATUS, appPath + "/icons")
+  appIndicator = app_indicator_new_with_path(#Application_Name, GetTrayIcon(), #APP_INDICATOR_CATEGORY_APPLICATION_STATUS, appPath + "/icons")
   app_indicator_set_status(appIndicator, #APP_INDICATOR_STATUS_ACTIVE)
   
   Protected menu = gtk_menu_new_()
@@ -179,7 +190,7 @@ Procedure UpdateTrayIcon()
   If config\useTrayIcon
     If IsLibrary(#Library_AppIndicator)
       If appIndicator
-        app_indicator_set_icon(appIndicator, "appicon-" + config\icons)
+        app_indicator_set_icon(appIndicator, GetTrayIcon())
       Else
         CreateTrayIcon()
       EndIf
@@ -202,19 +213,21 @@ Procedure UpdateListEntry(item, shortcutKey)
     SetGadgetItemText(#Gadget_ShortcutList, item, shortcut\name)
   EndIf
   
-  Protected actionDetails.s
+  Protected action.s
   
   Select shortcut\action
     Case #Action_LaunchApplication
       Protected desktopEntry.DesktopEntry
       
       ReadDesktopFile(shortcut\actionData, desktopEntry)
-      actionDetails = desktopEntry\name
+      action = ActionToString(shortcut\action) + ": " + desktopEntry\name
+    Case #Action_LockKeys
+      action = ActionToString(shortcut\action)
     Default
-      actionDetails = shortcut\actionData
+      action = ActionToString(shortcut\action) + ": " + shortcut\actionData
   EndSelect
   
-  SetGadgetItemText(#Gadget_ShortcutList, item, ActionToString(shortcut\action) + ": " + actionDetails, 1)
+  SetGadgetItemText(#Gadget_ShortcutList, item, action, 1)
   SetGadgetItemText(#Gadget_ShortcutList, item, Str(shortcutKey), 2)
   SetGadgetItemData(#Gadget_ShortcutList, item, shortcutKey)
 EndProcedure
@@ -459,6 +472,8 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, #Application_Name, #PB_Window_Maximi
   
   HideWindow(#Window_Main, startHidden)
   
+  Define previousAllowActionHandling = allowActionHandling
+  
   Repeat
     Select WaitWindowEvent(10)
       Case #PB_Event_Menu
@@ -510,6 +525,18 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, #Application_Name, #PB_Window_Maximi
           EndIf
         EndIf
     EndSelect
+    
+    If allowActionHandling <> previousAllowActionHandling
+      previousAllowActionHandling = allowActionHandling
+      
+      Define windowTitle.s = #Application_Name
+      If allowActionHandling = #ActionHandling_LockKeys
+        windowTitle + " (Keys locked)"
+      EndIf
+      
+      SetWindowTitle(#Window_Main, windowTitle)
+      UpdateTrayIcon()
+    EndIf
   Until quit
 EndIf
 

@@ -4,6 +4,12 @@ Enumeration
   #File_InputDevice
 EndEnumeration
 
+Enumeration
+  #ActionHandling_None
+  #ActionHandling_LockKeys
+  #ActionHandling_All
+EndEnumeration
+
 Structure Shortcut
   name.s
   action.s
@@ -28,6 +34,7 @@ EndStructure
 #Action_ExecuteCommand = "executeCommand"
 #Action_OpenFolder = "openFolder"
 #Action_InputText = "inputText"
+#Action_LockKeys = "lockKeys"
 
 Global NewMap shortcuts.Shortcut()
 Global NewList applicationList.DesktopEntry()
@@ -37,7 +44,7 @@ Global configFile.s
 Global shortcutsFile.s
 Global inputEventListenerThread
 Global inputEventKey
-Global allowActionHandling.b = #True
+Global allowActionHandling = #ActionHandling_All
 Global appPath.s = GetPathPart(ProgramFilename())
 
 ; Temporary (test) executable is created in "src" directory
@@ -171,5 +178,7 @@ Procedure.s ActionToString(action.s)
       ProcedureReturn "Open folder"
     Case #Action_InputText
       ProcedureReturn "Input text"
+    Case #Action_LockKeys
+      ProcedureReturn "Lock keys"
   EndSelect
 EndProcedure
