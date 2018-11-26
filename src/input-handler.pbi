@@ -8,7 +8,6 @@ Procedure ExecuteActionForKey(key)
   EndIf
   
   Protected shortcut.Shortcut = shortcuts(keyString)
-  Debug shortcut\actionData
   
   Select shortcut\action
     Case #Action_LaunchApplication
