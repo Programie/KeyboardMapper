@@ -388,6 +388,15 @@ Procedure UpdateMenuItems()
   DisableToolBarButton(#Toolbar_Main, #Menu_RemoveShortcut, Invert(itemFound))
 EndProcedure
 
+Procedure SignalHandler(signal)
+  Select signal
+    Case #SIGCONT
+      HideWindow(#Window_Main, #False)
+    Case #SIGTERM
+      quit = #True
+  EndSelect
+EndProcedure
+
 Define defaultConfigDir.s = GetHomeDirectory() + ".config/keyboard-mapper"
 Define startHidden.b = #False
 
@@ -420,9 +429,19 @@ shortcutsFile = configDir + "/shortcuts.ini"
 LoadConfig()
 LoadShortcutsFromFile()
 
+Define runningPID = RequireSingleInstance()
+If runningPID
+  kill_(runningPID, #SIGCONT)
+  MessageRequester(#Application_Name, "Keyboard Mapper is already running!", #PB_MessageRequester_Error)
+  End 1
+EndIf
+
 gtk_init_(0, "")
 
 RestartInputEventListener()
+
+signal_(#SIGCONT, @SignalHandler())
+signal_(#SIGTERM, @SignalHandler())
 
 UsePNGImageDecoder()
 
@@ -539,6 +558,8 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, #Application_Name, #PB_Window_Maximi
     EndIf
   Until quit
 EndIf
+
+DeleteFile(configDir + "/app.pid")
 
 If IsThread(inputEventListenerThread)
   KillThread(inputEventListenerThread)

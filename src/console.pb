@@ -38,6 +38,11 @@ LoadConfig()
 LoadShortcutsFromFile()
 
 If OpenConsole()
+  If RequireSingleInstance()
+    ConsoleError("Keyboard Mapper is already running!")
+    End 1
+  EndIf
+  
   If ReadFile(#File_InputDevice, config\keyboardInputDevice, #PB_File_NoBuffering)
     Print("Waiting for input from device " + config\keyboardInputDevice)
     InputEventListener(0)

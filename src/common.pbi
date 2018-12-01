@@ -5,6 +5,40 @@ Enumeration
 EndEnumeration
 
 Enumeration
+  #SIGHUP = 1
+  #SIGINT
+  #SIGQUIT
+  #SIGILL
+  #SIGTRAP
+  #SIGABRT
+  #SIGBUS
+  #SIGFPE
+  #SIGKILL
+  #SIGUSR1
+  #SIGSEGV
+  #SIGUSR2
+  #SIGPIPE
+  #SIGALRM
+  #SIGTERM
+  #SIGSTKFLT
+  #SIGCHLD
+  #SIGCONT
+  #SIGSTOP
+  #SIGTSTP
+  #SIGTTIN
+  #SIGTTOU
+  #SIGURG
+  #SIGXCPU
+  #SIGXFSZ
+  #SIGVTALRM
+  #SIGPROF
+  #SIGWINCH
+  #SIGPOLL
+  #SIGPWR
+  #SIGSYS
+EndEnumeration
+
+Enumeration
   #ActionHandling_None
   #ActionHandling_LockKeys
   #ActionHandling_All
@@ -181,4 +215,33 @@ Procedure.s ActionToString(action.s)
     Case #Action_LockKeys
       ProcedureReturn "Lock keys"
   EndSelect
+EndProcedure
+
+Procedure.b IsPIDRunning(pid)
+  ; Sending signal 0 to the PID results in just reporting the running state (0 = running, -1 = error/not running)
+  If kill_(pid, 0)
+    ProcedureReturn #False
+  Else
+    ProcedureReturn #True
+  EndIf
+EndProcedure
+
+Procedure RequireSingleInstance()
+  Protected ownPID = getpid_()
+  Protected file = OpenFile(#PB_Any, configDir + "/app.pid")
+  If IsFile(file)
+    Protected pid = Val(ReadString(file))
+    If pid
+      If pid <> ownPID And IsPIDRunning(pid)
+        CloseFile(file)
+        ProcedureReturn pid
+      EndIf
+    EndIf
+    FileSeek(file, 0)
+    TruncateFile(file)
+    WriteString(file, Str(ownPID))
+    CloseFile(file)
+    ProcedureReturn 0
+  EndIf
+  ProcedureReturn -1
 EndProcedure
