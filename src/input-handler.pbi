@@ -1,5 +1,38 @@
 EnableExplicit
 
+#NoSymbol = 0
+
+ImportC "-lX11"
+  XOpenDisplay(display)
+  XCloseDisplay(*display)
+  XStringToKeysym(string.p-utf8)
+  XKeysymToKeycode(*display, keysym)
+  XFlush(*display)
+EndImport
+
+ImportC "-lXtst"
+  XTestFakeKeyEvent(display, keycode, is_press, delay)
+EndImport
+
+Procedure SendKey(*display, key.s)
+  Protected symbol = XStringToKeysym(key)
+  
+  If symbol = #NoSymbol
+    ProcedureReturn #False
+  EndIf
+  
+  Protected code = XKeysymToKeycode(*display, symbol)
+  If code = 0
+    ProcedureReturn #False
+  EndIf
+  
+  ; TODO: Implement key modifiers
+  XTestFakeKeyEvent(*display, code, #True, 0)
+  XTestFakeKeyEvent(*display, code, #False, 0)
+  
+  XFlush(*display)
+EndProcedure
+
 Procedure ExecuteActionForKey(key, actionHandling)
   Protected keyString.s = Str(key)
   
@@ -35,7 +68,12 @@ Procedure ExecuteActionForKey(key, actionHandling)
       Case #Action_OpenFolder
         RunStandardProgram(shortcut\actionData, "")
       Case #Action_InputText
-        ; TODO: Send keys to active application
+        Protected *display = XOpenDisplay(0)
+        Protected character
+        For character = 1 To Len(shortcut\actionData)
+          SendKey(*display, Mid(shortcut\actionData, character, 1))
+        Next
+        XCloseDisplay(*display)
       Case #Action_LockKeys
         If actionHandling = #ActionHandling_All
           allowActionHandling = #ActionHandling_LockKeys
