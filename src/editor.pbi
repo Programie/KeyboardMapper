@@ -62,6 +62,7 @@ Procedure UpdateShortcutActionState()
   DisableGadget(#Gadget_EditShortcut_Action_OpenFolder_Path, Invert(GetGadgetState(#Gadget_EditShortcut_Action_OpenFolder)))
   DisableGadget(#Gadget_EditShortcut_Action_OpenFolder_Browse, Invert(GetGadgetState(#Gadget_EditShortcut_Action_OpenFolder)))
   DisableGadget(#Gadget_EditShortcut_Action_InputText_Text, Invert(GetGadgetState(#Gadget_EditShortcut_Action_InputText)))
+  DisableGadget(#Gadget_EditShortcut_Action_InputKeySequence_Sequence, Invert(GetGadgetState(#Gadget_EditShortcut_Action_InputKeySequence)))
 EndProcedure
 
 Procedure LoadApplicationList()
@@ -134,6 +135,14 @@ Procedure SaveShortcut()
       MessageRequester("Missing text", "Please specify the text to input!", #PB_MessageRequester_Error)
       ProcedureReturn #False
     EndIf
+  ElseIf GetGadgetState(#Gadget_EditShortcut_Action_InputKeySequence)
+    shortcut\action = #Action_InputKeySequence
+    shortcut\actionData = GetGadgetText(#Gadget_EditShortcut_Action_InputKeySequence_Sequence)
+    
+    If shortcut\actionData = ""
+      MessageRequester("Missing key sequence", "Please specify the key sequence to input!", #PB_MessageRequester_Error)
+      ProcedureReturn #False
+    EndIf
   ElseIf GetGadgetState(#Gadget_EditShortcut_Action_LockKeys)
     shortcut\action = #Action_LockKeys
   EndIf
@@ -177,27 +186,29 @@ Procedure EditShortcut(item)
     name = shortcut\name
   EndIf
   
-  If OpenWindow(#Window_EditShortcut, 0, 0, 600, 370, windowTitle, #PB_Window_WindowCentered, WindowID(#Window_Main))
+  If OpenWindow(#Window_EditShortcut, 0, 0, 600, 400, windowTitle, #PB_Window_WindowCentered, WindowID(#Window_Main))
     FrameGadget(#Gadget_EditShortcut_Shortcut_Frame, 10, 10, 580, 60, "Shortcut")
     ButtonGadget(#Gadget_EditShortcut_Shortcut, 20, 30, 560, 20, shortcutText)
     
     FrameGadget(#Gadget_EditShortcut_Name_Frame, 10, 80, 580, 60, "Name")
     StringGadget(#Gadget_EditShortcut_Name, 20, 100, 560, 20, name)
     
-    FrameGadget(#Gadget_EditShortcut_Action_Frame, 10, 150, 580, 170, "Action")
+    FrameGadget(#Gadget_EditShortcut_Action_Frame, 10, 150, 580, 200, "Action")
     OptionGadget(#Gadget_EditShortcut_Action_LaunchApplication, 20, 170, 150, 20, "Launch application")
     OptionGadget(#Gadget_EditShortcut_Action_ExecuteCommand, 20, 200, 150, 20, "Execute command")
     OptionGadget(#Gadget_EditShortcut_Action_OpenFolder, 20, 230, 150, 20, "Open folder")
     OptionGadget(#Gadget_EditShortcut_Action_InputText, 20, 260, 150, 20, "Input text")
-    OptionGadget(#Gadget_EditShortcut_Action_LockKeys, 20, 290, 150, 20, "Lock keys")
+    OptionGadget(#Gadget_EditShortcut_Action_InputKeySequence, 20, 290, 150, 20, "Input key sequence")
+    OptionGadget(#Gadget_EditShortcut_Action_LockKeys, 20, 320, 150, 20, "Lock keys")
     ComboBoxGadget(#Gadget_EditShortcut_Action_LaunchApplication_List, 200, 170, 380, 20, #PB_ComboBox_Image)
     StringGadget(#Gadget_EditShortcut_Action_ExecuteCommand_CommandLine, 200, 200, 380, 20, "")
     StringGadget(#Gadget_EditShortcut_Action_OpenFolder_Path, 200, 230, 250, 20, "", #PB_String_ReadOnly)
     ButtonGadget(#Gadget_EditShortcut_Action_OpenFolder_Browse, 460, 230, 120, 20, "Browse...")
     StringGadget(#Gadget_EditShortcut_Action_InputText_Text, 200, 260, 380, 20, "")
+    StringGadget(#Gadget_EditShortcut_Action_InputKeySequence_Sequence, 200, 290, 380, 20, "")
     
-    ButtonGadget(#Gadget_EditShortcut_Save, 380, 330, 100, 30, "Save")
-    ButtonGadget(#Gadget_EditShortcut_Cancel, 490, 330, 100, 30, "Cancel")
+    ButtonGadget(#Gadget_EditShortcut_Save, 380, 360, 100, 30, "Save")
+    ButtonGadget(#Gadget_EditShortcut_Cancel, 490, 360, 100, 30, "Cancel")
     
     AddKeyboardShortcut(#Window_EditShortcut, #PB_Shortcut_Return, #Menu_EditShortcut_Save)
     AddKeyboardShortcut(#Window_EditShortcut, #PB_Shortcut_Escape, #Menu_EditShortcut_Cancel)
@@ -242,6 +253,9 @@ Procedure EditShortcut(item)
       Case #Action_InputText
         SetGadgetState(#Gadget_EditShortcut_Action_InputText, #True)
         SetGadgetText(#Gadget_EditShortcut_Action_InputText_Text, shortcut\actionData)
+      Case #Action_InputKeySequence
+        SetGadgetState(#Gadget_EditShortcut_Action_InputKeySequence, #True)
+        SetGadgetText(#Gadget_EditShortcut_Action_InputKeySequence_Sequence, shortcut\actionData)
       Case #Action_LockKeys
         SetGadgetState(#Gadget_EditShortcut_Action_LockKeys, #True)
     EndSelect
@@ -282,6 +296,8 @@ Procedure EditShortcut(item)
             Case #Gadget_EditShortcut_Action_OpenFolder
               UpdateShortcutActionState()
             Case #Gadget_EditShortcut_Action_InputText
+              UpdateShortcutActionState()
+            Case #Gadget_EditShortcut_Action_InputKeySequence
               UpdateShortcutActionState()
             Case #Gadget_EditShortcut_Action_LockKeys
               UpdateShortcutActionState()

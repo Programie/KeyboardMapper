@@ -68,6 +68,7 @@ EndStructure
 #Action_ExecuteCommand = "executeCommand"
 #Action_OpenFolder = "openFolder"
 #Action_InputText = "inputText"
+#Action_InputKeySequence = "inputKeySequence"
 #Action_LockKeys = "lockKeys"
 
 Global NewMap shortcuts.Shortcut()
@@ -212,6 +213,8 @@ Procedure.s ActionToString(action.s)
       ProcedureReturn "Open folder"
     Case #Action_InputText
       ProcedureReturn "Input text"
+    Case #Action_InputKeySequence
+      ProcedureReturn "Input key sequence"
     Case #Action_LockKeys
       ProcedureReturn "Lock keys"
   EndSelect

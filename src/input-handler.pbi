@@ -14,23 +14,88 @@ ImportC "-lXtst"
   XTestFakeKeyEvent(display, keycode, is_press, delay)
 EndImport
 
-Procedure SendKey(*display, key.s)
+Procedure KeyStringToKeycode(*display, key.s)
   Protected symbol = XStringToKeysym(key)
   
   If symbol = #NoSymbol
-    ProcedureReturn #False
+    ProcedureReturn #Null
   EndIf
   
   Protected code = XKeysymToKeycode(*display, symbol)
   If code = 0
-    ProcedureReturn #False
+    ProcedureReturn #Null
   EndIf
   
-  ; TODO: Implement key modifiers
-  XTestFakeKeyEvent(*display, code, #True, 0)
-  XTestFakeKeyEvent(*display, code, #False, 0)
+  ProcedureReturn code
+EndProcedure
+
+Procedure SendKey(*display, key.s)
+  Protected shiftModifier.b
+  
+  If key = " "
+    key = "space"
+  EndIf
+  
+  If key <> LCase(key)
+    shiftModifier = #True
+  EndIf
+  
+  Protected shiftCode = KeyStringToKeycode(*display, "Shift_L")
+  Protected keyCode = KeyStringToKeycode(*display, key)
+  
+  If keyCode = #Null
+    Debug key
+    ProcedureReturn
+  EndIf
+  
+  If shiftModifier
+    XTestFakeKeyEvent(*display, shiftCode, #True, 0)
+  EndIf
+  
+  XTestFakeKeyEvent(*display, keyCode, #True, 0)
+  XTestFakeKeyEvent(*display, keyCode, #False, 0)
+  
+  If shiftModifier
+    XTestFakeKeyEvent(*display, shiftCode, #False, 0)
+  EndIf
   
   XFlush(*display)
+EndProcedure
+
+Procedure SendKeyCombination(*display, combination.s)
+  Protected NewList pressedKeyCodes()
+  
+  Protected keyIndex
+  For keyIndex = 0 To CountString(combination, "+")
+    Protected keyString.s = StringField(combination, keyIndex + 1, "+")
+    Protected keyCode = KeyStringToKeycode(*display, keyString)
+    If keyCode = #Null
+      Continue
+    EndIf
+    
+    XTestFakeKeyEvent(*display, keyCode, #True, 10)
+    
+    AddElement(pressedKeyCodes())
+    pressedKeyCodes() = keyCode
+  Next
+  
+  Protected listIndex
+  ;For listIndex = ListSize(pressedKeyCodes()) - 1 To 0 Step -1
+  For listIndex = 0 To ListSize(pressedKeyCodes()) - 1
+    SelectElement(pressedKeyCodes(), listIndex)
+    
+    XTestFakeKeyEvent(*display, pressedKeyCodes(), #False, 10)
+  Next
+  
+  XFlush(*display)
+EndProcedure
+
+Procedure SendKeySequence(*display, sequence.s)
+  Protected combinationIndex
+  
+  For combinationIndex = 0 To CountString(sequence, " ")
+    SendKeyCombination(*display, StringField(sequence, combinationIndex + 1, " "))
+  Next
 EndProcedure
 
 Procedure ExecuteActionForKey(key, actionHandling)
@@ -40,6 +105,7 @@ Procedure ExecuteActionForKey(key, actionHandling)
     ProcedureReturn
   EndIf
   
+  Protected *display
   Protected shortcut.Shortcut = shortcuts(keyString)
   If actionHandling = #ActionHandling_All Or shortcut\action = #Action_LockKeys
     Select shortcut\action
@@ -68,11 +134,15 @@ Procedure ExecuteActionForKey(key, actionHandling)
       Case #Action_OpenFolder
         RunStandardProgram(shortcut\actionData, "")
       Case #Action_InputText
-        Protected *display = XOpenDisplay(0)
-        Protected character
-        For character = 1 To Len(shortcut\actionData)
-          SendKey(*display, Mid(shortcut\actionData, character, 1))
-        Next
+        Protected oldClipboardText.s = GetClipboardText()
+        SetClipboardText(shortcut\actionData)
+        *display = XOpenDisplay(0)
+        SendKeyCombination(*display, "Control_L+V")
+        XCloseDisplay(*display)
+        SetClipboardText(oldClipboardText)
+      Case #Action_InputKeySequence
+        *display = XOpenDisplay(0)
+        SendKeySequence(*display, shortcut\actionData)
         XCloseDisplay(*display)
       Case #Action_LockKeys
         If actionHandling = #ActionHandling_All

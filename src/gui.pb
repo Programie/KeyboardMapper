@@ -49,6 +49,8 @@ Enumeration
   #Gadget_EditShortcut_Action_OpenFolder_Browse
   #Gadget_EditShortcut_Action_InputText
   #Gadget_EditShortcut_Action_InputText_Text
+  #Gadget_EditShortcut_Action_InputKeySequence
+  #Gadget_EditShortcut_Action_InputKeySequence_Sequence
   #Gadget_EditShortcut_Action_LockKeys
   #Gadget_EditShortcut_Save
   #Gadget_EditShortcut_Cancel
