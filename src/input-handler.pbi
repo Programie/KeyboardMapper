@@ -29,39 +29,6 @@ Procedure KeyStringToKeycode(*display, key.s)
   ProcedureReturn code
 EndProcedure
 
-Procedure SendKey(*display, key.s)
-  Protected shiftModifier.b
-  
-  If key = " "
-    key = "space"
-  EndIf
-  
-  If key <> LCase(key)
-    shiftModifier = #True
-  EndIf
-  
-  Protected shiftCode = KeyStringToKeycode(*display, "Shift_L")
-  Protected keyCode = KeyStringToKeycode(*display, key)
-  
-  If keyCode = #Null
-    Debug key
-    ProcedureReturn
-  EndIf
-  
-  If shiftModifier
-    XTestFakeKeyEvent(*display, shiftCode, #True, 0)
-  EndIf
-  
-  XTestFakeKeyEvent(*display, keyCode, #True, 0)
-  XTestFakeKeyEvent(*display, keyCode, #False, 0)
-  
-  If shiftModifier
-    XTestFakeKeyEvent(*display, shiftCode, #False, 0)
-  EndIf
-  
-  XFlush(*display)
-EndProcedure
-
 Procedure SendKeyCombination(*display, combination.s)
   Protected NewList pressedKeyCodes()
   
