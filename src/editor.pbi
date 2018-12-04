@@ -1,5 +1,34 @@
 EnableExplicit
 
+Enumeration Gadget
+  #Gadget_EditShortcut_Shortcut_Frame
+  #Gadget_EditShortcut_Shortcut
+  #Gadget_EditShortcut_Name_Frame
+  #Gadget_EditShortcut_Name
+  #Gadget_EditShortcut_Action_Frame
+  #Gadget_EditShortcut_Action_LaunchApplication
+  #Gadget_EditShortcut_Action_LaunchApplication_List
+  #Gadget_EditShortcut_Action_ExecuteCommand
+  #Gadget_EditShortcut_Action_ExecuteCommand_CommandLine
+  #Gadget_EditShortcut_Action_OpenFolder
+  #Gadget_EditShortcut_Action_OpenFolder_Path
+  #Gadget_EditShortcut_Action_OpenFolder_Browse
+  #Gadget_EditShortcut_Action_InputText
+  #Gadget_EditShortcut_Action_InputText_Text
+  #Gadget_EditShortcut_Action_InputKeySequence
+  #Gadget_EditShortcut_Action_InputKeySequence_Sequence
+  #Gadget_EditShortcut_Action_LockKeys
+  #Gadget_EditShortcut_Save
+  #Gadget_EditShortcut_Cancel
+  #Gadget_KeyRequester_Text
+  #Gadget_KeyRequester_Cancel
+EndEnumeration
+
+Enumeration MenuItem
+  #Menu_EditShortcut_Save
+  #Menu_EditShortcut_Cancel
+EndEnumeration
+
 Procedure IconTheme_LoadIconFromName(iconName.s, iconSize, flags)
   Protected *error.GError
   Protected *buffer = gtk_icon_theme_load_icon(gtk_icon_theme_get_default_(), iconName, iconSize, flags, @*error)

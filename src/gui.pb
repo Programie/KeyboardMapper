@@ -1,25 +1,21 @@
 EnableExplicit
 
-;- Windows
-Enumeration
+Enumeration Window
   #Window_Main
   #Window_EditShortcut
   #Window_KeyRequester
   #Window_Settings
 EndEnumeration
 
-;- Menus
-Enumeration
+Enumeration Menu
   #Menu_Main
 EndEnumeration
 
-;- Toolbars
-Enumeration
+Enumeration Toolbar
   #Toolbar_Main
 EndEnumeration
 
-;- Menu items
-Enumeration
+Enumeration MenuItem
   #Menu_Settings
   #Menu_Quit
   #Menu_AddShortcut
@@ -27,35 +23,11 @@ Enumeration
   #Menu_RemoveShortcut
   #Menu_Help
   #Menu_About
-  #Menu_EditShortcut_Save
-  #Menu_EditShortcut_Cancel
   #Menu_Settings_Close
 EndEnumeration
 
-;- Gadgets
-Enumeration
+Enumeration Gadget
   #Gadget_ShortcutList
-  #Gadget_EditShortcut_Shortcut_Frame
-  #Gadget_EditShortcut_Shortcut
-  #Gadget_EditShortcut_Name_Frame
-  #Gadget_EditShortcut_Name
-  #Gadget_EditShortcut_Action_Frame
-  #Gadget_EditShortcut_Action_LaunchApplication
-  #Gadget_EditShortcut_Action_LaunchApplication_List
-  #Gadget_EditShortcut_Action_ExecuteCommand
-  #Gadget_EditShortcut_Action_ExecuteCommand_CommandLine
-  #Gadget_EditShortcut_Action_OpenFolder
-  #Gadget_EditShortcut_Action_OpenFolder_Path
-  #Gadget_EditShortcut_Action_OpenFolder_Browse
-  #Gadget_EditShortcut_Action_InputText
-  #Gadget_EditShortcut_Action_InputText_Text
-  #Gadget_EditShortcut_Action_InputKeySequence
-  #Gadget_EditShortcut_Action_InputKeySequence_Sequence
-  #Gadget_EditShortcut_Action_LockKeys
-  #Gadget_EditShortcut_Save
-  #Gadget_EditShortcut_Cancel
-  #Gadget_KeyRequester_Text
-  #Gadget_KeyRequester_Cancel
   #Gadget_Settings_KeyboardInputDevice_Frame
   #Gadget_Settings_KeyboardInputDevice_List
   #Gadget_Settings_IconTheme_Frame
@@ -66,12 +38,12 @@ Enumeration
   #Gadget_Settings_Cancel
 EndEnumeration
 
-Enumeration
+Enumeration Image
   #Image_AppIcon
   #Image_ApplicationListIcon
 EndEnumeration
 
-Enumeration
+Enumeration Library
   #Library_AppIndicator
 EndEnumeration
 
