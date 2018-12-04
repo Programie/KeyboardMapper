@@ -78,7 +78,6 @@ Global configDir.s
 Global configFile.s
 Global shortcutsFile.s
 Global inputEventListenerThread
-Global inputEventKey
 Global allowActionHandling = #ActionHandling_All
 Global appPath.s = GetPathPart(ProgramFilename())
 

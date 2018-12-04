@@ -81,6 +81,10 @@ Enumeration
 EndEnumeration
 
 Enumeration
+  #Event_KeyInput = #PB_Event_FirstCustomValue
+EndEnumeration
+
+Enumeration
   #GTK_ICON_LOOKUP_ALL              = 0; Not gtk-defined, own constant to clearify
   #GTK_ICON_LOOKUP_NO_SVG           = 1
   #GTK_ICON_LOOKUP_FORCE_SVG        = 2
@@ -494,6 +498,8 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, #Application_Name, #PB_Window_Maximi
   HideWindow(#Window_Main, startHidden)
   
   Define previousAllowActionHandling = allowActionHandling
+  
+  BindEvent(#Event_KeyInput, @HandleKeyInputEvent())
   
   Repeat
     Select WaitWindowEvent(10)

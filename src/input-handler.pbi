@@ -134,12 +134,10 @@ Procedure ExecuteActionForKey(key, actionHandling)
       Case #Action_OpenFolder
         RunStandardProgram(shortcut\actionData, "")
       Case #Action_InputText
-        Protected oldClipboardText.s = GetClipboardText()
         SetClipboardText(shortcut\actionData)
         *display = XOpenDisplay(0)
         SendKeyCombination(*display, "Control_L+V")
         XCloseDisplay(*display)
-        SetClipboardText(oldClipboardText)
       Case #Action_InputKeySequence
         *display = XOpenDisplay(0)
         SendKeySequence(*display, shortcut\actionData)
@@ -171,12 +169,16 @@ Procedure InputEventListener(*param)
       Continue
     EndIf
     
-    inputEventKey = inputEvent\code
-    
-    If allowActionHandling <> #ActionHandling_None
-      ExecuteActionForKey(inputEvent\code, allowActionHandling)
-    EndIf
+    PostEvent(#Event_KeyInput, #PB_Ignore, #PB_Ignore, #PB_Ignore, inputEvent\code)
   ForEver
+EndProcedure
+
+Procedure HandleKeyInputEvent()
+  If allowActionHandling = #ActionHandling_None
+    ProcedureReturn
+  EndIf
+  
+  ExecuteActionForKey(EventData(), allowActionHandling)
 EndProcedure
 
 Procedure.b RestartInputEventListener()

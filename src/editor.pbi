@@ -8,10 +8,6 @@ Procedure IconTheme_LoadIconFromName(iconName.s, iconSize, flags)
 EndProcedure
 
 Procedure KeyRequester()
-  inputEventKey = 0
-  
-  Protected newKey
-  
   If OpenWindow(#Window_KeyRequester, 0, 0, 200, 100, "Configure key", #PB_Window_WindowCentered, WindowID(#Window_EditShortcut))
     TextGadget(#Gadget_KeyRequester_Text, 10, 10, 180, 50, "Press the key to use.", #PB_Text_Center)
     ButtonGadget(#Gadget_KeyRequester_Cancel, 10, 60, 180, 30, "Cancel")
@@ -30,19 +26,16 @@ Procedure KeyRequester()
           If EventWindow() = #Window_KeyRequester
             Break
           EndIf
+        Case #Event_KeyInput
+          CloseWindow(#Window_KeyRequester)
+          DisableWindow(#Window_EditShortcut, #False)
+          ProcedureReturn EventData()
       EndSelect
-      
-      If inputEventKey
-        newKey = inputEventKey
-        Break
-      EndIf
     ForEver
     
     CloseWindow(#Window_KeyRequester)
     DisableWindow(#Window_EditShortcut, #False)
   EndIf
-  
-  ProcedureReturn newKey
 EndProcedure
 
 Procedure UpdateLaunchApplicationActionToolTip()
