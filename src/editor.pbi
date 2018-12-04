@@ -1,5 +1,15 @@
 EnableExplicit
 
+Enumeration Window
+  #Window_EditShortcut
+  #Window_KeyRequester
+EndEnumeration
+
+Enumeration MenuItem
+  #Menu_EditShortcut_Save
+  #Menu_EditShortcut_Cancel
+EndEnumeration
+
 Enumeration Gadget
   #Gadget_EditShortcut_Shortcut_Frame
   #Gadget_EditShortcut_Shortcut
@@ -24,9 +34,8 @@ Enumeration Gadget
   #Gadget_KeyRequester_Cancel
 EndEnumeration
 
-Enumeration MenuItem
-  #Menu_EditShortcut_Save
-  #Menu_EditShortcut_Cancel
+Enumeration Image
+  #Image_ApplicationListIcon
 EndEnumeration
 
 Procedure IconTheme_LoadIconFromName(iconName.s, iconSize, flags)

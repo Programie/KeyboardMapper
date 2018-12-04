@@ -2,8 +2,6 @@ EnableExplicit
 
 Enumeration Window
   #Window_Main
-  #Window_EditShortcut
-  #Window_KeyRequester
   #Window_Settings
 EndEnumeration
 
@@ -40,7 +38,6 @@ EndEnumeration
 
 Enumeration Image
   #Image_AppIcon
-  #Image_ApplicationListIcon
 EndEnumeration
 
 Enumeration Library
