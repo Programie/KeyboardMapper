@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2018-12-03 23:57" user="programie" host="minty"/>
+    <lastopen date="2018-12-04 22:43" user="programie" host="minty"/>
   </section>
   <section name="files">
     <file name="appindicator.pbi">
@@ -20,7 +20,7 @@
     </file>
     <file name="common.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="99a83acde84cfaf8ff091936fac03681"/>
+      <fingerprint md5="2b10c6f03ef2d1cd611bd2c6f3c145ae"/>
     </file>
     <file name="desktop-entry.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
@@ -28,15 +28,19 @@
     </file>
     <file name="editor.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="3ff6b07aec3f7d8c15daa8c1b9003986"/>
+      <fingerprint md5="f4efda9cbec6d68a7b780aec405014a2"/>
     </file>
     <file name="gui.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="247681cd3c1524b23551cbfdd6334dd7"/>
+      <fingerprint md5="f4581b654eb00ffc66793dc091c09b0f"/>
     </file>
     <file name="input-handler.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
-      <fingerprint md5="bad01dc55fd409b8734f7c753abd7caf"/>
+      <fingerprint md5="029bb68f144d411572e20b4437ebbfd2"/>
+    </file>
+    <file name="settings.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate=""/>
+      <fingerprint md5="89e3d1337adb7b157dc6fa40701296c0"/>
     </file>
   </section>
   <section name="targets">
