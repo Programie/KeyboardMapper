@@ -110,7 +110,7 @@ Procedure.s StringToUtf8(string.s)
   Protected utf8String.s
   
   *memory = AllocateMemory(StringByteLength(string, #PB_Unicode) + 2)
-  PokeS(*memory, string, -1,  #PB_UTF8)
+  PokeS(*memory, string, -1, #PB_UTF8)
   utf8String = PeekS(*memory)
   FreeMemory(*memory)
   

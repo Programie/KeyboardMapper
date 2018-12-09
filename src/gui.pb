@@ -44,12 +44,12 @@ Enumeration
 EndEnumeration
 
 Enumeration
-  #GTK_ICON_LOOKUP_ALL              = 0; Not gtk-defined, own constant to clearify
-  #GTK_ICON_LOOKUP_NO_SVG           = 1
-  #GTK_ICON_LOOKUP_FORCE_SVG        = 2
-  #GTK_ICON_LOOKUP_USE_BUILTIN      = 4
+  #GTK_ICON_LOOKUP_ALL = 0; Not gtk-defined, own constant to clearify
+  #GTK_ICON_LOOKUP_NO_SVG = 1
+  #GTK_ICON_LOOKUP_FORCE_SVG = 2
+  #GTK_ICON_LOOKUP_USE_BUILTIN = 4
   #GTK_ICON_LOOKUP_GENERIC_FALLBACK = 8
-  #GTK_ICON_LOOKUP_FORCE_SIZE       = 16
+  #GTK_ICON_LOOKUP_FORCE_SIZE = 16
 EndEnumeration
 
 Enumeration
@@ -79,7 +79,7 @@ EndImport
 
 ImportC ""
   gtk_menu_item_new_with_label.i(label.p-utf8)
-  g_signal_connect_data.i(*instance, detailed_signal.p-utf8, *c_handler, *data_=0, *destroy_data=0, *connect_flags=0)
+  g_signal_connect_data.i(*instance, detailed_signal.p-utf8, *c_handler, *data_ = 0, *destroy_data = 0, *connect_flags = 0)
   gtk_icon_theme_load_icon(*icon_theme.GtkIconTheme, icon_name.p-utf8, size, flags, *error.GError)
   gtk_about_dialog_new()
   gtk_about_dialog_set_program_name(*about, name.p-utf8)
@@ -261,7 +261,7 @@ EndProcedure
 Define defaultConfigDir.s = GetHomeDirectory() + ".config/keyboard-mapper"
 Define startHidden.b = #False
 
-CLI_AddOption("c", "config-dir", #True , "path", "path to the config dir (default: " + defaultConfigDir + ")")
+CLI_AddOption("c", "config-dir", #True, "path", "path to the config dir (default: " + defaultConfigDir + ")")
 CLI_AddOption("H", "hidden", #False, "", "start hidden")
 CLI_AddOption("h", "help", #False, "", "show this help message")
 
