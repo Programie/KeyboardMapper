@@ -287,10 +287,12 @@ CreateDirectory(configDir)
 configFile = configDir + "/config.ini"
 shortcutsFile = configDir + "/shortcuts.ini"
 
+Define pidFile.s = GetPIDFilePath()
+
 LoadConfig()
 LoadShortcutsFromFile()
 
-Define runningPID = RequireSingleInstance()
+Define runningPID = RequireSingleInstance(pidFile)
 If runningPID
   kill_(runningPID, #SIGCONT)
   MessageRequester(#Application_Name, "Keyboard Mapper is already running!", #PB_MessageRequester_Error)
@@ -422,7 +424,7 @@ If OpenWindow(#Window_Main, 0, 0, 600, 400, #Application_Name, #PB_Window_Maximi
   Until quit
 EndIf
 
-DeleteFile(configDir + "/app.pid")
+DeleteFile(pidFile)
 
 If IsThread(inputEventListenerThread)
   KillThread(inputEventListenerThread)

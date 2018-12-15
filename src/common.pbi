@@ -219,6 +219,15 @@ Procedure.s ActionToString(action.s)
   EndSelect
 EndProcedure
 
+Procedure.s GetPIDFilePath()
+  Protected userRunDir.s = "/var/run/user/" + getuid_()
+  If FileSize(userRunDir) = -2
+    ProcedureReturn userRunDir + "/keyboard-mapper.pid"
+  Else
+    ProcedureReturn configDir + "/app.pid"
+  EndIf
+EndProcedure
+
 Procedure.b IsPIDRunning(pid)
   ; Sending signal 0 to the PID results in just reporting the running state (0 = running, -1 = error/not running)
   If kill_(pid, 0)
@@ -228,9 +237,9 @@ Procedure.b IsPIDRunning(pid)
   EndIf
 EndProcedure
 
-Procedure RequireSingleInstance()
+Procedure RequireSingleInstance(pidFile.s)
   Protected ownPID = getpid_()
-  Protected file = OpenFile(#PB_Any, configDir + "/app.pid")
+  Protected file = OpenFile(#PB_Any, pidFile)
   If IsFile(file)
     Protected pid = Val(ReadString(file))
     If pid
