@@ -99,6 +99,7 @@ EndProcedure
 Procedure LoadApplicationList()
   ClearList(applicationList())
   LoadApplicationDesktopFiles("/usr/share/applications", applicationList())
+  LoadApplicationDesktopFiles("/var/lib/snapd/desktop/applications", applicationList())
   LoadApplicationDesktopFiles(GetHomeDirectory() + ".local/share/applications", applicationList())
   SortStructuredList(applicationList(), 0, OffsetOf(DesktopEntry\name), TypeOf(DesktopEntry\name))
 EndProcedure
