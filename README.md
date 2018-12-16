@@ -20,7 +20,7 @@ Settings:
 
 ## Installation
 
-Download the latest release from the release page on GitLab.
+Download the latest release from the [release page on GitLab](https://gitlab.com/Programie/KeyboardMapper/tags).
 
 ## Initial configuration
 
