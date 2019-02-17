@@ -213,7 +213,7 @@ class SettingsWindow(QtWidgets.QDialog):
         if len(input_device_items) == 0:
             QtWidgets.QMessageBox.critical(self, "No keyboard input device selected", "Please selected the input device to use!")
 
-        Config.keyboard_input_device = input_device_items[0].text()
+        Config.keyboard_input_device = "/dev/input/by-id/{}".format(input_device_items[0].text())
         Config.icons = self.icon_theme_list.currentText()
         Config.use_tray_icon = self.use_tray_icon_checkbox.checkState() == Qt.Checked
 
