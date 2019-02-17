@@ -18,8 +18,6 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 class Config:
-    DEFAULT_SECTION = "options"
-
     filename = None
     keyboard_input_device = None
     icons = "dark"
