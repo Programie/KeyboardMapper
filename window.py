@@ -3,8 +3,8 @@ import subprocess
 import sys
 from typing import List
 
-from PySide2.QtCore import Qt, QModelIndex, QFile, QDir, QFileInfo
-from PySide2.QtGui import QStandardItemModel, QKeySequence, QIcon, QCloseEvent, QWindow
+from PySide2.QtCore import Qt, QModelIndex, QDir, QFileInfo
+from PySide2.QtGui import QStandardItemModel, QKeySequence, QIcon, QCloseEvent
 from PySide2.QtWidgets import QTreeView, QMenuBar, QMenu, QMainWindow, QMessageBox, QAbstractItemView, QSystemTrayIcon, QDialog, QGroupBox, QListWidget, QVBoxLayout, QDialogButtonBox, QListWidgetItem, QComboBox, QCheckBox
 
 from config import Config
