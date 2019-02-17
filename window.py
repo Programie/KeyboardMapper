@@ -3,15 +3,15 @@ import subprocess
 import sys
 from typing import List
 
+from PySide2 import QtWidgets
 from PySide2.QtCore import Qt, QModelIndex, QDir, QFileInfo
 from PySide2.QtGui import QStandardItemModel, QKeySequence, QIcon, QCloseEvent
-from PySide2.QtWidgets import QTreeView, QMenuBar, QMenu, QMainWindow, QMessageBox, QAbstractItemView, QSystemTrayIcon, QDialog, QGroupBox, QListWidget, QVBoxLayout, QDialogButtonBox, QListWidgetItem, QComboBox, QCheckBox
 
 from config import Config
 from shortcut import Shortcut, Shortcuts
 
 
-class MainWindow(QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     class ShortcutListHeader(enum.Enum):
         NAME, ACTION, KEY = range(3)
 
@@ -20,19 +20,19 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Keyboard Mapper")
 
-        menu_bar = QMenuBar()
+        menu_bar = QtWidgets.QMenuBar()
 
-        file_menu = QMenu("File")
+        file_menu = QtWidgets.QMenu("File")
         file_menu.addAction("Settings...", self.show_settings)
         file_menu.addSeparator()
         file_menu.addAction("Quit", self.quit)
 
-        edit_menu = QMenu("Edit")
+        edit_menu = QtWidgets.QMenu("Edit")
         edit_menu.addAction("Add shortcut...", self.add_shortcut)
         edit_menu.addAction("Edit shortcut...", self.edit_shortcut)
         edit_menu.addAction("Remove shortcut", self.remove_shortcut)
 
-        help_menu = QMenu("Help")
+        help_menu = QtWidgets.QMenu("Help")
         help_menu.addAction("Help", self.show_help).setShortcut(QKeySequence("F1"))
         help_menu.addSeparator()
         help_menu.addAction("About", self.show_about)
@@ -43,9 +43,9 @@ class MainWindow(QMainWindow):
 
         self.setMenuBar(menu_bar)
 
-        self.shortcut_tree_view = QTreeView()
+        self.shortcut_tree_view = QtWidgets.QTreeView()
         self.shortcut_tree_view.setAlternatingRowColors(True)
-        self.shortcut_tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.shortcut_tree_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         self.shortcut_tree_view_model = QStandardItemModel(0, 3)
         self.shortcut_tree_view_model.setHeaderData(self.ShortcutListHeader.NAME.value, Qt.Horizontal, "Name")
@@ -57,21 +57,28 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self.shortcut_tree_view)
 
-        self.tray_icon = None
-        self.init_tray_icon()
+        self.tray_icon: QtWidgets.QSystemTrayIcon = None
+        self.update_tray_icon()
 
-    def init_tray_icon(self):
-        if Config.use_tray_icon and QSystemTrayIcon.isSystemTrayAvailable():
-            tray_menu = QMenu()
+    def update_tray_icon(self):
+        if Config.use_tray_icon and QtWidgets.QSystemTrayIcon.isSystemTrayAvailable():
+            tray_menu = QtWidgets.QMenu()
 
             tray_menu.addAction("Show window", self.show)
             tray_menu.addSeparator()
             tray_menu.addAction("Quit", self.quit)
 
-            self.tray_icon = QSystemTrayIcon(QIcon("icons/appicon-bright.png"))
+            icon_name = ["appicon", Config.icons]
+
+            if KeyListener.keys_locked:
+                icon_name.append("disabled")
+
+            self.tray_icon = QtWidgets.QSystemTrayIcon(QIcon("icons/{}.png".format("-".join(icon_name))))
             self.tray_icon.show()
             self.tray_icon.setContextMenu(tray_menu)
             self.tray_icon.activated.connect(self.handle_tray_icon_activation)
+        else:
+            self.tray_icon = None
 
     def add_list_item(self, shortcut: Shortcut):
         model = self.shortcut_tree_view_model
@@ -114,10 +121,10 @@ class MainWindow(QMainWindow):
         subprocess.run(["xdg-open", "https://gitlab.com/Programie/KeyboardMapper"])
 
     def show_about(self):
-        QMessageBox.aboutQt(self, "About")
+        QtWidgets.QMessageBox.aboutQt(self, "About")
 
     def handle_tray_icon_activation(self, reason):
-        if reason == QSystemTrayIcon.Trigger:
+        if reason == QtWidgets.QSystemTrayIcon.Trigger:
             if self.isVisible():
                 self.hide()
             else:
@@ -130,27 +137,27 @@ class MainWindow(QMainWindow):
             event.ignore()
 
 
-class SettingsWindow(QDialog):
-    def __init__(self, parent):
+class SettingsWindow(QtWidgets.QDialog):
+    def __init__(self, parent: MainWindow):
         super().__init__(parent)
 
         self.setWindowTitle("Settings")
 
-        self.dialog_layout = QVBoxLayout()
+        self.dialog_layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.dialog_layout)
 
-        self.input_device_list: QListWidget = None
+        self.input_device_list: QtWidgets.QListWidget = None
         self.add_keyboard_input_device_settings()
 
-        self.icon_theme_list: QComboBox = None
+        self.icon_theme_list: QtWidgets.QComboBox = None
         self.add_icon_theme_settings()
 
-        self.use_tray_icon_checkbox = QCheckBox("Enable tray icon")
-        self.use_tray_icon_checkbox.setEnabled(QSystemTrayIcon.isSystemTrayAvailable())
+        self.use_tray_icon_checkbox = QtWidgets.QCheckBox("Enable tray icon")
+        self.use_tray_icon_checkbox.setEnabled(QtWidgets.QSystemTrayIcon.isSystemTrayAvailable())
         self.use_tray_icon_checkbox.setChecked(Config.use_tray_icon)
         self.dialog_layout.addWidget(self.use_tray_icon_checkbox)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         self.dialog_layout.addWidget(button_box)
 
         button_box.accepted.connect(self.save)
@@ -159,12 +166,12 @@ class SettingsWindow(QDialog):
         self.show()
 
     def add_keyboard_input_device_settings(self):
-        group_box = QGroupBox("Keyboard input device")
+        group_box = QtWidgets.QGroupBox("Keyboard input device")
         self.dialog_layout.addWidget(group_box)
 
-        self.input_device_list = QListWidget()
+        self.input_device_list = QtWidgets.QListWidget()
 
-        layout = QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.input_device_list)
         group_box.setLayout(layout)
 
@@ -180,31 +187,31 @@ class SettingsWindow(QDialog):
 
             name = item.baseName()
 
-            list_item = QListWidgetItem(name)
+            list_item = QtWidgets.QListWidgetItem(name)
             self.input_device_list.addItem(list_item)
 
             if active_device_file and active_device_file.baseName() == name:
                 self.input_device_list.setCurrentItem(list_item)
 
     def add_icon_theme_settings(self):
-        group_box = QGroupBox("Icon theme")
+        group_box = QtWidgets.QGroupBox("Icon theme")
         self.dialog_layout.addWidget(group_box)
 
-        self.icon_theme_list = QComboBox()
+        self.icon_theme_list = QtWidgets.QComboBox()
         self.icon_theme_list.addItem("bright")
         self.icon_theme_list.addItem("dark")
 
         self.icon_theme_list.setCurrentText(Config.icons)
 
-        layout = QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.icon_theme_list)
         group_box.setLayout(layout)
 
     def save(self):
-        input_device_items: List[QListWidgetItem] = self.input_device_list.selectedItems()
+        input_device_items: List[QtWidgets.QListWidgetItem] = self.input_device_list.selectedItems()
 
         if len(input_device_items) == 0:
-            QMessageBox.critical(self, "No keyboard input device selected", "Please selected the input device to use!")
+            QtWidgets.QMessageBox.critical(self, "No keyboard input device selected", "Please selected the input device to use!")
 
         Config.keyboard_input_device = input_device_items[0].text()
         Config.icons = self.icon_theme_list.currentText()
