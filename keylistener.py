@@ -32,7 +32,6 @@ class KeyListener(Thread):
                         # If restart flag is set, break the loop to restart reading the file (e.g. if file path has changed)
                         if KeyListener.restart:
                             KeyListener.restart = False
-                            print("restart")
                             break
 
                         # Wait for input (file.read() would block)
@@ -53,8 +52,6 @@ class KeyListener(Thread):
                             continue
 
                         self.handle_key_press(code)
-
-                print("eof")
             except:
                 pass
 
