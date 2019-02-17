@@ -12,6 +12,10 @@ from typing import List, Dict
 from PySide2 import QtWidgets, QtGui, QtCore
 from PySide2.QtWidgets import QApplication
 
+APP_NAME = "Keyboard Mapper"
+APP_DESCRIPTION = "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions"
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+
 
 class Config:
     DEFAULT_SECTION = "options"
@@ -195,6 +199,10 @@ class SettingsWindow(QtWidgets.QDialog):
         self.use_tray_icon_checkbox.setChecked(Config.use_tray_icon)
         self.dialog_layout.addWidget(self.use_tray_icon_checkbox)
 
+        create_desktop_file_button = QtWidgets.QPushButton("Create desktop file")
+        create_desktop_file_button.clicked.connect(self.create_desktop_file)
+        self.dialog_layout.addWidget(create_desktop_file_button)
+
         button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         self.dialog_layout.addWidget(button_box)
 
@@ -244,6 +252,20 @@ class SettingsWindow(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.icon_theme_list)
         group_box.setLayout(layout)
+
+    def create_desktop_file(self):
+        with open(os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper.desktop"), "w") as file:
+            lines = [
+                "[Desktop Entry]",
+                "Comment={}".format(APP_DESCRIPTION),
+                "Name={}".format(APP_NAME),
+                "Type=Application",
+                "Categories=System;",
+                "Exec={}".format(sys.argv[0]),
+                "Icon={}".format(os.path.join(BASE_DIR, "icons", "appicon-{}.png".format(Config.icons)))
+            ]
+
+            file.write("\n".join(lines))
 
     def save(self):
         input_device_items: List[QtWidgets.QListWidgetItem] = self.input_device_list.selectedItems()
