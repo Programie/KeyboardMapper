@@ -8,6 +8,7 @@ from PySide2.QtCore import Qt, QModelIndex, QDir, QFileInfo
 from PySide2.QtGui import QStandardItemModel, QKeySequence, QIcon, QCloseEvent
 
 from config import Config
+from keylistener import KeyListener
 from shortcut import Shortcut, Shortcuts
 
 
@@ -141,6 +142,8 @@ class SettingsWindow(QtWidgets.QDialog):
     def __init__(self, parent: MainWindow):
         super().__init__(parent)
 
+        self.main_window = parent
+
         self.setWindowTitle("Settings")
 
         self.dialog_layout = QtWidgets.QVBoxLayout()
@@ -218,5 +221,8 @@ class SettingsWindow(QtWidgets.QDialog):
         Config.use_tray_icon = self.use_tray_icon_checkbox.checkState() == Qt.Checked
 
         Config.save()
+
+        self.main_window.update_tray_icon()
+        KeyListener.restart = True
 
         self.close()

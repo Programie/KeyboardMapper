@@ -4,6 +4,7 @@ import sys
 from PySide2.QtWidgets import QApplication
 
 from config import Config
+from keylistener import KeyListener
 from shortcut import Shortcuts
 from window import MainWindow
 
@@ -21,6 +22,10 @@ def main():
 
     shortcuts = Shortcuts(os.path.join(config_dir, "shortcuts.ini"))
     shortcuts.load()
+
+    key_listener = KeyListener()
+    key_listener.setDaemon(True)
+    key_listener.start()
 
     main_window = MainWindow()
     main_window.load_from_shortcuts(shortcuts)
