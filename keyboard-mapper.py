@@ -184,6 +184,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.main_window = parent
 
         self.setWindowTitle("Settings")
+        self.setModal(True)
 
         self.dialog_layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.dialog_layout)
