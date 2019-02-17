@@ -52,11 +52,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     instance: "MainWindow" = None
 
-    def __init__(self):
+    def __init__(self, shortcuts: "Shortcuts"):
         super().__init__()
 
         # Required by other classes which don't know this instance
         MainWindow.instance = self
+
+        self.shortcuts = shortcuts
 
         self.setWindowTitle("Keyboard Mapper")
 
@@ -93,12 +95,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view_model.setHeaderData(self.ShortcutListHeader.KEY.value, QtCore.Qt.Horizontal, "Key")
         self.shortcut_tree_view.setModel(self.shortcut_tree_view_model)
 
-        self.shortcut_tree_view.doubleClicked.connect(lambda model_index: self.edit_item(model_index.row()))
+        self.shortcut_tree_view.doubleClicked.connect(lambda model_index: self.edit_item(model_index.siblingAtColumn(self.ShortcutListHeader.KEY.value).data()))
 
         self.setCentralWidget(self.shortcut_tree_view)
 
         self.tray_icon: QtWidgets.QSystemTrayIcon = None
         self.update_tray_icon()
+
+        self.load_from_shortcuts()
 
     def update_tray_icon(self):
         if Config.use_tray_icon and QtWidgets.QSystemTrayIcon.isSystemTrayAvailable():
@@ -128,14 +132,19 @@ class MainWindow(QtWidgets.QMainWindow):
         model.setData(model.index(0, self.ShortcutListHeader.ACTION.value), shortcut.get_action_name())
         model.setData(model.index(0, self.ShortcutListHeader.KEY.value), shortcut.key)
 
-    def load_from_shortcuts(self, shortcuts: "Shortcuts"):
+    def load_from_shortcuts(self):
         self.shortcut_tree_view_model.removeRows(0, self.shortcut_tree_view_model.rowCount())
 
-        for shortcut in shortcuts.get_list().values():
+        for shortcut in self.shortcuts.get_list().values():
             self.add_list_item(shortcut)
 
-    def edit_item(self, row=None):
-        print("Edit row {}".format(row))
+    def edit_item(self, key=None):
+        if key is None:
+            shortcut = None
+        else:
+            shortcut = self.shortcuts.get_by_key(key)
+
+        EditShortcutWindow(self, shortcut)
 
     def show_settings(self):
         SettingsWindow(self)
@@ -152,7 +161,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if len(selected_indexes) == 0:
             return
 
-        self.edit_item(selected_indexes[0].row())
+        self.edit_item(selected_indexes[0].siblingAtColumn(self.ShortcutListHeader.KEY.value).data())
 
     def remove_shortcut(self):
         pass
@@ -175,6 +184,146 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.tray_icon:
             self.hide()
             event.ignore()
+
+
+class EditShortcutWindow(QtWidgets.QDialog):
+    def __init__(self, parent: MainWindow, shortcut: "Shortcut"):
+        super().__init__(parent)
+
+        self.shortcut = shortcut
+
+        if shortcut:
+            self.setWindowTitle("Edit shortcut")
+        else:
+            self.setWindowTitle("Add shortcut")
+
+        self.setModal(True)
+
+        self.dialog_layout = QtWidgets.QVBoxLayout()
+        self.setLayout(self.dialog_layout)
+
+        self.shortcut_button = None
+        self.add_shortcut_button()
+
+        self.name_field = None
+        self.add_name_field()
+
+        self.action_options: List[QtWidgets.QRadioButton] = []
+        self.action_launch_application_list = None
+        self.execute_command_field = None
+        self.open_folder_field = None
+        self.input_text_field = None
+        self.input_key_sequence_field = None
+        self.add_action_options()
+
+        button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        self.dialog_layout.addWidget(button_box)
+
+        button_box.accepted.connect(self.save)
+        button_box.rejected.connect(self.close)
+
+        self.show()
+
+    def add_shortcut_button(self):
+        group_box = QtWidgets.QGroupBox("Shortcut")
+        self.dialog_layout.addWidget(group_box)
+
+        if self.shortcut:
+            text = str(self.shortcut.key)
+        else:
+            text = "Click to set shortcut"
+
+        self.shortcut_button = QtWidgets.QPushButton(text)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.shortcut_button)
+        group_box.setLayout(layout)
+
+    def add_name_field(self):
+        group_box = QtWidgets.QGroupBox("Name")
+        self.dialog_layout.addWidget(group_box)
+
+        if self.shortcut:
+            text = self.shortcut.name
+        else:
+            text = ""
+
+        self.name_field = QtWidgets.QLineEdit(text)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.name_field)
+        group_box.setLayout(layout)
+
+    def add_action_options(self):
+        group_box = QtWidgets.QGroupBox("Action")
+        self.dialog_layout.addWidget(group_box)
+
+        layout = QtWidgets.QGridLayout()
+        group_box.setLayout(layout)
+
+        self.action_launch_application_list = QtWidgets.QComboBox()
+        self.execute_command_field = QtWidgets.QLineEdit()
+        self.open_folder_field = QtWidgets.QLineEdit()
+        self.input_text_field = QtWidgets.QLineEdit()
+        self.input_key_sequence_field = QtWidgets.QLineEdit()
+
+        select_folder_button = QtWidgets.QPushButton("Browse...")
+        select_folder_button.clicked.connect(self.select_folder)
+
+        self.action_options = [
+            [None, Actions.LAUNCH_APPLICATION, [self.action_launch_application_list]],
+            [None, Actions.EXECUTE_COMMAND, [self.execute_command_field]],
+            [None, Actions.OPEN_FOLDER, [self.open_folder_field, select_folder_button]],
+            [None, Actions.INPUT_TEXT, [self.input_text_field]],
+            [None, Actions.INPUT_KEY_SEQUENCE, [self.input_key_sequence_field]],
+            [None, Actions.LOCK_KEYS, []]
+        ]
+
+        for row, action in enumerate(self.action_options):
+            radio_button, action, fields = action
+
+            radio_button = QtWidgets.QRadioButton(action.title)
+            radio_button.clicked.connect(self.update_action_states)
+            self.action_options[row][0] = radio_button
+            layout.addWidget(radio_button, row, 0)
+
+            for column, field in enumerate(fields, start=1):
+                layout.addWidget(field, row, column)
+
+            if self.shortcut and self.shortcut.action == action.name:
+                radio_button.setChecked(True)
+
+                if action == Actions.LAUNCH_APPLICATION:
+                    # TODO: self.action_launch_application_list.setCurrentIndex()
+                    pass
+                elif action == Actions.EXECUTE_COMMAND:
+                    self.execute_command_field.setText(self.shortcut.data)
+                elif action == Actions.OPEN_FOLDER:
+                    self.open_folder_field.setText(self.shortcut.data)
+                elif action == Actions.INPUT_TEXT:
+                    self.input_text_field.setText(self.shortcut.data)
+                elif action == Actions.INPUT_KEY_SEQUENCE:
+                    self.input_key_sequence_field.setText(self.shortcut.data)
+
+        self.update_action_states()
+
+    def update_action_states(self):
+        for action in self.action_options:
+            radio_button, action, fields = action
+
+            enabled = radio_button.isChecked()
+
+            for field in fields:
+                field.setEnabled(enabled)
+
+    def select_folder(self):
+        path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select folder to open", self.open_folder_field.text(), QtWidgets.QFileDialog.DontUseNativeDialog | QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontResolveSymlinks)
+
+        if path:
+            self.open_folder_field.setText(path)
+
+    def save(self):
+        pass
 
 
 class SettingsWindow(QtWidgets.QDialog):
@@ -504,8 +653,7 @@ def main():
     key_listener.setDaemon(True)
     key_listener.start()
 
-    main_window = MainWindow()
-    main_window.load_from_shortcuts(shortcuts)
+    main_window = MainWindow(shortcuts)
     main_window.show()
 
     sys.exit(application.exec_())
