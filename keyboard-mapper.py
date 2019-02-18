@@ -498,11 +498,9 @@ class Shortcut:
             # TODO: Launch application
             pass
         elif self.action == Actions.EXECUTE_COMMAND.name:
-            # TODO: Execute command
-            pass
+            subprocess.run(self.data, shell=True)
         elif self.action == Actions.OPEN_FOLDER.name:
-            # TODO: Open folder
-            pass
+            subprocess.run(["xdg-open", self.data])
         elif self.action == Actions.INPUT_TEXT.name:
             pyperclip.copy(self.data)
             XTestWrapper().send_combination(["Control_L", "V"])
