@@ -459,10 +459,10 @@ class Actions:
 
 class Shortcut:
     def __init__(self):
-        self.key = None
-        self.action = None
-        self.data = None
-        self.name = None
+        self.key: int = None
+        self.action: str = None
+        self.data: str = None
+        self.name: str = None
 
     def __str__(self):
         return self.name
@@ -550,7 +550,7 @@ class Shortcuts:
         settings = QtCore.QSettings(self.filename, QtCore.QSettings.IniFormat)
 
         for shortcut in self.list:
-            settings.beginGroup(shortcut.key)
+            settings.beginGroup(str(shortcut.key))
             shortcut.to_config(settings)
             settings.endGroup()
 
