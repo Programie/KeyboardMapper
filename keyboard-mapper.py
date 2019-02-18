@@ -9,8 +9,11 @@ from select import select
 from threading import Thread
 from typing import List, Dict
 
+import pyperclip as pyperclip
 from PySide2 import QtWidgets, QtGui, QtCore
 from PySide2.QtWidgets import QApplication
+
+from xtestwrapper import XTestWrapper
 
 APP_NAME = "Keyboard Mapper"
 APP_DESCRIPTION = "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions"
@@ -501,11 +504,13 @@ class Shortcut:
             # TODO: Open folder
             pass
         elif self.action == Actions.INPUT_TEXT.name:
-            # TODO: Input text
-            pass
+            pyperclip.copy(self.data)
+            XTestWrapper().send_combination(["Control_L", "V"])
         elif self.action == Actions.INPUT_KEY_SEQUENCE.name:
-            # TODO: Input key sequence
-            pass
+            xtest_wrapper = XTestWrapper()
+
+            for combination in self.data.split(" "):
+                xtest_wrapper.send_combination(combination.split("+"))
         elif self.action == Actions.LOCK_KEYS.name:
             if KeyListener.allowed_actions == AllowedActions.ALL:
                 KeyListener.allowed_actions = AllowedActions.LOCK_KEYS
