@@ -613,8 +613,8 @@ class KeyListener(Thread):
                             continue
 
                         self.handle_key_press(code)
-            except:
-                pass
+            except Exception as exception:
+                print(exception, file=sys.stderr)
 
             time.sleep(1)
 
