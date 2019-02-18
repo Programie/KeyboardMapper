@@ -14,6 +14,7 @@ from PySide2.QtWidgets import QApplication
 
 APP_NAME = "Keyboard Mapper"
 APP_DESCRIPTION = "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions"
+APP_WEBSITE = "https://gitlab.com/Programie/KeyboardMapper"
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -165,7 +166,7 @@ class MainWindow(QtWidgets.QMainWindow):
         pass
 
     def show_help(self):
-        subprocess.run(["xdg-open", "https://gitlab.com/Programie/KeyboardMapper"])
+        subprocess.run(["xdg-open", APP_WEBSITE])
 
     def show_about(self):
         QtWidgets.QMessageBox.aboutQt(self, "About")
