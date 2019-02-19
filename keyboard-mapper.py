@@ -3,14 +3,13 @@ import enum
 import os
 import subprocess
 import sys
-from typing import List, Dict
+from typing import List
 
-import pyperclip as pyperclip
 from PySide2 import QtWidgets, QtGui, QtCore
 from PySide2.QtWidgets import QApplication
 
 from keylistener import KeyListener
-from xtestwrapper import XTestWrapper
+from shortcut import Actions, Shortcuts, Shortcut
 
 APP_NAME = "Keyboard Mapper"
 APP_DESCRIPTION = "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions"
@@ -60,7 +59,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcuts = shortcuts
         self.key_listener = key_listener
 
-        self.setWindowTitle("Keyboard Mapper")
+        # Let shortcuts know how to handle the lock keys action (Shortcuts don't know anything about the Key Listener, Main Window, etc)
+        Shortcuts.lock_keys_handler = self.toggle_lock_keys
 
         menu_bar = QtWidgets.QMenuBar()
 
@@ -99,10 +99,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setCentralWidget(self.shortcut_tree_view)
 
+        self.update_window_title()
+
         self.tray_icon: QtWidgets.QSystemTrayIcon = None
         self.update_tray_icon()
 
         self.load_from_shortcuts()
+
+    def update_window_title(self):
+        title = APP_NAME
+
+        if self.key_listener.allowed_actions == AllowedActions.LOCK_KEYS:
+            title = "{} (Keys locked)".format(title)
+
+        self.setWindowTitle(title)
 
     def update_tray_icon(self):
         if Config.use_tray_icon and QtWidgets.QSystemTrayIcon.isSystemTrayAvailable():
@@ -184,6 +194,15 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.tray_icon:
             self.hide()
             event.ignore()
+
+    def toggle_lock_keys(self):
+        if self.key_listener.allowed_actions == AllowedActions.ALL:
+            self.key_listener.allowed_actions = AllowedActions.LOCK_KEYS
+        elif self.key_listener.allowed_actions == AllowedActions.LOCK_KEYS:
+            self.key_listener.allowed_actions = AllowedActions.ALL
+
+        self.update_window_title()
+        self.update_tray_icon()
 
 
 class EditShortcutWindow(QtWidgets.QDialog):
@@ -433,127 +452,6 @@ class SettingsWindow(QtWidgets.QDialog):
         self.main_window.key_listener.set_device_file(Config.keyboard_input_device)
 
         self.close()
-
-
-class Action:
-    def __init__(self, name: str, title: str):
-        self.name = name
-        self.title = title
-
-
-class Actions:
-    LAUNCH_APPLICATION = Action("launchApplication", "Launch application")
-    EXECUTE_COMMAND = Action("executeCommand", "Execute command")
-    OPEN_FOLDER = Action("openFolder", "Open folder")
-    INPUT_TEXT = Action("inputText", "Input text")
-    INPUT_KEY_SEQUENCE = Action("inputKeySequence", "Input key sequence")
-    LOCK_KEYS = Action("lockKeys", "Lock keys")
-
-    ACTIONS = [LAUNCH_APPLICATION, EXECUTE_COMMAND, OPEN_FOLDER, INPUT_TEXT, INPUT_KEY_SEQUENCE, LOCK_KEYS]
-
-    @staticmethod
-    def get(name: str):
-        for action in Actions.ACTIONS:
-            if action.name == name:
-                return action
-
-
-class Shortcut:
-    def __init__(self):
-        self.key: int = None
-        self.action: str = None
-        self.data: str = None
-        self.name: str = None
-
-    def __str__(self):
-        return self.name
-
-    @staticmethod
-    def new_from_config(section, settings: QtCore.QSettings):
-        shortcut = Shortcut()
-        shortcut.key = int(section)
-        shortcut.action = settings.value("action")
-        shortcut.data = settings.value("data")
-        shortcut.name = settings.value("name")
-
-        return shortcut
-
-    def to_config(self, settings: QtCore.QSettings):
-        settings.setValue("action", self.action)
-        settings.setValue("data", self.data)
-        settings.setValue("name", self.name)
-
-    def get_action_name(self):
-        if self.action == Actions.LAUNCH_APPLICATION.name:
-            return Actions.LAUNCH_APPLICATION.title
-        elif self.action == Actions.LOCK_KEYS.name:
-            return Actions.LOCK_KEYS.title
-        else:
-            return "{}: {}".format(Actions.get(self.action).title, self.data)
-
-    def execute(self):
-        if self.action == Actions.LAUNCH_APPLICATION.name:
-            # TODO: Launch application
-            pass
-        elif self.action == Actions.EXECUTE_COMMAND.name:
-            subprocess.run(self.data, shell=True)
-        elif self.action == Actions.OPEN_FOLDER.name:
-            subprocess.run(["xdg-open", self.data])
-        elif self.action == Actions.INPUT_TEXT.name:
-            pyperclip.copy(self.data)
-            XTestWrapper().send_combination(["Control_L", "V"])
-        elif self.action == Actions.INPUT_KEY_SEQUENCE.name:
-            xtest_wrapper = XTestWrapper()
-
-            for combination in self.data.split(" "):
-                xtest_wrapper.send_combination(combination.split("+"))
-        elif self.action == Actions.LOCK_KEYS.name:
-            if MainWindow.instance.key_listener.allowed_actions == AllowedActions.ALL:
-                MainWindow.instance.key_listener.allowed_actions = AllowedActions.LOCK_KEYS
-            elif MainWindow.instance.key_listener.allowed_actions == AllowedActions.LOCK_KEYS:
-                MainWindow.instance.key_listener.allowed_actions = AllowedActions.ALL
-
-            if MainWindow.instance and MainWindow.instance.tray_icon:
-                MainWindow.instance.update_tray_icon()
-
-
-class Shortcuts:
-    def __init__(self, filename: str):
-        self.list: Dict[Shortcut] = {}
-        self.filename = filename
-
-    def add(self, shortcut: Shortcut):
-        self.list[shortcut.key] = shortcut
-
-    def remove_by_key(self, key):
-        self.list.pop(key, None)
-
-    def get_by_key(self, key):
-        return self.list.get(key)
-
-    def get_list(self):
-        return self.list
-
-    def clear(self):
-        self.list.clear()
-
-    def load(self):
-        settings = QtCore.QSettings(self.filename, QtCore.QSettings.IniFormat)
-
-        self.clear()
-
-        for section in settings.childGroups():
-            settings.beginGroup(section)
-            self.add(Shortcut.new_from_config(section, settings))
-            settings.endGroup()
-
-    def save(self):
-        settings = QtCore.QSettings(self.filename, QtCore.QSettings.IniFormat)
-
-        for shortcut in self.list:
-            settings.beginGroup(str(shortcut.key))
-            shortcut.to_config(settings)
-            settings.endGroup()
 
 
 class AllowedActions(enum.Enum):
