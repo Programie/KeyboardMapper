@@ -8,6 +8,7 @@ from typing import List
 from PySide2 import QtWidgets, QtGui, QtCore
 from PySide2.QtWidgets import QApplication
 
+from desktopfiles import DesktopFile
 from keylistener import KeyListener
 from shortcut import Actions, Shortcuts, Shortcut
 
@@ -423,18 +424,16 @@ class SettingsWindow(QtWidgets.QDialog):
         group_box.setLayout(layout)
 
     def create_desktop_file(self):
-        with open(os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper.desktop"), "w") as file:
-            lines = [
-                "[Desktop Entry]",
-                "Comment={}".format(APP_DESCRIPTION),
-                "Name={}".format(APP_NAME),
-                "Type=Application",
-                "Categories=System;",
-                "Exec={}".format(sys.argv[0]),
-                "Icon={}".format(os.path.join(BASE_DIR, "icons", "appicon-{}.png".format(Config.icons)))
-            ]
+        desktop_file = DesktopFile(os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper.desktop"))
 
-            file.write("\n".join(lines))
+        desktop_file.name = APP_NAME
+        desktop_file.comment = APP_DESCRIPTION
+        desktop_file.type = "Application"
+        desktop_file.categories = ["System"]
+        desktop_file.exec = sys.argv[0]
+        desktop_file.icon = os.path.join(BASE_DIR, "icons", "appicon-{}.png".format(Config.icons))
+
+        desktop_file.write()
 
     def save(self):
         input_device_items: List[QtWidgets.QListWidgetItem] = self.input_device_list.selectedItems()
