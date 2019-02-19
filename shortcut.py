@@ -1,3 +1,5 @@
+import os
+import shutil
 import subprocess
 from typing import Dict
 
@@ -65,8 +67,10 @@ class Shortcut:
 
     def execute(self):
         if self.action == Actions.LAUNCH_APPLICATION.name:
-            # TODO: Launch application
-            pass
+            temp_desktop_file = os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper-tmp.desktop")
+            shutil.copy(self.data, temp_desktop_file)
+            subprocess.run(["gtk-launch", os.path.basename(temp_desktop_file)])
+            os.remove(temp_desktop_file)
         elif self.action == Actions.EXECUTE_COMMAND.name:
             subprocess.run(self.data, shell=True)
         elif self.action == Actions.OPEN_FOLDER.name:
