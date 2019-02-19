@@ -1,18 +1,15 @@
 #! /usr/bin/env python3
 import enum
 import os
-import struct
 import subprocess
 import sys
-import time
-from select import select
-from threading import Thread
 from typing import List, Dict
 
 import pyperclip as pyperclip
 from PySide2 import QtWidgets, QtGui, QtCore
 from PySide2.QtWidgets import QApplication
 
+from keylistener import KeyListener
 from xtestwrapper import XTestWrapper
 
 APP_NAME = "Keyboard Mapper"
@@ -54,13 +51,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
     instance: "MainWindow" = None
 
-    def __init__(self, shortcuts: "Shortcuts"):
+    def __init__(self, shortcuts: "Shortcuts", key_listener: "KeyListenerWrapper"):
         super().__init__()
 
         # Required by other classes which don't know this instance
         MainWindow.instance = self
 
         self.shortcuts = shortcuts
+        self.key_listener = key_listener
 
         self.setWindowTitle("Keyboard Mapper")
 
@@ -116,7 +114,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             icon_name = ["appicon", Config.icons]
 
-            if KeyListener.allowed_actions == AllowedActions.LOCK_KEYS:
+            if self.key_listener.allowed_actions == AllowedActions.LOCK_KEYS:
                 icon_name.append("disabled")
 
             self.tray_icon = QtWidgets.QSystemTrayIcon(QtGui.QIcon("icons/{}.png".format("-".join(icon_name))))
@@ -432,7 +430,7 @@ class SettingsWindow(QtWidgets.QDialog):
         Config.save()
 
         self.main_window.update_tray_icon()
-        KeyListener.reload = True
+        self.main_window.key_listener.set_device_file(Config.keyboard_input_device)
 
         self.close()
 
@@ -510,10 +508,10 @@ class Shortcut:
             for combination in self.data.split(" "):
                 xtest_wrapper.send_combination(combination.split("+"))
         elif self.action == Actions.LOCK_KEYS.name:
-            if KeyListener.allowed_actions == AllowedActions.ALL:
-                KeyListener.allowed_actions = AllowedActions.LOCK_KEYS
-            elif KeyListener.allowed_actions == AllowedActions.LOCK_KEYS:
-                KeyListener.allowed_actions = AllowedActions.ALL
+            if MainWindow.instance.key_listener.allowed_actions == AllowedActions.ALL:
+                MainWindow.instance.key_listener.allowed_actions = AllowedActions.LOCK_KEYS
+            elif MainWindow.instance.key_listener.allowed_actions == AllowedActions.LOCK_KEYS:
+                MainWindow.instance.key_listener.allowed_actions = AllowedActions.ALL
 
             if MainWindow.instance and MainWindow.instance.tray_icon:
                 MainWindow.instance.update_tray_icon()
@@ -564,65 +562,18 @@ class AllowedActions(enum.Enum):
     ALL = 2
 
 
-class KeyListener(Thread):
-    FORMAT = "llHHI"
-    EVENT_SIZE = struct.calcsize(FORMAT)
-
-    reload = False
-    allowed_actions = AllowedActions.ALL
-
+class KeyListenerWrapper(KeyListener):
     def __init__(self, shortcuts: Shortcuts):
-        super().__init__()
+        super().__init__(self.handle_key_press, Config.keyboard_input_device)
 
         self.shortcuts = shortcuts
-
-    def run(self):
-        while True:
-            # Skip reading the file if no device configured yet
-            if Config.keyboard_input_device is None:
-                time.sleep(1)
-                continue
-
-            if not os.path.exists(Config.keyboard_input_device) or not os.access(Config.keyboard_input_device, os.R_OK):
-                time.sleep(1)
-                continue
-
-            try:
-                with open(Config.keyboard_input_device, "rb", buffering=0) as file:
-                    while True:
-                        # If restart flag is set, break the loop to restart reading the file (e.g. if file path has changed)
-                        if KeyListener.reload:
-                            KeyListener.reload = False
-                            break
-
-                        # Wait for input (file.read() would block)
-                        r, w, x = select([file], [], [], 0)
-                        if not len(r):
-                            continue
-
-                        (time_sec, time_usec, event_type, code, value) = struct.unpack(self.FORMAT, file.read(self.EVENT_SIZE))
-
-                        # Skip non-key press/release events (type 1 = key press/release event)
-                        if event_type != 1:
-                            continue
-
-                        # Only handle key releases
-                        # value 0 = key released
-                        # value 1 = key pressed
-                        if value != 0:
-                            continue
-
-                        self.handle_key_press(code)
-            except Exception as exception:
-                print(exception, file=sys.stderr)
-
-            time.sleep(1)
+        self.allowed_actions = AllowedActions.ALL
 
     def handle_key_press(self, key_code):
         print(key_code)
 
         # Skip if disabled
-        if KeyListener.allowed_actions == AllowedActions.NONE:
+        if self.allowed_actions == AllowedActions.NONE:
             return
 
         # Skip if shortcut not configured
@@ -631,7 +582,7 @@ class KeyListener(Thread):
             return
 
         # Skip if keys are locked and this shortcut is not used to lock/unlock keys
-        if KeyListener.allowed_actions == AllowedActions.LOCK_KEYS and shortcut.action != Actions.LOCK_KEYS.name:
+        if self.allowed_actions == AllowedActions.LOCK_KEYS and shortcut.action != Actions.LOCK_KEYS.name:
             return
 
         shortcut.execute()
@@ -651,11 +602,11 @@ def main():
     shortcuts = Shortcuts(os.path.join(config_dir, "shortcuts.ini"))
     shortcuts.load()
 
-    key_listener = KeyListener(shortcuts)
+    key_listener = KeyListenerWrapper(shortcuts)
     key_listener.setDaemon(True)
     key_listener.start()
 
-    main_window = MainWindow(shortcuts)
+    main_window = MainWindow(shortcuts, key_listener)
     main_window.show()
 
     sys.exit(application.exec_())
