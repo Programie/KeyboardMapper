@@ -51,7 +51,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     instance: "MainWindow" = None
 
-    def __init__(self, shortcuts: "Shortcuts", key_listener: "KeyListenerWrapper"):
+    def __init__(self, shortcuts: Shortcuts, key_listener: "KeyListenerWrapper"):
         super().__init__()
 
         # Required by other classes which don't know this instance
@@ -135,7 +135,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.tray_icon = None
 
-    def add_list_item(self, shortcut: "Shortcut"):
+    def add_list_item(self, shortcut: Shortcut):
         model = self.shortcut_tree_view_model
 
         model.insertRow(0)
@@ -207,7 +207,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class EditShortcutWindow(QtWidgets.QDialog):
-    def __init__(self, parent: MainWindow, shortcut: "Shortcut"):
+    def __init__(self, parent: MainWindow, shortcut: Shortcut):
         super().__init__(parent)
 
         self.shortcut = shortcut
