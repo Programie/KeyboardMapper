@@ -72,8 +72,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         edit_menu = QtWidgets.QMenu("Edit")
         edit_menu.addAction("Add shortcut...", self.add_shortcut)
-        self.menu_edit_shortcut = edit_menu.addAction("Edit shortcut...", self.edit_shortcut)
-        self.menu_remove_shortcut = edit_menu.addAction("Remove shortcut", self.remove_shortcut)
+        self.edit_shortcut_action = edit_menu.addAction("Edit shortcut...", self.edit_shortcut)
+        self.remove_shortcut_action = edit_menu.addAction("Remove shortcut", self.remove_shortcut)
         edit_menu.aboutToShow.connect(self.update_edit_menu)
 
         help_menu = QtWidgets.QMenu("Help")
@@ -98,6 +98,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view.setModel(self.shortcut_tree_view_model)
 
         self.shortcut_tree_view.doubleClicked.connect(lambda model_index: self.edit_item(model_index.siblingAtColumn(self.ShortcutListHeader.KEY.value).data()))
+
+        self.shortcut_tree_view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        self.shortcut_tree_view.addAction(self.edit_shortcut_action)
+        self.shortcut_tree_view.addAction(self.remove_shortcut_action)
 
         self.setCentralWidget(self.shortcut_tree_view)
 
@@ -139,8 +143,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_edit_menu(self):
         selected = bool(len(self.shortcut_tree_view.selectedIndexes()))
 
-        self.menu_edit_shortcut.setEnabled(selected)
-        self.menu_remove_shortcut.setEnabled(selected)
+        self.edit_shortcut_action.setEnabled(selected)
+        self.remove_shortcut_action.setEnabled(selected)
 
     def add_list_item(self, shortcut: Shortcut):
         model = self.shortcut_tree_view_model
