@@ -70,11 +70,11 @@ class MainWindow(QtWidgets.QMainWindow):
         file_menu.addSeparator()
         file_menu.addAction("Quit", self.quit)
 
-        edit_menu = QtWidgets.QMenu("Edit")
-        edit_menu.addAction("Add shortcut...", self.add_shortcut)
-        self.edit_shortcut_action = edit_menu.addAction("Edit shortcut...", self.edit_shortcut)
-        self.remove_shortcut_action = edit_menu.addAction("Remove shortcut", self.remove_shortcut)
-        edit_menu.aboutToShow.connect(self.update_edit_menu)
+        self.edit_menu = QtWidgets.QMenu("Edit")
+        self.edit_menu.addAction("Add shortcut...", self.add_shortcut)
+        self.edit_shortcut_action = self.edit_menu.addAction("Edit shortcut...", self.edit_shortcut)
+        self.remove_shortcut_action = self.edit_menu.addAction("Remove shortcut", self.remove_shortcut)
+        self.edit_menu.aboutToShow.connect(self.update_edit_menu)
 
         help_menu = QtWidgets.QMenu("Help")
         help_menu.addAction("Help", self.show_help).setShortcut(QtGui.QKeySequence("F1"))
@@ -82,7 +82,7 @@ class MainWindow(QtWidgets.QMainWindow):
         help_menu.addAction("About", self.show_about)
 
         menu_bar.addMenu(file_menu)
-        menu_bar.addMenu(edit_menu)
+        menu_bar.addMenu(self.edit_menu)
         menu_bar.addMenu(help_menu)
 
         self.setMenuBar(menu_bar)
@@ -99,9 +99,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.shortcut_tree_view.doubleClicked.connect(lambda model_index: self.edit_item(model_index.siblingAtColumn(self.ShortcutListHeader.KEY.value).data()))
 
-        self.shortcut_tree_view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
-        self.shortcut_tree_view.addAction(self.edit_shortcut_action)
-        self.shortcut_tree_view.addAction(self.remove_shortcut_action)
+        self.shortcut_tree_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.shortcut_tree_view.customContextMenuRequested.connect(self.show_context_menu)
 
         self.setCentralWidget(self.shortcut_tree_view)
 
@@ -145,6 +144,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.edit_shortcut_action.setEnabled(selected)
         self.remove_shortcut_action.setEnabled(selected)
+
+    def show_context_menu(self, position):
+        self.edit_menu.exec_(self.shortcut_tree_view.mapToGlobal(position))
 
     def add_list_item(self, shortcut: Shortcut):
         model = self.shortcut_tree_view_model
