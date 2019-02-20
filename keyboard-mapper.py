@@ -72,8 +72,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         edit_menu = QtWidgets.QMenu("Edit")
         edit_menu.addAction("Add shortcut...", self.add_shortcut)
-        edit_menu.addAction("Edit shortcut...", self.edit_shortcut)
-        edit_menu.addAction("Remove shortcut", self.remove_shortcut)
+        self.menu_edit_shortcut = edit_menu.addAction("Edit shortcut...", self.edit_shortcut)
+        self.menu_remove_shortcut = edit_menu.addAction("Remove shortcut", self.remove_shortcut)
+        edit_menu.aboutToShow.connect(self.update_edit_menu)
 
         help_menu = QtWidgets.QMenu("Help")
         help_menu.addAction("Help", self.show_help).setShortcut(QtGui.QKeySequence("F1"))
@@ -134,6 +135,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tray_icon.activated.connect(self.handle_tray_icon_activation)
         else:
             self.tray_icon = None
+
+    def update_edit_menu(self):
+        selected = bool(len(self.shortcut_tree_view.selectedIndexes()))
+
+        self.menu_edit_shortcut.setEnabled(selected)
+        self.menu_remove_shortcut.setEnabled(selected)
 
     def add_list_item(self, shortcut: Shortcut):
         model = self.shortcut_tree_view_model
