@@ -63,6 +63,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # Let shortcuts know how to handle the lock keys action (Shortcuts don't know anything about the Key Listener, Main Window, etc)
         Shortcuts.lock_keys_handler = self.toggle_lock_keys
 
+        self.setGeometry(QtWidgets.QStyle.alignedRect(QtCore.Qt.LeftToRight, QtCore.Qt.AlignCenter, self.size(), QApplication.desktop().availableGeometry()))
+
         menu_bar = QtWidgets.QMenuBar()
 
         file_menu = QtWidgets.QMenu("File")
