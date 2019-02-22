@@ -465,7 +465,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.main_window.update_tray_icon()
         self.main_window.key_listener.set_device_file(Config.keyboard_input_device)
 
-        self.close()
+        self.accept()
 
 
 class AllowedActions(enum.Enum):
