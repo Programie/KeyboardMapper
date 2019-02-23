@@ -1,16 +1,17 @@
 #! /usr/bin/env python3
+import copy
 import enum
 import os
 import subprocess
 import sys
-from typing import List
+from typing import List, Union
 
 from PySide2 import QtWidgets, QtGui, QtCore
 from PySide2.QtWidgets import QApplication
 
 from desktopfiles import DesktopFile
 from keylistener import KeyListener
-from shortcut import Actions, Shortcuts, Shortcut
+from shortcut import Actions, Shortcuts, Shortcut, Action
 
 APP_NAME = "Keyboard Mapper"
 APP_DESCRIPTION = "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions"
@@ -150,13 +151,18 @@ class MainWindow(QtWidgets.QMainWindow):
     def show_context_menu(self, position):
         self.edit_menu.exec_(self.shortcut_tree_view.mapToGlobal(position))
 
-    def add_list_item(self, shortcut: Shortcut):
+    def add_list_item(self, shortcut: Shortcut, row: int = None):
         model = self.shortcut_tree_view_model
 
-        model.insertRow(0)
-        model.setData(model.index(0, self.ShortcutListHeader.NAME.value), shortcut.name)
-        model.setData(model.index(0, self.ShortcutListHeader.ACTION.value), shortcut.get_action_name())
-        model.setData(model.index(0, self.ShortcutListHeader.KEY.value), shortcut.key)
+        if row is None:
+            model.appendRow([])
+            row = model.rowCount() - 1
+        else:
+            model.insertRow(row)
+
+        model.setData(model.index(row, self.ShortcutListHeader.NAME.value), shortcut.name)
+        model.setData(model.index(row, self.ShortcutListHeader.ACTION.value), shortcut.get_action_name())
+        model.setData(model.index(row, self.ShortcutListHeader.KEY.value), shortcut.key)
 
     def load_from_shortcuts(self):
         self.shortcut_tree_view_model.removeRows(0, self.shortcut_tree_view_model.rowCount())
@@ -222,14 +228,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class EditShortcutWindow(QtWidgets.QDialog):
-    def __init__(self, parent: MainWindow, shortcut: Shortcut):
-        super().__init__(parent)
+    def __init__(self, main_window: MainWindow, shortcut: Shortcut):
+        super().__init__(main_window)
 
-        self.shortcut = shortcut
+        self.main_window = main_window
+
+        self.original_shortcut = shortcut
 
         if shortcut:
+            self.shortcut = copy.copy(shortcut)
             self.setWindowTitle("Edit shortcut")
         else:
+            self.shortcut = Shortcut()
             self.setWindowTitle("Add shortcut")
 
         self.setModal(True)
@@ -237,13 +247,13 @@ class EditShortcutWindow(QtWidgets.QDialog):
         self.dialog_layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.dialog_layout)
 
-        self.shortcut_button = None
+        self.shortcut_button: QtWidgets.QPushButton = None
         self.add_shortcut_button()
 
-        self.name_field = None
+        self.name_field: QtWidgets.QLineEdit = None
         self.add_name_field()
 
-        self.action_options: List[QtWidgets.QRadioButton] = []
+        self.action_options = []
         self.action_launch_application_list = None
         self.execute_command_field = None
         self.open_folder_field = None
@@ -263,25 +273,23 @@ class EditShortcutWindow(QtWidgets.QDialog):
         group_box = QtWidgets.QGroupBox("Shortcut")
         self.dialog_layout.addWidget(group_box)
 
-        if self.shortcut:
-            text = str(self.shortcut.key)
-        else:
-            text = "Click to set shortcut"
-
-        self.shortcut_button = QtWidgets.QPushButton(text)
+        self.shortcut_button = QtWidgets.QPushButton()
+        self.update_shortcut_button()
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.shortcut_button)
         group_box.setLayout(layout)
 
+        self.shortcut_button.clicked.connect(self.request_shortcut)
+
     def add_name_field(self):
         group_box = QtWidgets.QGroupBox("Name")
         self.dialog_layout.addWidget(group_box)
 
-        if self.shortcut:
-            text = self.shortcut.name
-        else:
+        if self.shortcut.name is None:
             text = ""
+        else:
+            text = self.shortcut.name
 
         self.name_field = QtWidgets.QLineEdit(text)
 
@@ -325,7 +333,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
             for column, field in enumerate(fields, start=1):
                 layout.addWidget(field, row, column)
 
-            if self.shortcut and self.shortcut.action == action.name:
+            if self.shortcut.action == action.name:
                 radio_button.setChecked(True)
 
                 if action == Actions.LAUNCH_APPLICATION:
@@ -342,6 +350,18 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
         self.update_action_states()
 
+    def request_shortcut(self):
+        shortcut_requester = ShortcutRequester(self, self.main_window.key_listener, self.shortcut)
+        shortcut_requester.accepted.connect(self.update_shortcut_button)
+
+    def update_shortcut_button(self):
+        if self.shortcut.key is None:
+            text = "Click to set shortcut"
+        else:
+            text = str(self.shortcut.key)
+
+        self.shortcut_button.setText(text)
+
     def update_action_states(self):
         for action in self.action_options:
             radio_button, action, fields = action
@@ -357,8 +377,112 @@ class EditShortcutWindow(QtWidgets.QDialog):
         if path:
             self.open_folder_field.setText(path)
 
+    def get_selected_action(self) -> Union[Action, None]:
+        for action in self.action_options:
+            radio_button, action, fields = action
+
+            if radio_button.isChecked():
+                return action
+
+        return None
+
     def save(self):
-        pass
+        self.shortcut.name = self.name_field.text().strip()
+
+        if self.shortcut.key is None:
+            QtWidgets.QMessageBox.critical(self, "No key defined", "Please define a key to use for this shortcut!")
+            return
+
+        existing_shortcut = self.main_window.shortcuts.get_by_key(self.shortcut.key)
+
+        if existing_shortcut and existing_shortcut != self.original_shortcut:
+            QtWidgets.QMessageBox.critical(self, "Duplicate shortcut", "Another shortcut for key '{}' already exists!".format(self.shortcut.key))
+            return
+
+        action = self.get_selected_action()
+
+        if action is None:
+            QtWidgets.QMessageBox.critical(self, "No action selected", "Please select an action to do!")
+            return
+
+        self.shortcut.action = action.name
+
+        if action == Actions.LAUNCH_APPLICATION:
+            pass
+        elif action == Actions.EXECUTE_COMMAND:
+            command = self.execute_command_field.text().strip()
+            if command == "":
+                QtWidgets.QMessageBox.critical(self, "Missing command", "Please specify the command to execute!")
+                return
+
+            self.shortcut.data = command
+        elif action == Actions.OPEN_FOLDER:
+            folder = self.open_folder_field.text().strip()
+            if folder == "":
+                QtWidgets.QMessageBox.critical(self, "Missing folder path", "Please select the path to the folder to open!")
+                return
+
+            self.shortcut.data = folder
+        elif action == Actions.INPUT_TEXT:
+            text = self.input_text_field.text()
+            if text == "":
+                QtWidgets.QMessageBox.critical(self, "Missing text", "Please specify the text to input!")
+                return
+
+            self.shortcut.data = text
+        elif action == Actions.INPUT_KEY_SEQUENCE:
+            key_sequence = self.input_key_sequence_field.text().strip()
+            if key_sequence == "":
+                QtWidgets.QMessageBox.critical(self, "Missing text", "Please specify the key sequence to input!")
+                return
+
+            self.shortcut.data = key_sequence
+
+        if self.original_shortcut:
+            self.main_window.shortcuts.remove_by_key(self.original_shortcut.key)
+
+            list_item: QtGui.QStandardItem = self.main_window.shortcut_tree_view_model.findItems(str(self.original_shortcut.key), column=MainWindow.ShortcutListHeader.KEY.value)[0]
+            list_row = list_item.row()
+            self.main_window.shortcut_tree_view_model.removeRow(list_row)
+        else:
+            list_row = None
+
+        self.main_window.add_list_item(self.shortcut, list_row)
+        self.main_window.shortcuts.add(self.shortcut)
+
+        self.accept()
+
+
+class ShortcutRequester(QtWidgets.QDialog):
+    def __init__(self, parent, key_listener: KeyListener, shortcut: Shortcut):
+        super().__init__(parent)
+
+        self.key_listener = key_listener
+        self.shortcut = shortcut
+
+        self.setWindowTitle("Configure key")
+        self.setModal(True)
+
+        layout = QtWidgets.QVBoxLayout()
+        self.setLayout(layout)
+
+        layout.addWidget(QtWidgets.QLabel("Press the key to use."))
+
+        cancel_button = QtWidgets.QPushButton("Cancel")
+        cancel_button.clicked.connect(self.reject)
+        layout.addWidget(cancel_button)
+
+        self.show()
+
+        self.key_listener.set_event_handler(self.handle_key_press)
+
+    def handle_key_press(self, key_code):
+        self.shortcut.key = key_code
+        self.accept()
+
+    def reject(self):
+        self.key_listener.restore_event_handler()
+        super().reject()
 
 
 class SettingsWindow(QtWidgets.QDialog):

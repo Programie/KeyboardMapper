@@ -15,7 +15,14 @@ class KeyListener(Thread):
 
         self.device_file = device_file
         self.event_handler = event_handler
+        self.initial_event_handler = event_handler
         self.reload = False
+
+    def set_event_handler(self, event_handler: callable):
+        self.event_handler = event_handler
+
+    def restore_event_handler(self):
+        self.event_handler = self.initial_event_handler
 
     def set_device_file(self, device_file):
         self.device_file = device_file
