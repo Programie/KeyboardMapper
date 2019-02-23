@@ -46,10 +46,11 @@ class Config:
         settings.setValue("use-tray-icon", Config.use_tray_icon)
 
 
-class MainWindow(QtWidgets.QMainWindow):
-    class ShortcutListHeader(enum.Enum):
-        NAME, ACTION, KEY = range(3)
+class ShortcutListHeader(enum.Enum):
+    NAME, ACTION, KEY = range(3)
 
+
+class MainWindow(QtWidgets.QMainWindow):
     instance: "MainWindow" = None
 
     def __init__(self, shortcuts: Shortcuts, key_listener: "KeyListenerWrapper"):
@@ -95,12 +96,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         self.shortcut_tree_view_model = QtGui.QStandardItemModel(0, 3)
-        self.shortcut_tree_view_model.setHeaderData(self.ShortcutListHeader.NAME.value, QtCore.Qt.Horizontal, "Name")
-        self.shortcut_tree_view_model.setHeaderData(self.ShortcutListHeader.ACTION.value, QtCore.Qt.Horizontal, "Action")
-        self.shortcut_tree_view_model.setHeaderData(self.ShortcutListHeader.KEY.value, QtCore.Qt.Horizontal, "Key")
+        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.NAME.value, QtCore.Qt.Horizontal, "Name")
+        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.ACTION.value, QtCore.Qt.Horizontal, "Action")
+        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.KEY.value, QtCore.Qt.Horizontal, "Key")
         self.shortcut_tree_view.setModel(self.shortcut_tree_view_model)
 
-        self.shortcut_tree_view.doubleClicked.connect(lambda model_index: self.edit_item(model_index.siblingAtColumn(self.ShortcutListHeader.KEY.value).data()))
+        self.shortcut_tree_view.doubleClicked.connect(lambda model_index: self.edit_item(model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data()))
 
         self.shortcut_tree_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.shortcut_tree_view.customContextMenuRequested.connect(self.show_context_menu)
@@ -160,9 +161,9 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             model.insertRow(row)
 
-        model.setData(model.index(row, self.ShortcutListHeader.NAME.value), shortcut.name)
-        model.setData(model.index(row, self.ShortcutListHeader.ACTION.value), shortcut.get_action_name())
-        model.setData(model.index(row, self.ShortcutListHeader.KEY.value), shortcut.key)
+        model.setData(model.index(row, ShortcutListHeader.NAME.value), shortcut.name)
+        model.setData(model.index(row, ShortcutListHeader.ACTION.value), shortcut.get_action_name())
+        model.setData(model.index(row, ShortcutListHeader.KEY.value), shortcut.key)
 
     def load_from_shortcuts(self):
         self.shortcut_tree_view_model.removeRows(0, self.shortcut_tree_view_model.rowCount())
@@ -193,7 +194,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if len(selected_indexes) == 0:
             return
 
-        self.edit_item(selected_indexes[0].siblingAtColumn(self.ShortcutListHeader.KEY.value).data())
+        self.edit_item(selected_indexes[0].siblingAtColumn(ShortcutListHeader.KEY.value).data())
 
     def remove_shortcut(self):
         pass
@@ -441,7 +442,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
         if self.original_shortcut:
             self.main_window.shortcuts.remove_by_key(self.original_shortcut.key)
 
-            list_item: QtGui.QStandardItem = self.main_window.shortcut_tree_view_model.findItems(str(self.original_shortcut.key), column=MainWindow.ShortcutListHeader.KEY.value)[0]
+            list_item: QtGui.QStandardItem = self.main_window.shortcut_tree_view_model.findItems(str(self.original_shortcut.key), column=ShortcutListHeader.KEY.value)[0]
             list_row = list_item.row()
             self.main_window.shortcut_tree_view_model.removeRow(list_row)
         else:
