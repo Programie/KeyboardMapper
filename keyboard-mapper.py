@@ -117,6 +117,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.KEY.value, QtCore.Qt.Horizontal, "Key")
         self.shortcut_tree_view.setModel(self.shortcut_tree_view_model)
 
+        self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.NAME.value, 300)
+        self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.ACTION.value, 300)
+        self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.KEY.value, 50)
+
         self.shortcut_tree_view.selectionModel().selectionChanged.connect(self.update_edit_actions)
 
         self.shortcut_tree_view.doubleClicked.connect(lambda model_index: self.edit_item(model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data()))
