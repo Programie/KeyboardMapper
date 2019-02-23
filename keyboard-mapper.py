@@ -197,7 +197,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.edit_item(selected_indexes[0].siblingAtColumn(ShortcutListHeader.KEY.value).data())
 
     def remove_shortcut(self):
-        pass
+        selected_indexes: List[QtCore.QModelIndex] = self.shortcut_tree_view.selectedIndexes()
+
+        if len(selected_indexes) == 0:
+            return
+
+        self.shortcuts.remove_by_key(selected_indexes[0].siblingAtColumn(ShortcutListHeader.KEY.value).data())
+        self.shortcut_tree_view_model.removeRow(selected_indexes[0].row())
+        self.shortcuts.save()
 
     def show_help(self):
         subprocess.run(["xdg-open", APP_WEBSITE])

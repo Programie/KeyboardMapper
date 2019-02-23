@@ -123,6 +123,8 @@ class Shortcuts:
     def save(self):
         settings = QtCore.QSettings(self.filename, QtCore.QSettings.IniFormat)
 
+        settings.clear()
+
         for index in self.list:
             shortcut = self.list[index]
             settings.beginGroup(str(shortcut.key))
