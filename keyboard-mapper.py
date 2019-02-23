@@ -321,6 +321,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
         button_box.rejected.connect(self.close)
 
         self.show()
+        self.setFixedSize(self.size())
 
     def add_shortcut_button(self):
         group_box = QtWidgets.QGroupBox("Shortcut")
@@ -602,6 +603,7 @@ class SettingsWindow(QtWidgets.QDialog):
         button_box.rejected.connect(self.close)
 
         self.show()
+        self.setFixedSize(self.size())
 
     def add_keyboard_input_device_settings(self):
         group_box = QtWidgets.QGroupBox("Keyboard input device")
