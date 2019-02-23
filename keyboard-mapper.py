@@ -8,6 +8,7 @@ from typing import List, Union
 
 from PySide2 import QtWidgets, QtGui, QtCore
 from PySide2.QtWidgets import QApplication
+from filelock import FileLock, Timeout
 
 from desktopfiles import DesktopFile, DesktopFilesFinder
 from keylistener import KeyListener
@@ -25,6 +26,7 @@ class Config:
     keyboard_input_device = None
     icons = "dark"
     use_tray_icon = True
+    single_instance = True
 
     @staticmethod
     def load():
@@ -33,6 +35,7 @@ class Config:
         Config.keyboard_input_device = settings.value("keyboard-input-device")
         Config.icons = settings.value("icons", defaultValue="dark")
         Config.use_tray_icon = Config.to_boolean(str(settings.value("use-tray-icon", defaultValue=True)))
+        Config.single_instance = Config.to_boolean(str(settings.value("single-instance", defaultValue=True)))
 
     @staticmethod
     def to_boolean(string: str):
@@ -45,6 +48,7 @@ class Config:
         settings.setValue("keyboard-input-device", Config.keyboard_input_device)
         settings.setValue("icons", Config.icons)
         settings.setValue("use-tray-icon", Config.use_tray_icon)
+        settings.setValue("single-instance", Config.single_instance)
 
 
 class LockKeysEvent(QtCore.QEvent):
@@ -583,6 +587,10 @@ class SettingsWindow(QtWidgets.QDialog):
         self.use_tray_icon_checkbox.setChecked(Config.use_tray_icon)
         self.dialog_layout.addWidget(self.use_tray_icon_checkbox)
 
+        self.single_instance_checkbox = QtWidgets.QCheckBox("Allow only one instance")
+        self.single_instance_checkbox.setChecked(Config.single_instance)
+        self.dialog_layout.addWidget(self.single_instance_checkbox)
+
         create_desktop_file_button = QtWidgets.QPushButton("Create desktop file")
         create_desktop_file_button.clicked.connect(self.create_desktop_file)
         self.dialog_layout.addWidget(create_desktop_file_button)
@@ -658,6 +666,7 @@ class SettingsWindow(QtWidgets.QDialog):
         Config.keyboard_input_device = "/dev/input/by-id/{}".format(input_device_items[0].text())
         Config.icons = self.icon_theme_list.currentText()
         Config.use_tray_icon = self.use_tray_icon_checkbox.checkState() == QtCore.Qt.Checked
+        Config.single_instance = self.single_instance_checkbox.checkState() == QtCore.Qt.Checked
 
         Config.save()
 
@@ -726,6 +735,21 @@ def main():
     Config.load()
 
     application.setWindowIcon(QtGui.QIcon(os.path.join(BASE_DIR, "icons", "appicon-{}.png".format(Config.icons))))
+
+    if Config.single_instance:
+        user_run_dir = os.path.join("var", "run", "user", str(os.getuid()))
+        if os.path.exists(user_run_dir):
+            lock_file = os.path.join(user_run_dir, "keyboard-mapper.lock")
+        else:
+            lock_file = os.path.join(config_dir, "app.lock")
+
+        lock = FileLock(lock_file, timeout=1)
+
+        try:
+            lock.acquire()
+        except Timeout:
+            QtWidgets.QMessageBox.critical(None, APP_NAME, "Keyboard Mapper is already running!")
+            sys.exit(1)
 
     shortcuts = Shortcuts(os.path.join(config_dir, "shortcuts.ini"))
     shortcuts.load()
