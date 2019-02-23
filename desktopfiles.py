@@ -28,19 +28,21 @@ class DesktopFile:
         desktop_file = DesktopFile(filename)
 
         desktop_file.config_parser.read(filename)
-        section: SectionProxy = desktop_file.config_parser["Desktop Entry"]
 
-        desktop_file.name = section.get("Name", raw=True)
-        desktop_file.comment = section.get("Comment", raw=True)
-        desktop_file.type = section.get("Type", raw=True, fallback="Application")
-        desktop_file.exec = section.get("Exec", raw=True)
-        desktop_file.path = section.get("Path", raw=True)
-        desktop_file.icon = section.get("Icon", raw=True)
-        desktop_file.categories = DesktopFile.string_to_list(section.get("Categories", raw=True))
-        desktop_file.no_display = section.get("NoDisplay", raw=True, fallback=False, _impl=desktop_file.config_parser.getboolean)
-        desktop_file.hidden = section.get("Hidden", raw=True, fallback=False, _impl=desktop_file.config_parser.getboolean)
-        desktop_file.only_show_in = DesktopFile.string_to_list(section.get("OnlyShowIn", raw=True))
-        desktop_file.not_show_in = DesktopFile.string_to_list(section.get("NotShowIn", raw=True))
+        if "Desktop Entry" in desktop_file.config_parser:
+            section: SectionProxy = desktop_file.config_parser["Desktop Entry"]
+
+            desktop_file.name = section.get("Name", raw=True)
+            desktop_file.comment = section.get("Comment", raw=True)
+            desktop_file.type = section.get("Type", raw=True, fallback="Application")
+            desktop_file.exec = section.get("Exec", raw=True)
+            desktop_file.path = section.get("Path", raw=True)
+            desktop_file.icon = section.get("Icon", raw=True)
+            desktop_file.categories = DesktopFile.string_to_list(section.get("Categories", raw=True))
+            desktop_file.no_display = section.get("NoDisplay", raw=True, fallback=False, _impl=desktop_file.config_parser.getboolean)
+            desktop_file.hidden = section.get("Hidden", raw=True, fallback=False, _impl=desktop_file.config_parser.getboolean)
+            desktop_file.only_show_in = DesktopFile.string_to_list(section.get("OnlyShowIn", raw=True))
+            desktop_file.not_show_in = DesktopFile.string_to_list(section.get("NotShowIn", raw=True))
 
         return desktop_file
 
