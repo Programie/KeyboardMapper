@@ -31,8 +31,8 @@ class Config:
         settings = QtCore.QSettings(Config.filename, QtCore.QSettings.IniFormat)
 
         Config.keyboard_input_device = settings.value("keyboard-input-device")
-        Config.icons = settings.value("icons")
-        Config.use_tray_icon = Config.to_boolean(str(settings.value("use-tray-icon")))
+        Config.icons = settings.value("icons", defaultValue="dark")
+        Config.use_tray_icon = Config.to_boolean(str(settings.value("use-tray-icon", defaultValue=True)))
 
     @staticmethod
     def to_boolean(string: str):
