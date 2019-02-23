@@ -136,6 +136,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_tray_icon()
 
         self.load_from_shortcuts()
+        self.shortcut_tree_view.setCurrentIndex(self.shortcut_tree_view_model.index(0, 0))
 
         self.update_edit_actions()
 
