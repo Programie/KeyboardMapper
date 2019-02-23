@@ -47,6 +47,11 @@ class Config:
         settings.setValue("use-tray-icon", Config.use_tray_icon)
 
 
+class LockKeysEvent(QtCore.QEvent):
+    def __init__(self):
+        super().__init__(QtCore.QEvent.Type.User)
+
+
 class ShortcutListHeader(enum.Enum):
     NAME, ACTION, KEY = range(3)
 
@@ -64,7 +69,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.key_listener = key_listener
 
         # Let shortcuts know how to handle the lock keys action (Shortcuts don't know anything about the Key Listener, Main Window, etc)
-        Shortcuts.lock_keys_handler = self.toggle_lock_keys
+        Shortcuts.lock_keys_handler = lambda: QApplication.postEvent(self, LockKeysEvent())
 
         self.setGeometry(QtWidgets.QStyle.alignedRect(QtCore.Qt.LeftToRight, QtCore.Qt.AlignCenter, self.size(), QApplication.desktop().availableGeometry()))
 
@@ -254,6 +259,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.tray_icon:
             self.hide()
             event.ignore()
+
+    def event(self, event: QtCore.QEvent):
+        if isinstance(event, LockKeysEvent):
+            self.toggle_lock_keys()
+
+        return super().event(event)
 
     def toggle_lock_keys(self):
         if self.key_listener.allowed_actions == AllowedActions.ALL:
