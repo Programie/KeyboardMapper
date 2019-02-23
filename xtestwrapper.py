@@ -19,8 +19,6 @@ class XTestWrapper:
         keysym = XK.string_to_keysym(key)
         keycode = self.display.keysym_to_keycode(keysym)
 
-        print("{} -> {} -> {}".format(key, keysym, keycode))
-
         # Send a fake keypress via xtest
         xtest.fake_input(window, event_type, keycode)
 

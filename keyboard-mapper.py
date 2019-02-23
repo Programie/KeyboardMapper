@@ -642,8 +642,6 @@ class KeyListenerWrapper(KeyListener):
         self.allowed_actions = AllowedActions.ALL
 
     def handle_key_press(self, key_code):
-        print(key_code)
-
         # Skip if disabled
         if self.allowed_actions == AllowedActions.NONE:
             return
