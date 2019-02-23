@@ -6,6 +6,7 @@ from typing import Dict
 import pyperclip
 from PySide2 import QtCore
 
+from desktopfiles import DesktopFile
 from xtestwrapper import XTestWrapper
 
 
@@ -59,7 +60,14 @@ class Shortcut:
 
     def get_action_name(self):
         if self.action == Actions.LAUNCH_APPLICATION.name:
-            return Actions.LAUNCH_APPLICATION.title
+            desktop_file = DesktopFile.read(self.data)
+
+            if desktop_file.name is None:
+                application_name = self.data
+            else:
+                application_name = desktop_file.name
+
+            return "{}: {}".format(Actions.LAUNCH_APPLICATION.title, application_name)
         elif self.action == Actions.LOCK_KEYS.name:
             return Actions.LOCK_KEYS.title
         else:

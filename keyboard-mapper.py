@@ -9,7 +9,7 @@ from typing import List, Union
 from PySide2 import QtWidgets, QtGui, QtCore
 from PySide2.QtWidgets import QApplication
 
-from desktopfiles import DesktopFile
+from desktopfiles import DesktopFile, DesktopFilesFinder
 from keylistener import KeyListener
 from shortcut import Actions, Shortcuts, Shortcut, Action
 
@@ -264,11 +264,11 @@ class EditShortcutWindow(QtWidgets.QDialog):
         self.add_name_field()
 
         self.action_options = []
-        self.action_launch_application_list = None
-        self.execute_command_field = None
-        self.open_folder_field = None
-        self.input_text_field = None
-        self.input_key_sequence_field = None
+        self.action_launch_application_list: QtWidgets.QComboBox = None
+        self.execute_command_field: QtWidgets.QLineEdit = None
+        self.open_folder_field: QtWidgets.QLineEdit = None
+        self.input_text_field: QtWidgets.QLineEdit = None
+        self.input_key_sequence_field: QtWidgets.QLineEdit = None
         self.add_action_options()
 
         button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
@@ -320,6 +320,22 @@ class EditShortcutWindow(QtWidgets.QDialog):
         self.input_text_field = QtWidgets.QLineEdit()
         self.input_key_sequence_field = QtWidgets.QLineEdit()
 
+        desktop_files = list(DesktopFilesFinder.load_in_known_paths())
+        desktop_files.sort(key=lambda item: item.name)
+
+        application_items = {}
+
+        index = 0
+        for desktop_file in desktop_files:
+            if not desktop_file.is_visible():
+                continue
+
+            self.action_launch_application_list.addItem(desktop_file.get_icon(), desktop_file.name, desktop_file)
+
+            application_items[desktop_file.filename] = index
+
+            index += 1
+
         select_folder_button = QtWidgets.QPushButton("Browse...")
         select_folder_button.clicked.connect(self.select_folder)
 
@@ -347,8 +363,8 @@ class EditShortcutWindow(QtWidgets.QDialog):
                 radio_button.setChecked(True)
 
                 if action == Actions.LAUNCH_APPLICATION:
-                    # TODO: self.action_launch_application_list.setCurrentIndex()
-                    pass
+                    if self.shortcut.data in application_items:
+                        self.action_launch_application_list.setCurrentIndex(application_items[self.shortcut.data])
                 elif action == Actions.EXECUTE_COMMAND:
                     self.execute_command_field.setText(self.shortcut.data)
                 elif action == Actions.OPEN_FOLDER:
@@ -418,7 +434,12 @@ class EditShortcutWindow(QtWidgets.QDialog):
         self.shortcut.action = action.name
 
         if action == Actions.LAUNCH_APPLICATION:
-            pass
+            desktop_file: DesktopFile = self.action_launch_application_list.currentData(QtCore.Qt.ItemDataRole.UserRole)
+            if desktop_file is None:
+                QtWidgets.QMessageBox.critical(self, "Missing application", "Please select the application to launch!")
+                return
+
+            self.shortcut.data = desktop_file.filename
         elif action == Actions.EXECUTE_COMMAND:
             command = self.execute_command_field.text().strip()
             if command == "":

@@ -2,6 +2,8 @@ import os
 from configparser import ConfigParser, SectionProxy
 from typing import List
 
+from PySide2.QtGui import QIcon
+
 
 class DesktopFile:
     def __init__(self, filename: str):
@@ -86,6 +88,15 @@ class DesktopFile:
             return False
 
         return True
+
+    def get_icon(self):
+        if self.icon is None:
+            return QIcon()
+
+        if self.icon[0] == "/":
+            return QIcon(self.icon)
+
+        return QIcon.fromTheme(self.icon)
 
     @staticmethod
     def string_to_list(string: str):
