@@ -16,6 +16,7 @@ from shortcut import Actions, Shortcuts, Shortcut, Action
 APP_NAME = "Keyboard Mapper"
 APP_DESCRIPTION = "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions"
 APP_WEBSITE = "https://gitlab.com/Programie/KeyboardMapper"
+APP_VERSION = "1.0"
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -640,14 +641,33 @@ class KeyListenerWrapper(KeyListener):
 
 def main():
     application = QApplication(sys.argv)
+    application.setApplicationName(APP_NAME)
+    application.setApplicationVersion(APP_VERSION)
+
+    parser = QtCore.QCommandLineParser()
+    parser.setApplicationDescription(APP_DESCRIPTION)
+    parser.addHelpOption()
+    parser.addVersionOption()
 
     config_dir = os.path.join(os.path.expanduser("~"), ".config", "keyboard-mapper")
+
+    config_dir_option = QtCore.QCommandLineOption(["c", "config-dir"], "Path to the config dir (default: {})".format(config_dir), defaultValue=config_dir)
+    parser.addOption(config_dir_option)
+
+    hidden_option = QtCore.QCommandLineOption(["H", "hidden"], "Start hidden")
+    parser.addOption(hidden_option)
+
+    parser.process(application)
+
+    config_dir = parser.value(config_dir_option)
 
     if not os.path.isdir(config_dir):
         os.mkdir(config_dir)
 
     Config.filename = os.path.join(config_dir, "config.ini")
     Config.load()
+
+    application.setWindowIcon(QtGui.QIcon(os.path.join(BASE_DIR, "icons", "appicon-{}.png".format(Config.icons))))
 
     shortcuts = Shortcuts(os.path.join(config_dir, "shortcuts.ini"))
     shortcuts.load()
@@ -657,7 +677,9 @@ def main():
     key_listener.start()
 
     main_window = MainWindow(shortcuts, key_listener)
-    main_window.show()
+
+    if not parser.isSet(hidden_option):
+        main_window.show()
 
     sys.exit(application.exec_())
 
