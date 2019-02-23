@@ -116,6 +116,17 @@ class MainWindow(QtWidgets.QMainWindow):
         toolbar.addAction(self.edit_shortcut_action)
         toolbar.addAction(self.remove_shortcut_action)
 
+        statusbar = QtWidgets.QStatusBar()
+        self.statusbar_text = QtWidgets.QLabel()
+        self.statusbar_lock_state = QtWidgets.QPushButton()
+        self.statusbar_lock_state.setIcon(QtGui.QIcon.fromTheme("object-locked"))
+        self.statusbar_lock_state.setToolTip("Shortcuts locked, click to unlock")
+        self.statusbar_lock_state.hide()
+        self.statusbar_lock_state.clicked.connect(self.toggle_lock_keys)
+        statusbar.addWidget(self.statusbar_text)
+        statusbar.addPermanentWidget(self.statusbar_lock_state)
+        self.setStatusBar(statusbar)
+
         self.shortcut_tree_view = QtWidgets.QTreeView()
         self.shortcut_tree_view.setAlternatingRowColors(True)
         self.shortcut_tree_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -139,8 +150,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setCentralWidget(self.shortcut_tree_view)
 
-        self.update_window_title()
-
         self.tray_icon: QtWidgets.QSystemTrayIcon = None
         self.update_tray_icon()
 
@@ -149,13 +158,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.update_edit_actions()
 
-    def update_window_title(self):
-        title = APP_NAME
+    def update_status_bar(self):
+        message = []
 
-        if self.key_listener.allowed_actions == AllowedActions.LOCK_KEYS:
-            title = "{} (Keys locked)".format(title)
+        shortcuts = len(self.shortcuts.get_list())
+        if shortcuts == 1:
+            message.append("1 Shortcut")
+        else:
+            message.append("{} shortcuts".format(shortcuts))
 
-        self.setWindowTitle(title)
+        self.statusbar_text.setText(" ".join(message))
 
     def update_tray_icon(self):
         if Config.use_tray_icon and QtWidgets.QSystemTrayIcon.isSystemTrayAvailable():
@@ -205,6 +217,8 @@ class MainWindow(QtWidgets.QMainWindow):
         for shortcut in self.shortcuts.get_list().values():
             self.add_list_item(shortcut)
 
+        self.update_status_bar()
+
     def edit_item(self, key=None):
         if key is None:
             shortcut = None
@@ -244,6 +258,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcuts.remove_by_key(selected_indexes[0].siblingAtColumn(ShortcutListHeader.KEY.value).data())
         self.shortcut_tree_view_model.removeRow(selected_indexes[0].row())
         self.shortcuts.save()
+        self.update_status_bar()
 
     def show_help(self):
         subprocess.run(["xdg-open", APP_WEBSITE])
@@ -273,10 +288,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def toggle_lock_keys(self):
         if self.key_listener.allowed_actions == AllowedActions.ALL:
             self.key_listener.allowed_actions = AllowedActions.LOCK_KEYS
+            self.statusbar_lock_state.show()
         elif self.key_listener.allowed_actions == AllowedActions.LOCK_KEYS:
             self.key_listener.allowed_actions = AllowedActions.ALL
+            self.statusbar_lock_state.hide()
 
-        self.update_window_title()
         self.update_tray_icon()
 
 
@@ -524,6 +540,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
         self.main_window.add_list_item(self.shortcut, list_row)
         self.main_window.shortcuts.add(self.shortcut)
+        self.main_window.update_status_bar()
 
         if list_row is not None:
             self.main_window.shortcut_tree_view.setCurrentIndex(self.main_window.shortcut_tree_view_model.index(list_row, 0))
