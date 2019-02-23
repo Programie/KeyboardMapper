@@ -451,6 +451,9 @@ class EditShortcutWindow(QtWidgets.QDialog):
         self.main_window.add_list_item(self.shortcut, list_row)
         self.main_window.shortcuts.add(self.shortcut)
 
+        if list_row is not None:
+            self.main_window.shortcut_tree_view.setCurrentIndex(self.main_window.shortcut_tree_view_model.index(list_row, 0))
+
         self.accept()
 
 
