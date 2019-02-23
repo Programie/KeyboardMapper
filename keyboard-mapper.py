@@ -75,11 +75,20 @@ class MainWindow(QtWidgets.QMainWindow):
         file_menu.addSeparator()
         file_menu.addAction("Quit", self.quit)
 
-        self.edit_menu = QtWidgets.QMenu("Edit")
-        self.edit_menu.addAction("Add shortcut...", self.add_shortcut)
-        self.edit_shortcut_action = self.edit_menu.addAction("Edit shortcut...", self.edit_shortcut)
-        self.remove_shortcut_action = self.edit_menu.addAction("Remove shortcut", self.remove_shortcut)
+        self.add_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"), "Add shortcut...")
+        self.add_shortcut_action.triggered.connect(self.add_shortcut)
+
+        self.edit_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-edit"), "Edit shortcut...")
+        self.edit_shortcut_action.triggered.connect(self.edit_shortcut)
+
+        self.remove_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("delete"), "Remove shortcut...")
         self.remove_shortcut_action.setShortcut(QtGui.QKeySequence("Del"))
+        self.remove_shortcut_action.triggered.connect(self.remove_shortcut)
+
+        self.edit_menu = QtWidgets.QMenu("Edit")
+        self.edit_menu.addAction(self.add_shortcut_action)
+        self.edit_menu.addAction(self.edit_shortcut_action)
+        self.edit_menu.addAction(self.remove_shortcut_action)
         self.edit_menu.aboutToShow.connect(self.update_edit_menu)
 
         help_menu = QtWidgets.QMenu("Help")
@@ -92,6 +101,12 @@ class MainWindow(QtWidgets.QMainWindow):
         menu_bar.addMenu(help_menu)
 
         self.setMenuBar(menu_bar)
+
+        toolbar = self.addToolBar("Edit")
+
+        toolbar.addAction(self.add_shortcut_action)
+        toolbar.addAction(self.edit_shortcut_action)
+        toolbar.addAction(self.remove_shortcut_action)
 
         self.shortcut_tree_view = QtWidgets.QTreeView()
         self.shortcut_tree_view.setAlternatingRowColors(True)
@@ -202,6 +217,11 @@ class MainWindow(QtWidgets.QMainWindow):
         selected_indexes: List[QtCore.QModelIndex] = self.shortcut_tree_view.selectedIndexes()
 
         if len(selected_indexes) == 0:
+            return
+
+        response = QtWidgets.QMessageBox.question(self, "Remove shortcut", "Are you sure to remove the shortcut '{}'?".format(selected_indexes[0].siblingAtColumn(ShortcutListHeader.NAME.value).data()))
+
+        if response != QtWidgets.QMessageBox.StandardButton.Yes:
             return
 
         self.shortcuts.remove_by_key(selected_indexes[0].siblingAtColumn(ShortcutListHeader.KEY.value).data())
