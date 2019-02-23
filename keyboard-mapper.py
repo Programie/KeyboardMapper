@@ -18,7 +18,8 @@ APP_NAME = "Keyboard Mapper"
 APP_DESCRIPTION = "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions"
 APP_WEBSITE = "https://gitlab.com/Programie/KeyboardMapper"
 APP_VERSION = "1.0"
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+APP_FILE = os.path.realpath(__file__)
+BASE_DIR = os.path.dirname(APP_FILE)
 
 
 class Config:
@@ -588,6 +589,8 @@ class SettingsWindow(QtWidgets.QDialog):
 
         self.main_window = parent
 
+        self.autostart_file = os.path.join(os.path.expanduser("~"), ".config", "autostart", "keyboard-mapper.desktop")
+
         self.setWindowTitle("Settings")
         self.setModal(True)
 
@@ -609,8 +612,12 @@ class SettingsWindow(QtWidgets.QDialog):
         self.single_instance_checkbox.setChecked(Config.single_instance)
         self.dialog_layout.addWidget(self.single_instance_checkbox)
 
+        self.autostart_checkbox = QtWidgets.QCheckBox("Start on login")
+        self.autostart_checkbox.setChecked(os.path.exists(self.autostart_file))
+        self.dialog_layout.addWidget(self.autostart_checkbox)
+
         create_desktop_file_button = QtWidgets.QPushButton("Create desktop file")
-        create_desktop_file_button.clicked.connect(self.create_desktop_file)
+        create_desktop_file_button.clicked.connect(self.create_app_desktop_file)
         self.dialog_layout.addWidget(create_desktop_file_button)
 
         button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
@@ -664,17 +671,20 @@ class SettingsWindow(QtWidgets.QDialog):
         layout.addWidget(self.icon_theme_list)
         group_box.setLayout(layout)
 
-    def create_desktop_file(self):
-        desktop_file = DesktopFile(os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper.desktop"))
+    def create_desktop_file(self, filename: str, arguments: List[str]):
+        desktop_file = DesktopFile(filename)
 
         desktop_file.name = APP_NAME
         desktop_file.comment = APP_DESCRIPTION
         desktop_file.type = "Application"
         desktop_file.categories = ["System"]
-        desktop_file.exec = sys.argv[0]
+        desktop_file.exec = " ".join([APP_FILE] + arguments)
         desktop_file.icon = os.path.join(BASE_DIR, "icons", "appicon-{}.png".format(Config.icons))
 
         desktop_file.write()
+
+    def create_app_desktop_file(self):
+        self.create_desktop_file(os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper.desktop"), [])
 
     def save(self):
         input_device_items: List[QtWidgets.QListWidgetItem] = self.input_device_list.selectedItems()
@@ -688,6 +698,11 @@ class SettingsWindow(QtWidgets.QDialog):
         Config.single_instance = self.single_instance_checkbox.checkState() == QtCore.Qt.Checked
 
         Config.save()
+
+        if self.autostart_checkbox.checkState() == QtCore.Qt.Checked:
+            self.create_desktop_file(self.autostart_file, ["--hidden"])
+        elif os.path.exists(self.autostart_file):
+            os.remove(self.autostart_file)
 
         self.main_window.update_tray_icon()
         self.main_window.key_listener.set_device_file(Config.keyboard_input_device)
