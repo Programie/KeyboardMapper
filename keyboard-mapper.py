@@ -137,7 +137,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.key_listener.allowed_actions == AllowedActions.LOCK_KEYS:
                 icon_name.append("disabled")
 
-            self.tray_icon = QtWidgets.QSystemTrayIcon(QtGui.QIcon("icons/{}.png".format("-".join(icon_name))))
+            self.tray_icon = QtWidgets.QSystemTrayIcon(QtGui.QIcon(os.path.join(BASE_DIR, "icons", "{}.png".format("-".join(icon_name)))))
             self.tray_icon.show()
             self.tray_icon.setContextMenu(tray_menu)
             self.tray_icon.activated.connect(self.handle_tray_icon_activation)
