@@ -78,6 +78,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.edit_menu.addAction("Add shortcut...", self.add_shortcut)
         self.edit_shortcut_action = self.edit_menu.addAction("Edit shortcut...", self.edit_shortcut)
         self.remove_shortcut_action = self.edit_menu.addAction("Remove shortcut", self.remove_shortcut)
+        self.remove_shortcut_action.setShortcut(QtGui.QKeySequence("Del"))
         self.edit_menu.aboutToShow.connect(self.update_edit_menu)
 
         help_menu = QtWidgets.QMenu("Help")
