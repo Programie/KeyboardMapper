@@ -89,7 +89,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.edit_menu.addAction(self.add_shortcut_action)
         self.edit_menu.addAction(self.edit_shortcut_action)
         self.edit_menu.addAction(self.remove_shortcut_action)
-        self.edit_menu.aboutToShow.connect(self.update_edit_menu)
 
         help_menu = QtWidgets.QMenu("Help")
         help_menu.addAction("Help", self.show_help).setShortcut(QtGui.QKeySequence("F1"))
@@ -118,6 +117,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.KEY.value, QtCore.Qt.Horizontal, "Key")
         self.shortcut_tree_view.setModel(self.shortcut_tree_view_model)
 
+        self.shortcut_tree_view.selectionModel().selectionChanged.connect(self.update_edit_actions)
+
         self.shortcut_tree_view.doubleClicked.connect(lambda model_index: self.edit_item(model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data()))
 
         self.shortcut_tree_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -131,6 +132,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_tray_icon()
 
         self.load_from_shortcuts()
+
+        self.update_edit_actions()
 
     def update_window_title(self):
         title = APP_NAME
@@ -160,7 +163,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.tray_icon = None
 
-    def update_edit_menu(self):
+    def update_edit_actions(self):
         selected = bool(len(self.shortcut_tree_view.selectedIndexes()))
 
         self.edit_shortcut_action.setEnabled(selected)
