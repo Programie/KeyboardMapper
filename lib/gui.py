@@ -8,7 +8,7 @@ from typing import List, Union
 from PySide2 import QtWidgets, QtGui, QtCore
 
 from lib.config import Config
-from lib.constants import APP_WEBSITE, DEVICES_BASE_DIR, APP_NAME, APP_DESCRIPTION, ICONS_DIR, APP_VERSION
+from lib.constants import APP_WEBSITE, DEVICES_BASE_DIR, APP_NAME, APP_DESCRIPTION, ICONS_DIR, APP_VERSION, APP_COPYRIGHT
 from lib.desktopfiles import DesktopFilesFinder, DesktopFile
 from lib.keylistener_manager import KeyListenerManager, AllowedActions
 from lib.shortcut import Shortcuts, Shortcut, Actions, Action
@@ -733,6 +733,13 @@ class AboutDialog(QtWidgets.QDialog):
         app_version_label = QtWidgets.QLabel(APP_VERSION)
         app_version_label.setFont(bold_font)
         layout.addWidget(app_version_label, alignment=QtCore.Qt.AlignCenter)
+
+        app_description_label = QtWidgets.QLabel(APP_DESCRIPTION)
+        app_description_label.setWordWrap(True)
+        layout.addWidget(app_description_label, alignment=QtCore.Qt.AlignCenter)
+
+        copyright_label = QtWidgets.QLabel(APP_COPYRIGHT)
+        layout.addWidget(copyright_label, alignment=QtCore.Qt.AlignCenter)
 
         website_label = QtWidgets.QLabel("<a href='{}'>View on GitLab</a>".format(APP_WEBSITE))
         website_label.setTextFormat(QtCore.Qt.RichText)
