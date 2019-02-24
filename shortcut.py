@@ -4,6 +4,7 @@ import subprocess
 from typing import Dict
 
 import pyperclip
+import yaml
 from PySide2 import QtCore
 
 from desktopfiles import DesktopFile
@@ -35,6 +36,7 @@ class Actions:
 
 class Shortcut:
     def __init__(self):
+        self.device: str = None
         self.key: int = None
         self.action: str = None
         self.data: str = None
@@ -44,19 +46,24 @@ class Shortcut:
         return self.name
 
     @staticmethod
-    def new_from_config(section, settings: QtCore.QSettings):
+    def new_from_config(shortcut_properties):
         shortcut = Shortcut()
-        shortcut.key = int(section)
-        shortcut.action = settings.value("action")
-        shortcut.data = settings.value("data")
-        shortcut.name = settings.value("name")
+        shortcut.device = shortcut_properties["device"]
+        shortcut.key = int(shortcut_properties["key"])
+        shortcut.action = shortcut_properties["action"]
+        shortcut.data = shortcut_properties["data"]
+        shortcut.name = shortcut_properties["name"]
 
         return shortcut
 
-    def to_config(self, settings: QtCore.QSettings):
-        settings.setValue("action", self.action)
-        settings.setValue("data", self.data)
-        settings.setValue("name", self.name)
+    def to_config(self):
+        return {
+            "device": self.device,
+            "key": self.key,
+            "name": self.name,
+            "action": self.action,
+            "data": self.data
+        }
 
     def get_action_name(self):
         if self.action == Actions.LAUNCH_APPLICATION.name:
@@ -104,13 +111,13 @@ class Shortcuts:
         self.filename = filename
 
     def add(self, shortcut: Shortcut):
-        self.list[shortcut.key] = shortcut
+        self.list[(shortcut.device, shortcut.key)] = shortcut
 
-    def remove_by_key(self, key):
-        self.list.pop(key, None)
+    def remove_by_device_key(self, device_name: str, key):
+        self.list.pop((device_name, key), None)
 
-    def get_by_key(self, key):
-        return self.list.get(key)
+    def get_by_device_key(self, device_name: str, key):
+        return self.list.get((device_name, key))
 
     def get_list(self):
         return self.list
@@ -119,22 +126,40 @@ class Shortcuts:
         self.list.clear()
 
     def load(self):
-        settings = QtCore.QSettings(self.filename, QtCore.QSettings.IniFormat)
+        if not os.path.exists(self.filename):
+            return
+
+        with open(self.filename, "r") as file:
+            data = yaml.safe_load(file)
 
         self.clear()
 
+        for shortcut in data:
+            self.add(Shortcut.new_from_config(shortcut))
+
+    def load_legacy(self, filename, device):
+        if not os.path.exists(filename):
+            return
+
+        settings = QtCore.QSettings(filename, QtCore.QSettings.IniFormat)
+
         for section in settings.childGroups():
             settings.beginGroup(section)
-            self.add(Shortcut.new_from_config(section, settings))
+            shortcut = Shortcut()
+            shortcut.device = device
+            shortcut.key = int(section)
+            shortcut.name = settings.value("name")
+            shortcut.action = settings.value("action")
+            shortcut.data = settings.value("data")
             settings.endGroup()
+            self.add(shortcut)
 
     def save(self):
-        settings = QtCore.QSettings(self.filename, QtCore.QSettings.IniFormat)
-
-        settings.clear()
+        data = []
 
         for index in self.list:
             shortcut = self.list[index]
-            settings.beginGroup(str(shortcut.key))
-            shortcut.to_config(settings)
-            settings.endGroup()
+            data.append(shortcut.to_config())
+
+        with open(self.filename, "w") as file:
+            yaml.dump(data, file, default_flow_style=False)

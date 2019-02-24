@@ -20,23 +20,29 @@ APP_WEBSITE = "https://gitlab.com/Programie/KeyboardMapper"
 APP_VERSION = "1.0"
 APP_FILE = os.path.realpath(__file__)
 BASE_DIR = os.path.dirname(APP_FILE)
+DEVICES_BASE_DIR = "/dev/input/by-id"
 
 
 class Config:
-    filename = None
-    keyboard_input_device = None
-    icons = "dark"
-    use_tray_icon = True
-    single_instance = True
+    filename: str = None
+    input_devices: List[str] = []
+    icons: str = "dark"
+    use_tray_icon: bool = True
+    single_instance: bool = True
 
     @staticmethod
     def load():
         settings = QtCore.QSettings(Config.filename, QtCore.QSettings.IniFormat)
 
-        Config.keyboard_input_device = settings.value("keyboard-input-device")
+        legacy_device = os.path.basename(str(settings.value("keyboard-input-device"))).strip()
+        Config.input_devices = list(set(filter(None, str(settings.value("input-devices", defaultValue=legacy_device)).split(","))))
         Config.icons = settings.value("icons", defaultValue="dark")
         Config.use_tray_icon = Config.to_boolean(str(settings.value("use-tray-icon", defaultValue=True)))
         Config.single_instance = Config.to_boolean(str(settings.value("single-instance", defaultValue=True)))
+
+        if legacy_device != "":
+            settings.remove("keyboard-input-device")
+            Config.save()
 
     @staticmethod
     def to_boolean(string: str):
@@ -46,10 +52,65 @@ class Config:
     def save():
         settings = QtCore.QSettings(Config.filename, QtCore.QSettings.IniFormat)
 
-        settings.setValue("keyboard-input-device", Config.keyboard_input_device)
+        settings.setValue("input-devices", ",".join(Config.input_devices))
         settings.setValue("icons", Config.icons)
         settings.setValue("use-tray-icon", Config.use_tray_icon)
         settings.setValue("single-instance", Config.single_instance)
+
+
+class AllowedActions(enum.Enum):
+    NONE = 0
+    LOCK_KEYS = 1
+    ALL = 2
+
+
+class KeyListenerManager:
+    def __init__(self, shortcuts: Shortcuts):
+        self.input_devices: List[str] = []
+        self.key_listener_threads: List[KeyListener] = []
+        self.shortcuts = shortcuts
+        self.allowed_actions = AllowedActions.ALL
+
+    def set_device_files(self, input_devices: List[str]):
+        self.input_devices = input_devices
+        self.restart_threads()
+
+    def restart_threads(self):
+        for key_listener in self.key_listener_threads:
+            key_listener.stop()
+
+        self.key_listener_threads = []
+
+        for input_device in self.input_devices:
+            key_listener = KeyListener(os.path.join(DEVICES_BASE_DIR, input_device))
+            key_listener.setDaemon(True)
+            key_listener.start()
+            self.key_listener_threads.append(key_listener)
+
+        self.use_default_event_handler()
+
+    def set_event_handler(self, event_handler: callable):
+        for key_listener in self.key_listener_threads:
+            key_listener.set_event_handler(lambda key_code: event_handler(os.path.basename(key_listener.device_file), key_code))
+
+    def use_default_event_handler(self):
+        self.set_event_handler(self.handle_key_press)
+
+    def handle_key_press(self, input_device_name, key_code):
+        # Skip if disabled
+        if self.allowed_actions == AllowedActions.NONE:
+            return
+
+        # Skip if shortcut not configured
+        shortcut: Shortcut = self.shortcuts.get_by_device_key(input_device_name, key_code)
+        if shortcut is None:
+            return
+
+        # Skip if keys are locked and this shortcut is not used to lock/unlock keys
+        if self.allowed_actions == AllowedActions.LOCK_KEYS and shortcut.action != Actions.LOCK_KEYS.name:
+            return
+
+        shortcut.execute()
 
 
 class LockKeysEvent(QtCore.QEvent):
@@ -58,20 +119,20 @@ class LockKeysEvent(QtCore.QEvent):
 
 
 class ShortcutListHeader(enum.Enum):
-    NAME, ACTION, KEY = range(3)
+    NAME, ACTION, KEY, DEVICE = range(4)
 
 
 class MainWindow(QtWidgets.QMainWindow):
     instance: "MainWindow" = None
 
-    def __init__(self, shortcuts: Shortcuts, key_listener: "KeyListenerWrapper"):
+    def __init__(self, shortcuts: Shortcuts, key_listener_manager: KeyListenerManager):
         super().__init__()
 
         # Required by other classes which don't know this instance
         MainWindow.instance = self
 
         self.shortcuts = shortcuts
-        self.key_listener = key_listener
+        self.key_listener_manager = key_listener_manager
 
         # Let shortcuts know how to handle the lock keys action (Shortcuts don't know anything about the Key Listener, Main Window, etc)
         Shortcuts.lock_keys_handler = lambda: QApplication.postEvent(self, LockKeysEvent())
@@ -132,19 +193,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view.setAlternatingRowColors(True)
         self.shortcut_tree_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
-        self.shortcut_tree_view_model = QtGui.QStandardItemModel(0, 3)
+        self.shortcut_tree_view_model = QtGui.QStandardItemModel(0, 4)
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.NAME.value, QtCore.Qt.Horizontal, "Name")
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.ACTION.value, QtCore.Qt.Horizontal, "Action")
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.KEY.value, QtCore.Qt.Horizontal, "Key")
+        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.DEVICE.value, QtCore.Qt.Horizontal, "Device")
         self.shortcut_tree_view.setModel(self.shortcut_tree_view_model)
 
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.NAME.value, 300)
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.ACTION.value, 300)
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.KEY.value, 50)
+        self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.DEVICE.value, 100)
 
         self.shortcut_tree_view.selectionModel().selectionChanged.connect(self.update_edit_actions)
 
-        self.shortcut_tree_view.doubleClicked.connect(lambda model_index: self.edit_item(model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data()))
+        self.shortcut_tree_view.doubleClicked.connect(self.edit_item)
 
         self.shortcut_tree_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.shortcut_tree_view.customContextMenuRequested.connect(self.show_context_menu)
@@ -180,7 +243,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             icon_name = ["appicon", Config.icons]
 
-            if self.key_listener.allowed_actions == AllowedActions.LOCK_KEYS:
+            if self.key_listener_manager.allowed_actions == AllowedActions.LOCK_KEYS:
                 icon_name.append("disabled")
 
             self.tray_icon = QtWidgets.QSystemTrayIcon(QtGui.QIcon(os.path.join(BASE_DIR, "icons", "{}.png".format("-".join(icon_name)))))
@@ -211,6 +274,7 @@ class MainWindow(QtWidgets.QMainWindow):
         model.setData(model.index(row, ShortcutListHeader.NAME.value), shortcut.name)
         model.setData(model.index(row, ShortcutListHeader.ACTION.value), shortcut.get_action_name())
         model.setData(model.index(row, ShortcutListHeader.KEY.value), shortcut.key)
+        model.setData(model.index(row, ShortcutListHeader.DEVICE.value), shortcut.device)
 
     def load_from_shortcuts(self):
         self.shortcut_tree_view_model.removeRows(0, self.shortcut_tree_view_model.rowCount())
@@ -220,11 +284,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.update_status_bar()
 
-    def edit_item(self, key=None):
-        if key is None:
+    def edit_item(self, model_index: QtCore.QModelIndex = None):
+        if model_index is None:
             shortcut = None
         else:
-            shortcut = self.shortcuts.get_by_key(key)
+            device = model_index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
+            key = model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
+            shortcut = self.shortcuts.get_by_device_key(device, key)
 
         EditShortcutWindow(self, shortcut)
 
@@ -243,7 +309,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if len(selected_indexes) == 0:
             return
 
-        self.edit_item(selected_indexes[0].siblingAtColumn(ShortcutListHeader.KEY.value).data())
+        self.edit_item(selected_indexes[0])
 
     def remove_shortcut(self):
         selected_indexes: List[QtCore.QModelIndex] = self.shortcut_tree_view.selectedIndexes()
@@ -256,8 +322,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if response != QtWidgets.QMessageBox.StandardButton.Yes:
             return
 
-        self.shortcuts.remove_by_key(selected_indexes[0].siblingAtColumn(ShortcutListHeader.KEY.value).data())
-        self.shortcut_tree_view_model.removeRow(selected_indexes[0].row())
+        index = selected_indexes[0]
+        device = index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
+        key = index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
+
+        self.shortcuts.remove_by_device_key(device, key)
+        self.shortcut_tree_view_model.removeRow(index.row())
         self.shortcuts.save()
         self.update_status_bar()
 
@@ -287,11 +357,11 @@ class MainWindow(QtWidgets.QMainWindow):
         return super().event(event)
 
     def toggle_lock_keys(self):
-        if self.key_listener.allowed_actions == AllowedActions.ALL:
-            self.key_listener.allowed_actions = AllowedActions.LOCK_KEYS
+        if self.key_listener_manager.allowed_actions == AllowedActions.ALL:
+            self.key_listener_manager.allowed_actions = AllowedActions.LOCK_KEYS
             self.statusbar_lock_state.show()
-        elif self.key_listener.allowed_actions == AllowedActions.LOCK_KEYS:
-            self.key_listener.allowed_actions = AllowedActions.ALL
+        elif self.key_listener_manager.allowed_actions == AllowedActions.LOCK_KEYS:
+            self.key_listener_manager.allowed_actions = AllowedActions.ALL
             self.statusbar_lock_state.hide()
 
         self.update_tray_icon()
@@ -438,7 +508,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
         self.update_action_states()
 
     def request_shortcut(self):
-        shortcut_requester = ShortcutRequester(self, self.main_window.key_listener, self.shortcut)
+        shortcut_requester = ShortcutRequester(self, self.main_window.key_listener_manager, self.shortcut)
         shortcut_requester.accepted.connect(self.update_shortcut_button)
 
     def update_shortcut_button(self):
@@ -480,7 +550,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
             QtWidgets.QMessageBox.critical(self, "No key defined", "Please define a key to use for this shortcut!")
             return
 
-        existing_shortcut = self.main_window.shortcuts.get_by_key(self.shortcut.key)
+        existing_shortcut = self.main_window.shortcuts.get_by_device_key(self.shortcut.device, self.shortcut.key)
 
         if existing_shortcut and existing_shortcut != self.original_shortcut:
             QtWidgets.QMessageBox.critical(self, "Duplicate shortcut", "Another shortcut for key '{}' already exists!".format(self.shortcut.key))
@@ -531,10 +601,15 @@ class EditShortcutWindow(QtWidgets.QDialog):
             self.shortcut.data = key_sequence
 
         if self.original_shortcut:
-            self.main_window.shortcuts.remove_by_key(self.original_shortcut.key)
+            self.main_window.shortcuts.remove_by_device_key(self.original_shortcut.device, self.original_shortcut.key)
 
-            list_item: QtGui.QStandardItem = self.main_window.shortcut_tree_view_model.findItems(str(self.original_shortcut.key), column=ShortcutListHeader.KEY.value)[0]
-            list_row = list_item.row()
+            list_row = None
+            list_items: List[QtGui.QStandardItem] = self.main_window.shortcut_tree_view_model.findItems(str(self.original_shortcut.key), column=ShortcutListHeader.KEY.value)
+            for list_item in list_items:
+                if list_item.index().siblingAtColumn(ShortcutListHeader.DEVICE.value).data() == self.original_shortcut.device:
+                    list_row = list_item.row()
+                    break
+
             self.main_window.shortcut_tree_view_model.removeRow(list_row)
         else:
             list_row = None
@@ -552,10 +627,10 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
 
 class ShortcutRequester(QtWidgets.QDialog):
-    def __init__(self, parent, key_listener: KeyListener, shortcut: Shortcut):
+    def __init__(self, parent, key_listener_manager: KeyListenerManager, shortcut: Shortcut):
         super().__init__(parent)
 
-        self.key_listener = key_listener
+        self.key_listener_manager = key_listener_manager
         self.shortcut = shortcut
 
         self.setWindowTitle("Configure key")
@@ -572,14 +647,15 @@ class ShortcutRequester(QtWidgets.QDialog):
 
         self.show()
 
-        self.key_listener.set_event_handler(self.handle_key_press)
+        self.key_listener_manager.set_event_handler(self.handle_key_press)
 
-    def handle_key_press(self, key_code):
+    def handle_key_press(self, device_name, key_code):
+        self.shortcut.device = device_name
         self.shortcut.key = key_code
         self.accept()
 
     def reject(self):
-        self.key_listener.restore_event_handler()
+        self.key_listener_manager.use_default_event_handler()
         super().reject()
 
 
@@ -639,12 +715,7 @@ class SettingsWindow(QtWidgets.QDialog):
         layout.addWidget(self.input_device_list)
         group_box.setLayout(layout)
 
-        if Config.keyboard_input_device is None:
-            active_device_file = None
-        else:
-            active_device_file = QtCore.QFileInfo(Config.keyboard_input_device)
-
-        file_list: List[QtCore.QFileInfo] = QtCore.QDir("/dev/input/by-id").entryInfoList()
+        file_list: List[QtCore.QFileInfo] = QtCore.QDir(DEVICES_BASE_DIR).entryInfoList()
         for item in file_list:
             if item.isDir():
                 continue
@@ -652,10 +723,14 @@ class SettingsWindow(QtWidgets.QDialog):
             name = item.baseName()
 
             list_item = QtWidgets.QListWidgetItem(name)
-            self.input_device_list.addItem(list_item)
+            list_item.setFlags(list_item.flags() | QtCore.Qt.ItemIsUserCheckable)
 
-            if active_device_file and active_device_file.baseName() == name:
-                self.input_device_list.setCurrentItem(list_item)
+            if name in Config.input_devices:
+                list_item.setCheckState(QtCore.Qt.Checked)
+            else:
+                list_item.setCheckState(QtCore.Qt.Unchecked)
+
+            self.input_device_list.addItem(list_item)
 
     def add_icon_theme_settings(self):
         group_box = QtWidgets.QGroupBox("Icon theme")
@@ -687,12 +762,18 @@ class SettingsWindow(QtWidgets.QDialog):
         self.create_desktop_file(os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper.desktop"), [])
 
     def save(self):
-        input_device_items: List[QtWidgets.QListWidgetItem] = self.input_device_list.selectedItems()
+        selected_input_devices = []
 
-        if len(input_device_items) == 0:
-            QtWidgets.QMessageBox.critical(self, "No keyboard input device selected", "Please selected the input device to use!")
+        for index in range(self.input_device_list.count()):
+            item = self.input_device_list.item(index)
+            if item.checkState() == QtCore.Qt.Checked:
+                selected_input_devices.append(item.text())
 
-        Config.keyboard_input_device = "/dev/input/by-id/{}".format(input_device_items[0].text())
+        if len(selected_input_devices) == 0:
+            QtWidgets.QMessageBox.critical(self, "No keyboard input device selected", "Please select at least one input device to use!")
+            return
+
+        Config.input_devices = selected_input_devices
         Config.icons = self.icon_theme_list.currentText()
         Config.use_tray_icon = self.use_tray_icon_checkbox.checkState() == QtCore.Qt.Checked
         Config.single_instance = self.single_instance_checkbox.checkState() == QtCore.Qt.Checked
@@ -705,39 +786,9 @@ class SettingsWindow(QtWidgets.QDialog):
             os.remove(self.autostart_file)
 
         self.main_window.update_tray_icon()
-        self.main_window.key_listener.set_device_file(Config.keyboard_input_device)
+        self.main_window.key_listener_manager.set_device_files(Config.input_devices)
 
         self.accept()
-
-
-class AllowedActions(enum.Enum):
-    NONE = 0
-    LOCK_KEYS = 1
-    ALL = 2
-
-
-class KeyListenerWrapper(KeyListener):
-    def __init__(self, shortcuts: Shortcuts):
-        super().__init__(self.handle_key_press, Config.keyboard_input_device)
-
-        self.shortcuts = shortcuts
-        self.allowed_actions = AllowedActions.ALL
-
-    def handle_key_press(self, key_code):
-        # Skip if disabled
-        if self.allowed_actions == AllowedActions.NONE:
-            return
-
-        # Skip if shortcut not configured
-        shortcut: Shortcut = self.shortcuts.get_by_key(key_code)
-        if shortcut is None:
-            return
-
-        # Skip if keys are locked and this shortcut is not used to lock/unlock keys
-        if self.allowed_actions == AllowedActions.LOCK_KEYS and shortcut.action != Actions.LOCK_KEYS.name:
-            return
-
-        shortcut.execute()
 
 
 def main():
@@ -785,14 +836,20 @@ def main():
             QtWidgets.QMessageBox.critical(None, APP_NAME, "Keyboard Mapper is already running!")
             sys.exit(1)
 
-    shortcuts = Shortcuts(os.path.join(config_dir, "shortcuts.ini"))
+    shortcuts_file = os.path.join(config_dir, "shortcuts.yaml")
+    legacy_shortcuts_file = os.path.join(config_dir, "shortcuts.ini")
+
+    shortcuts = Shortcuts(shortcuts_file)
+
+    if os.path.exists(legacy_shortcuts_file) and not os.path.exists(shortcuts_file):
+        if len(Config.input_devices):
+            shortcuts.load_legacy(legacy_shortcuts_file, Config.input_devices[0])
+
     shortcuts.load()
 
-    key_listener = KeyListenerWrapper(shortcuts)
-    key_listener.setDaemon(True)
-    key_listener.start()
-
-    main_window = MainWindow(shortcuts, key_listener)
+    key_listener_manager = KeyListenerManager(shortcuts)
+    key_listener_manager.set_device_files(Config.input_devices)
+    main_window = MainWindow(shortcuts, key_listener_manager)
 
     if not parser.isSet(hidden_option):
         main_window.show()

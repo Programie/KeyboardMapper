@@ -10,34 +10,24 @@ class KeyListener(Thread):
     FORMAT = "llHHI"
     EVENT_SIZE = struct.calcsize(FORMAT)
 
-    def __init__(self, event_handler: callable, device_file: str = None):
+    def __init__(self, device_file: str, event_handler: callable = None):
         super().__init__()
 
         self.device_file = device_file
         self.event_handler = event_handler
-        self.initial_event_handler = event_handler
-        self.reload = False
+        self.do_stop = False
 
     def set_event_handler(self, event_handler: callable):
         self.event_handler = event_handler
 
-    def restore_event_handler(self):
-        self.event_handler = self.initial_event_handler
-
-    def set_device_file(self, device_file):
-        self.device_file = device_file
-        self.reload = True
-
     def run(self):
         while True:
-            # Skip reading the file if no device configured yet
-            if self.device_file is None:
-                time.sleep(1)
-                continue
-
             if not os.path.exists(self.device_file) or not os.access(self.device_file, os.R_OK):
                 time.sleep(1)
                 continue
+
+            if self.do_stop:
+                break
 
             try:
                 self.read_file()
@@ -46,12 +36,13 @@ class KeyListener(Thread):
 
             time.sleep(1)
 
+    def stop(self):
+        self.do_stop = True
+
     def read_file(self):
         with open(self.device_file, "rb", buffering=0) as file:
             while True:
-                # If restart flag is set, break the loop to restart reading the file (e.g. if file path has changed)
-                if self.reload:
-                    self.reload = False
+                if self.do_stop:
                     break
 
                 # Wait for input (file.read() would block)
@@ -71,4 +62,5 @@ class KeyListener(Thread):
                 if value != 0:
                     continue
 
-                self.event_handler(code)
+                if self.event_handler:
+                    self.event_handler(code)
