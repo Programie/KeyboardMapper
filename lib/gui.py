@@ -554,6 +554,7 @@ class ShortcutRequester(QtWidgets.QDialog):
         layout.addWidget(cancel_button)
 
         self.show()
+        self.setFixedSize(self.size())
 
         self.key_listener_manager.set_event_handler(self.handle_key_press)
 
