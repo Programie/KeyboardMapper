@@ -8,7 +8,7 @@ from typing import List, Union
 from PySide2 import QtWidgets, QtGui, QtCore
 
 from lib.config import Config
-from lib.constants import APP_WEBSITE, DEVICES_BASE_DIR, APP_NAME, APP_DESCRIPTION, ICONS_DIR
+from lib.constants import APP_WEBSITE, DEVICES_BASE_DIR, APP_NAME, APP_DESCRIPTION, ICONS_DIR, APP_VERSION
 from lib.desktopfiles import DesktopFilesFinder, DesktopFile
 from lib.keylistener_manager import KeyListenerManager, AllowedActions
 from lib.shortcut import Shortcuts, Shortcut, Actions, Action
@@ -243,7 +243,7 @@ class MainWindow(QtWidgets.QMainWindow):
         subprocess.run(["xdg-open", APP_WEBSITE])
 
     def show_about(self):
-        QtWidgets.QMessageBox.aboutQt(self, "About")
+        AboutDialog(self)
 
     def handle_tray_icon_activation(self, reason):
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
@@ -702,3 +702,43 @@ class SettingsWindow(QtWidgets.QDialog):
         self.main_window.key_listener_manager.set_device_files(Config.input_devices)
 
         self.accept()
+
+
+class AboutDialog(QtWidgets.QDialog):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.setWindowTitle("About")
+        self.setModal(True)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setMargin(20)
+        layout.setSpacing(10)
+        self.setLayout(layout)
+
+        icon_pixmap = QtGui.QPixmap(os.path.join(ICONS_DIR, "appicon-{}.png".format(Config.icons)))
+        icon_pixmap = icon_pixmap.scaledToHeight(64)
+
+        icon = QtWidgets.QLabel()
+        icon.setPixmap(icon_pixmap)
+        layout.addWidget(icon, alignment=QtCore.Qt.AlignCenter)
+
+        bold_font = QtGui.QFont()
+        bold_font.setBold(True)
+
+        app_name_label = QtWidgets.QLabel(APP_NAME)
+        app_name_label.setFont(bold_font)
+        layout.addWidget(app_name_label, alignment=QtCore.Qt.AlignCenter)
+
+        app_version_label = QtWidgets.QLabel(APP_VERSION)
+        app_version_label.setFont(bold_font)
+        layout.addWidget(app_version_label, alignment=QtCore.Qt.AlignCenter)
+
+        website_label = QtWidgets.QLabel("<a href='{}'>View on GitLab</a>".format(APP_WEBSITE))
+        website_label.setTextFormat(QtCore.Qt.RichText)
+        website_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+        website_label.setOpenExternalLinks(True)
+        layout.addWidget(website_label, alignment=QtCore.Qt.AlignCenter)
+
+        self.show()
+        self.setFixedSize(self.size())
