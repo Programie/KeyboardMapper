@@ -40,10 +40,14 @@ class KeyListenerManager:
 
     def set_event_handler(self, event_handler: callable):
         for key_listener in self.key_listener_threads:
-            key_listener.set_event_handler(lambda key_code: event_handler(os.path.basename(key_listener.device_file), key_code))
+            key_listener.set_event_handler(self.get_event_handler_function(key_listener, event_handler))
 
     def use_default_event_handler(self):
         self.set_event_handler(self.handle_key_press)
+
+    @staticmethod
+    def get_event_handler_function(key_listener, event_handler):
+        return lambda key_code: event_handler(os.path.basename(key_listener.device_file), key_code)
 
     def handle_key_press(self, input_device_name, key_code):
         # Skip if disabled
