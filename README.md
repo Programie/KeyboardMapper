@@ -1,6 +1,6 @@
 # Keyboard Mapper
 
-A tool for Linux desktops to map keys of a dedicated keyboard to specific actions.
+A tool for Linux desktops to map keys of dedicated keyboards to specific actions.
 
 [RSBasic](https://www.rsbasic.de) developed a similar application for Windows which got me to the idea of developing something like that for Linux.
 
@@ -17,6 +17,11 @@ Edit shortcut:
 Settings:
 
 ![](screenshots/Settings.png)
+
+## Requirements
+
+* Python 3.6+
+* Python modules: See [requirements.txt](requirements.txt) (`pip3 install -r requirements.txt`)
 
 ## Installation
 
@@ -35,9 +40,9 @@ Section "InputClass"
 EndSection
 ```
 
-Also make sure, your user has the permission to access the device files.
+Also make sure, your user has the permission to access the device files (located in `/dev/input`).
 
-After that, you can start the application and select the input device in the settings (usually a device file in `/dev/input`).
+After that, you can start the application and select the input devices to use in the settings.
 
 ## Usage
 
@@ -51,3 +56,13 @@ The following actions are available for each shortcut:
 * Input text: Send any text to the currently active window (uses the clipboard and sends Ctrl+V to the currently active window)
 * Input key sequence: Send any sequence of key combinations to the currently active window (e.g. "Control_L+N Control_L+W" would send Ctrl+N and Ctrl+W)
 * Lock keys: Toggle locking of all other actions (only respond to shortcuts with the "Lock keys" action)
+
+## Known issues
+
+### Application theme is different from other applications
+
+When installing PySide2 using pip, it's possible that the application does not use the native desktop theme. In that case, simply install PySide2 using your package manager.
+
+In case of Debian based Linux distributions (e.g. Ubuntu, Mint, etc.) install PySide2 using `sudo apt-get install python3-pyside2`.
+
+After that you should remove PySide2 which has been installed by pip using `pip3 uninstall PySide2`.
