@@ -7,8 +7,8 @@ import pyperclip
 import yaml
 from PySide2 import QtCore
 
-from desktopfiles import DesktopFile
-from xtestwrapper import XTestWrapper
+from lib.desktopfiles import DesktopFile
+from lib.xtestwrapper import XTestWrapper
 
 
 class Action:

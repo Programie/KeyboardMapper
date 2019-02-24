@@ -10,9 +10,9 @@ from PySide2 import QtWidgets, QtGui, QtCore
 from PySide2.QtWidgets import QApplication
 from filelock import FileLock, Timeout
 
-from desktopfiles import DesktopFile, DesktopFilesFinder
-from keylistener import KeyListener
-from shortcut import Actions, Shortcuts, Shortcut, Action
+from lib.desktopfiles import DesktopFile, DesktopFilesFinder
+from lib.keylistener import KeyListener
+from lib.shortcut import Actions, Shortcuts, Shortcut, Action
 
 APP_NAME = "Keyboard Mapper"
 APP_DESCRIPTION = "A tool for Linux desktops to map keys of a dedicated keyboard to specific actions"
