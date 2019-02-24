@@ -222,6 +222,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.update_edit_actions()
 
+    def create_tray_icon(self):
+        if self.tray_icon:
+            return
+
+        tray_menu = QtWidgets.QMenu()
+
+        tray_menu.addAction("Show window", self.show)
+        tray_menu.addSeparator()
+        tray_menu.addAction("Quit", self.quit)
+
+        self.tray_icon = QtWidgets.QSystemTrayIcon(parent=self)
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.activated.connect(self.handle_tray_icon_activation)
+
     def update_status_bar(self):
         message = []
 
@@ -235,23 +249,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def update_tray_icon(self):
         if Config.use_tray_icon and QtWidgets.QSystemTrayIcon.isSystemTrayAvailable():
-            tray_menu = QtWidgets.QMenu()
-
-            tray_menu.addAction("Show window", self.show)
-            tray_menu.addSeparator()
-            tray_menu.addAction("Quit", self.quit)
-
             icon_name = ["appicon", Config.icons]
 
             if self.key_listener_manager.allowed_actions == AllowedActions.LOCK_KEYS:
                 icon_name.append("disabled")
 
-            self.tray_icon = QtWidgets.QSystemTrayIcon(QtGui.QIcon(os.path.join(BASE_DIR, "icons", "{}.png".format("-".join(icon_name)))))
+            self.create_tray_icon()
+            self.tray_icon.setIcon(QtGui.QIcon(os.path.join(BASE_DIR, "icons", "{}.png".format("-".join(icon_name)))))
             self.tray_icon.show()
-            self.tray_icon.setContextMenu(tray_menu)
-            self.tray_icon.activated.connect(self.handle_tray_icon_activation)
-        else:
-            self.tray_icon = None
+        elif self.tray_icon:
+            self.tray_icon.hide()
 
     def update_edit_actions(self):
         selected = bool(len(self.shortcut_tree_view.selectedIndexes()))
