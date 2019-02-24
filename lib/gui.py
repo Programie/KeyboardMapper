@@ -562,6 +562,10 @@ class ShortcutRequester(QtWidgets.QDialog):
         self.shortcut.key = key_code
         self.accept()
 
+    def accept(self):
+        self.key_listener_manager.use_default_event_handler()
+        super().accept()
+
     def reject(self):
         self.key_listener_manager.use_default_event_handler()
         super().reject()
