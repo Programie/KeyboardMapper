@@ -355,11 +355,19 @@ class EditShortcutWindow(QtWidgets.QDialog):
         layout = QtWidgets.QGridLayout()
         group_box.setLayout(layout)
 
+        # TODO: This also completes filenames but we only want directories :(
+        dir_completer = QtWidgets.QCompleter()
+        dir_model = QtWidgets.QFileSystemModel(dir_completer)
+        dir_model.setRootPath("/")
+        dir_completer.setModel(dir_model)
+
         self.action_launch_application_list = QtWidgets.QComboBox()
         self.execute_command_field = QtWidgets.QLineEdit()
         self.open_folder_field = QtWidgets.QLineEdit()
         self.input_text_field = QtWidgets.QLineEdit()
         self.input_key_sequence_field = QtWidgets.QLineEdit()
+
+        self.open_folder_field.setCompleter(dir_completer)
 
         desktop_files = list(DesktopFilesFinder.load_in_known_paths())
         desktop_files.sort(key=lambda item: item.name)
