@@ -64,6 +64,10 @@ The following actions are available for each shortcut:
 
 When installing PySide2 using pip, it's possible that the application does not use the native desktop theme. In that case, simply install PySide2 using your package manager.
 
-In case of Debian based Linux distributions (e.g. Ubuntu, Mint, etc.) install PySide2 using `sudo apt-get install python3-pyside2`.
+In case of Debian based Linux distributions (e.g. Ubuntu, Mint, etc.) install PySide2 using the following command:
 
-After that you should remove PySide2 which has been installed by pip using `pip3 uninstall PySide2`.
+```
+sudo apt-get install python3-pyside2.qtcore python3-pyside2.qtgui python3-pyside2.qtwidgets
+```
+
+After that you should remove PySide2 which has been installed by pip using `pip3 uninstall PySide2`. Otherwise the application continues to use PySide installed with pip.
