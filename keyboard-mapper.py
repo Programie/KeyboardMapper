@@ -9,7 +9,7 @@ from PySide2.QtWidgets import QApplication
 from filelock import FileLock, Timeout
 
 from lib.config import Config
-from lib.constants import APP_NAME, APP_VERSION, APP_DESCRIPTION, DEVICES_BASE_DIR, ICONS_DIR
+from lib.constants import APP_NAME, APP_VERSION, APP_DESCRIPTION, DEVICES_BASE_DIR, ICONS_DIR, TRANSLATIONS_DIR
 from lib.gui import MainWindow
 from lib.keylistener_manager import KeyListenerManager
 from lib.shortcut import Shortcuts
@@ -72,6 +72,10 @@ def main():
             else:
                 print(message)
             sys.exit(1)
+
+    translator = QtCore.QTranslator(application)
+    translator.load(QtCore.QLocale().name(), directory=TRANSLATIONS_DIR)
+    application.installTranslator(translator)
 
     shortcuts_file = os.path.join(config_dir, "shortcuts.yaml")
     legacy_shortcuts_file = os.path.join(config_dir, "shortcuts.ini")

@@ -10,6 +10,8 @@ from PySide2 import QtCore
 from lib.desktopfiles import DesktopFile
 from lib.xtestwrapper import XTestWrapper
 
+translate = QtCore.QCoreApplication.translate
+
 
 class Action:
     def __init__(self, name: str, title: str):
@@ -18,12 +20,12 @@ class Action:
 
 
 class Actions:
-    LAUNCH_APPLICATION = Action("launchApplication", "Launch application")
-    EXECUTE_COMMAND = Action("executeCommand", "Execute command")
-    OPEN_FOLDER = Action("openFolder", "Open folder")
-    INPUT_TEXT = Action("inputText", "Input text")
-    INPUT_KEY_SEQUENCE = Action("inputKeySequence", "Input key sequence")
-    LOCK_KEYS = Action("lockKeys", "Lock keys")
+    LAUNCH_APPLICATION = Action("launchApplication", translate("shortcut_action", "Launch application"))
+    EXECUTE_COMMAND = Action("executeCommand", translate("shortcut_action", "Execute command"))
+    OPEN_FOLDER = Action("openFolder", translate("shortcut_action", "Open folder"))
+    INPUT_TEXT = Action("inputText", translate("shortcut_action", "Input text"))
+    INPUT_KEY_SEQUENCE = Action("inputKeySequence", translate("shortcut_action", "Input key sequence"))
+    LOCK_KEYS = Action("lockKeys", translate("shortcut_action", "Lock keys"))
 
     ACTIONS = [LAUNCH_APPLICATION, EXECUTE_COMMAND, OPEN_FOLDER, INPUT_TEXT, INPUT_KEY_SEQUENCE, LOCK_KEYS]
 

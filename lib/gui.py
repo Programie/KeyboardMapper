@@ -13,6 +13,8 @@ from lib.desktopfiles import DesktopFilesFinder, DesktopFile
 from lib.keylistener_manager import KeyListenerManager, AllowedActions
 from lib.shortcut import Shortcuts, Shortcut, Actions, Action
 
+translate = QtWidgets.QApplication.translate
+
 
 class LockKeysEvent(QtCore.QEvent):
     def __init__(self):
@@ -42,30 +44,30 @@ class MainWindow(QtWidgets.QMainWindow):
 
         menu_bar = QtWidgets.QMenuBar()
 
-        file_menu = QtWidgets.QMenu("File")
-        file_menu.addAction("Settings...", self.show_settings)
+        file_menu = QtWidgets.QMenu(translate("main_window_menu", "File"))
+        file_menu.addAction(translate("main_window_menu", "Settings..."), self.show_settings)
         file_menu.addSeparator()
-        file_menu.addAction("Quit", self.quit)
+        file_menu.addAction(translate("main_window_menu", "Quit"), self.quit)
 
-        self.add_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"), "Add shortcut...")
+        self.add_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"), translate("main_window_menu", "Add shortcut..."))
         self.add_shortcut_action.triggered.connect(self.add_shortcut)
 
-        self.edit_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-edit"), "Edit shortcut...")
+        self.edit_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-edit"), translate("main_window_menu", "Edit shortcut..."))
         self.edit_shortcut_action.triggered.connect(self.edit_shortcut)
 
-        self.remove_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("delete"), "Remove shortcut...")
+        self.remove_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("delete"), translate("main_window_menu", "Remove shortcut..."))
         self.remove_shortcut_action.setShortcut(QtGui.QKeySequence("Del"))
         self.remove_shortcut_action.triggered.connect(self.remove_shortcut)
 
-        self.edit_menu = QtWidgets.QMenu("Edit")
+        self.edit_menu = QtWidgets.QMenu(translate("main_window_menu", "Edit"))
         self.edit_menu.addAction(self.add_shortcut_action)
         self.edit_menu.addAction(self.edit_shortcut_action)
         self.edit_menu.addAction(self.remove_shortcut_action)
 
-        help_menu = QtWidgets.QMenu("Help")
-        help_menu.addAction("Help", self.show_help).setShortcut(QtGui.QKeySequence("F1"))
+        help_menu = QtWidgets.QMenu(translate("main_window_menu", "Help"))
+        help_menu.addAction(translate("main_window_menu", "Help"), self.show_help).setShortcut(QtGui.QKeySequence("F1"))
         help_menu.addSeparator()
-        help_menu.addAction("About", self.show_about)
+        help_menu.addAction(translate("main_window_menu", "About"), self.show_about)
 
         menu_bar.addMenu(file_menu)
         menu_bar.addMenu(self.edit_menu)
@@ -73,7 +75,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setMenuBar(menu_bar)
 
-        toolbar = self.addToolBar("Edit")
+        toolbar = self.addToolBar(translate("main_window_menu", "Edit"))
 
         toolbar.addAction(self.add_shortcut_action)
         toolbar.addAction(self.edit_shortcut_action)
@@ -83,7 +85,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.statusbar_text = QtWidgets.QLabel()
         self.statusbar_lock_state = QtWidgets.QPushButton()
         self.statusbar_lock_state.setIcon(QtGui.QIcon.fromTheme("object-locked"))
-        self.statusbar_lock_state.setToolTip("Shortcuts locked, click to unlock")
+        self.statusbar_lock_state.setToolTip(translate("main_window", "Shortcuts locked, click to unlock"))
         self.statusbar_lock_state.hide()
         self.statusbar_lock_state.clicked.connect(self.toggle_lock_keys)
         statusbar.addWidget(self.statusbar_text)
@@ -95,10 +97,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         self.shortcut_tree_view_model = QtGui.QStandardItemModel(0, 4)
-        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.NAME.value, QtCore.Qt.Horizontal, "Name")
-        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.ACTION.value, QtCore.Qt.Horizontal, "Action")
-        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.KEY.value, QtCore.Qt.Horizontal, "Key")
-        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.DEVICE.value, QtCore.Qt.Horizontal, "Device")
+        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.NAME.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Name"))
+        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.ACTION.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Action"))
+        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.KEY.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Key"))
+        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.DEVICE.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Device"))
         self.shortcut_tree_view.setModel(self.shortcut_tree_view_model)
 
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.NAME.value, 300)
@@ -129,9 +131,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         tray_menu = QtWidgets.QMenu()
 
-        tray_menu.addAction("Show window", self.show)
+        tray_menu.addAction(translate("tray_menu", "Show window"), self.show)
         tray_menu.addSeparator()
-        tray_menu.addAction("Quit", self.quit)
+        tray_menu.addAction(translate("tray_menu", "Quit"), self.quit)
 
         self.tray_icon = QtWidgets.QSystemTrayIcon(parent=self)
         self.tray_icon.setContextMenu(tray_menu)
@@ -142,9 +144,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         shortcuts = len(self.shortcuts.get_list())
         if shortcuts == 1:
-            message.append("1 Shortcut")
+            message.append(translate("main_window_statusbar", "1 Shortcut"))
         else:
-            message.append("{} shortcuts".format(shortcuts))
+            message.append(translate("main_window_statusbar", "{} shortcuts").format(shortcuts))
 
         self.statusbar_text.setText(" ".join(message))
 
@@ -225,7 +227,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if len(selected_indexes) == 0:
             return
 
-        response = QtWidgets.QMessageBox.question(self, "Remove shortcut", "Are you sure to remove the shortcut '{}'?".format(selected_indexes[0].siblingAtColumn(ShortcutListHeader.NAME.value).data()))
+        response = QtWidgets.QMessageBox.question(self, translate("main_window", "Remove shortcut"), translate("main_window", "Are you sure to remove the shortcut '{}'?").format(selected_indexes[0].siblingAtColumn(ShortcutListHeader.NAME.value).data()))
 
         if response != QtWidgets.QMessageBox.StandardButton.Yes:
             return
@@ -285,10 +287,10 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
         if shortcut:
             self.shortcut = copy.copy(shortcut)
-            self.setWindowTitle("Edit shortcut")
+            self.setWindowTitle(translate("edit_shortcut", "Edit shortcut"))
         else:
             self.shortcut = Shortcut()
-            self.setWindowTitle("Add shortcut")
+            self.setWindowTitle(translate("edit_shortcut", "Add shortcut"))
 
         self.setModal(True)
 
@@ -319,7 +321,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
         self.setFixedSize(self.size())
 
     def add_shortcut_button(self):
-        group_box = QtWidgets.QGroupBox("Shortcut")
+        group_box = QtWidgets.QGroupBox(translate("edit_shortcut", "Shortcut"))
         self.dialog_layout.addWidget(group_box)
 
         self.shortcut_button = QtWidgets.QPushButton()
@@ -332,7 +334,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
         self.shortcut_button.clicked.connect(self.request_shortcut)
 
     def add_name_field(self):
-        group_box = QtWidgets.QGroupBox("Name")
+        group_box = QtWidgets.QGroupBox(translate("edit_shortcut", "Name"))
         self.dialog_layout.addWidget(group_box)
 
         if self.shortcut.name is None:
@@ -347,7 +349,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
         group_box.setLayout(layout)
 
     def add_action_options(self):
-        group_box = QtWidgets.QGroupBox("Action")
+        group_box = QtWidgets.QGroupBox(translate("edit_shortcut", "Action"))
         self.dialog_layout.addWidget(group_box)
 
         layout = QtWidgets.QGridLayout()
@@ -375,7 +377,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
             index += 1
 
-        select_folder_button = QtWidgets.QPushButton("Browse...")
+        select_folder_button = QtWidgets.QPushButton(translate("edit_shortcut", "Browse..."))
         select_folder_button.clicked.connect(self.select_folder)
 
         self.action_options = [
@@ -421,7 +423,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
     def update_shortcut_button(self):
         if self.shortcut.key is None:
-            text = "Click to set shortcut"
+            text = translate("edit_shortcut", "Click to set shortcut")
         else:
             text = str(self.shortcut.key)
 
@@ -437,7 +439,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
                 field.setEnabled(enabled)
 
     def select_folder(self):
-        path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select folder to open", self.open_folder_field.text(), QtWidgets.QFileDialog.DontUseNativeDialog | QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontResolveSymlinks)
+        path = QtWidgets.QFileDialog.getExistingDirectory(self, translate("edit_shortcut", "Select folder to open"), self.open_folder_field.text(), QtWidgets.QFileDialog.DontUseNativeDialog | QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontResolveSymlinks)
 
         if path:
             self.open_folder_field.setText(path)
@@ -455,19 +457,19 @@ class EditShortcutWindow(QtWidgets.QDialog):
         self.shortcut.name = self.name_field.text().strip()
 
         if self.shortcut.key is None:
-            QtWidgets.QMessageBox.critical(self, "No key defined", "Please define a key to use for this shortcut!")
+            QtWidgets.QMessageBox.critical(self, translate("edit_shortcut", "No key defined"), translate("edit_shortcut", "Please define a key to use for this shortcut!"))
             return
 
         existing_shortcut = self.main_window.shortcuts.get_by_device_key(self.shortcut.device, self.shortcut.key)
 
         if existing_shortcut and existing_shortcut != self.original_shortcut:
-            QtWidgets.QMessageBox.critical(self, "Duplicate shortcut", "Another shortcut for key '{}' already exists!".format(self.shortcut.key))
+            QtWidgets.QMessageBox.critical(self, translate("edit_shortcut", "Duplicate shortcut"), translate("edit_shortcut", "Another shortcut for key '{}' already exists!").format(self.shortcut.key))
             return
 
         action = self.get_selected_action()
 
         if action is None:
-            QtWidgets.QMessageBox.critical(self, "No action selected", "Please select an action to do!")
+            QtWidgets.QMessageBox.critical(self, translate("edit_shortcut", "No action selected"), translate("edit_shortcut", "Please select an action to do!"))
             return
 
         self.shortcut.action = action.name
@@ -475,35 +477,35 @@ class EditShortcutWindow(QtWidgets.QDialog):
         if action == Actions.LAUNCH_APPLICATION:
             desktop_file: DesktopFile = self.action_launch_application_list.currentData(QtCore.Qt.ItemDataRole.UserRole)
             if desktop_file is None:
-                QtWidgets.QMessageBox.critical(self, "Missing application", "Please select the application to launch!")
+                QtWidgets.QMessageBox.critical(self, translate("edit_shortcut", "Missing application"), translate("edit_shortcut", "Please select the application to launch!"))
                 return
 
             self.shortcut.data = desktop_file.filename
         elif action == Actions.EXECUTE_COMMAND:
             command = self.execute_command_field.text().strip()
             if command == "":
-                QtWidgets.QMessageBox.critical(self, "Missing command", "Please specify the command to execute!")
+                QtWidgets.QMessageBox.critical(self, translate("edit_shortcut", "Missing command"), translate("edit_shortcut", "Please specify the command to execute!"))
                 return
 
             self.shortcut.data = command
         elif action == Actions.OPEN_FOLDER:
             folder = self.open_folder_field.text().strip()
             if folder == "":
-                QtWidgets.QMessageBox.critical(self, "Missing folder path", "Please select the path to the folder to open!")
+                QtWidgets.QMessageBox.critical(self, translate("edit_shortcut", "Missing folder path"), translate("edit_shortcut", "Please select the path to the folder to open!"))
                 return
 
             self.shortcut.data = folder
         elif action == Actions.INPUT_TEXT:
             text = self.input_text_field.text()
             if text == "":
-                QtWidgets.QMessageBox.critical(self, "Missing text", "Please specify the text to input!")
+                QtWidgets.QMessageBox.critical(self, translate("edit_shortcut", "Missing text"), translate("edit_shortcut", "Please specify the text to input!"))
                 return
 
             self.shortcut.data = text
         elif action == Actions.INPUT_KEY_SEQUENCE:
             key_sequence = self.input_key_sequence_field.text().strip()
             if key_sequence == "":
-                QtWidgets.QMessageBox.critical(self, "Missing text", "Please specify the key sequence to input!")
+                QtWidgets.QMessageBox.critical(self, translate("edit_shortcut", "Missing text"), translate("edit_shortcut", "Please specify the key sequence to input!"))
                 return
 
             self.shortcut.data = key_sequence
@@ -541,15 +543,15 @@ class ShortcutRequester(QtWidgets.QDialog):
         self.key_listener_manager = key_listener_manager
         self.shortcut = shortcut
 
-        self.setWindowTitle("Configure key")
+        self.setWindowTitle(translate("shortcut_requester", "Configure key"))
         self.setModal(True)
 
         layout = QtWidgets.QVBoxLayout()
         self.setLayout(layout)
 
-        layout.addWidget(QtWidgets.QLabel("Press the key to use."))
+        layout.addWidget(QtWidgets.QLabel(translate("shortcut_requester", "Press the key to use.")))
 
-        cancel_button = QtWidgets.QPushButton("Cancel")
+        cancel_button = QtWidgets.QPushButton(translate("shortcut_requester", "Cancel"))
         cancel_button.clicked.connect(self.reject)
         layout.addWidget(cancel_button)
 
@@ -580,7 +582,7 @@ class SettingsWindow(QtWidgets.QDialog):
 
         self.autostart_file = os.path.join(os.path.expanduser("~"), ".config", "autostart", "keyboard-mapper.desktop")
 
-        self.setWindowTitle("Settings")
+        self.setWindowTitle(translate("settings", "Settings"))
         self.setModal(True)
 
         self.dialog_layout = QtWidgets.QVBoxLayout()
@@ -592,20 +594,20 @@ class SettingsWindow(QtWidgets.QDialog):
         self.icon_theme_list: QtWidgets.QComboBox = None
         self.add_icon_theme_settings()
 
-        self.use_tray_icon_checkbox = QtWidgets.QCheckBox("Enable tray icon")
+        self.use_tray_icon_checkbox = QtWidgets.QCheckBox(translate("settings", "Enable tray icon"))
         self.use_tray_icon_checkbox.setEnabled(QtWidgets.QSystemTrayIcon.isSystemTrayAvailable())
         self.use_tray_icon_checkbox.setChecked(Config.use_tray_icon)
         self.dialog_layout.addWidget(self.use_tray_icon_checkbox)
 
-        self.single_instance_checkbox = QtWidgets.QCheckBox("Allow only one instance")
+        self.single_instance_checkbox = QtWidgets.QCheckBox(translate("settings", "Allow only one instance"))
         self.single_instance_checkbox.setChecked(Config.single_instance)
         self.dialog_layout.addWidget(self.single_instance_checkbox)
 
-        self.autostart_checkbox = QtWidgets.QCheckBox("Start on login")
+        self.autostart_checkbox = QtWidgets.QCheckBox(translate("settings", "Start on login"))
         self.autostart_checkbox.setChecked(os.path.exists(self.autostart_file))
         self.dialog_layout.addWidget(self.autostart_checkbox)
 
-        create_desktop_file_button = QtWidgets.QPushButton("Create desktop file")
+        create_desktop_file_button = QtWidgets.QPushButton(translate("settings", "Create desktop file"))
         create_desktop_file_button.clicked.connect(self.create_app_desktop_file)
         self.dialog_layout.addWidget(create_desktop_file_button)
 
@@ -619,7 +621,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.setFixedSize(self.size())
 
     def add_keyboard_input_device_settings(self):
-        group_box = QtWidgets.QGroupBox("Keyboard input device")
+        group_box = QtWidgets.QGroupBox(translate("settings", "Keyboard input device"))
         self.dialog_layout.addWidget(group_box)
 
         self.input_device_list = QtWidgets.QListWidget()
@@ -646,7 +648,7 @@ class SettingsWindow(QtWidgets.QDialog):
             self.input_device_list.addItem(list_item)
 
     def add_icon_theme_settings(self):
-        group_box = QtWidgets.QGroupBox("Icon theme")
+        group_box = QtWidgets.QGroupBox(translate("settings", "Icon theme"))
         self.dialog_layout.addWidget(group_box)
 
         self.icon_theme_list = QtWidgets.QComboBox()
@@ -683,7 +685,7 @@ class SettingsWindow(QtWidgets.QDialog):
                 selected_input_devices.append(item.text())
 
         if len(selected_input_devices) == 0:
-            QtWidgets.QMessageBox.critical(self, "No keyboard input device selected", "Please select at least one input device to use!")
+            QtWidgets.QMessageBox.critical(self, translate("settings", "No keyboard input device selected"), translate("settings", "Please select at least one input device to use!"))
             return
 
         Config.input_devices = selected_input_devices
@@ -708,7 +710,7 @@ class AboutDialog(QtWidgets.QDialog):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.setWindowTitle("About")
+        self.setWindowTitle(translate("about", "About"))
         self.setModal(True)
 
         layout = QtWidgets.QVBoxLayout()
@@ -741,7 +743,7 @@ class AboutDialog(QtWidgets.QDialog):
         copyright_label = QtWidgets.QLabel(APP_COPYRIGHT)
         layout.addWidget(copyright_label, alignment=QtCore.Qt.AlignCenter)
 
-        website_label = QtWidgets.QLabel("<a href='{}'>View on GitLab</a>".format(APP_WEBSITE))
+        website_label = QtWidgets.QLabel("<a href='{}'>{}</a>".format(APP_WEBSITE, translate("about", "View on GitLab")))
         website_label.setTextFormat(QtCore.Qt.RichText)
         website_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
         website_label.setOpenExternalLinks(True)

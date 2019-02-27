@@ -7,4 +7,5 @@ APP_WEBSITE = "https://gitlab.com/Programie/KeyboardMapper"
 APP_VERSION = "1.0"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 ICONS_DIR = os.path.join(BASE_DIR, "icons")
+TRANSLATIONS_DIR = os.path.join(BASE_DIR, "translations")
 DEVICES_BASE_DIR = "/dev/input/by-id"
