@@ -12,6 +12,7 @@ from lib.constants import APP_WEBSITE, DEVICES_BASE_DIR, APP_NAME, APP_DESCRIPTI
 from lib.desktopfiles import DesktopFilesFinder, DesktopFile
 from lib.keylistener_manager import KeyListenerManager, AllowedActions
 from lib.shortcut import Shortcuts, Shortcut, Actions, Action
+from lib.xtestwrapper import XKeys
 
 translate = QtWidgets.QApplication.translate
 
@@ -388,12 +389,15 @@ class EditShortcutWindow(QtWidgets.QDialog):
         select_folder_button = QtWidgets.QPushButton(translate("edit_shortcut", "Browse..."))
         select_folder_button.clicked.connect(self.select_folder)
 
+        build_key_sequence_button = QtWidgets.QPushButton(translate("edit_shortcut", "Edit..."))
+        build_key_sequence_button.clicked.connect(self.open_key_sequence_builder)
+
         self.action_options = [
             [None, Actions.LAUNCH_APPLICATION, [self.action_launch_application_list]],
             [None, Actions.EXECUTE_COMMAND, [self.execute_command_field]],
             [None, Actions.OPEN_FOLDER, [self.open_folder_field, select_folder_button]],
             [None, Actions.INPUT_TEXT, [self.input_text_field]],
-            [None, Actions.INPUT_KEY_SEQUENCE, [self.input_key_sequence_field]],
+            [None, Actions.INPUT_KEY_SEQUENCE, [self.input_key_sequence_field, build_key_sequence_button]],
             [None, Actions.LOCK_KEYS, []]
         ]
 
@@ -451,6 +455,11 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
         if path:
             self.open_folder_field.setText(path)
+
+    def open_key_sequence_builder(self):
+        key_sequence_builder = KeySequenceBuilder(self, self.input_key_sequence_field.text().strip())
+
+        key_sequence_builder.accepted.connect(lambda: self.input_key_sequence_field.setText(key_sequence_builder.get_sequence_as_string()))
 
     def get_selected_action(self) -> Union[Action, None]:
         for action in self.action_options:
@@ -580,6 +589,124 @@ class ShortcutRequester(QtWidgets.QDialog):
     def reject(self):
         self.key_listener_manager.use_default_event_handler()
         super().reject()
+
+
+class KeySequenceBuilder(QtWidgets.QDialog):
+    def __init__(self, parent, initial_sequence: str = None):
+        super().__init__(parent)
+
+        self.setWindowTitle(translate("key_sequence_builder", "Build key sequence"))
+        self.setModal(True)
+        self.resize(500, 300)
+
+        dialog_layout = QtWidgets.QVBoxLayout()
+        self.setLayout(dialog_layout)
+
+        scroll_area = QtWidgets.QScrollArea()
+        dialog_layout.addWidget(scroll_area)
+
+        scroll_area_widget = QtWidgets.QWidget()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(scroll_area_widget)
+
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
+        scroll_area_widget.setLayout(self.layout)
+
+        add_combination_button = QtWidgets.QPushButton()
+        add_combination_button.setIcon(QtGui.QIcon.fromTheme("list-add"))
+        add_combination_button.setToolTip(translate("key_sequence_builder", "Add key combination to sequence"))
+        self.layout.addWidget(add_combination_button)
+
+        if initial_sequence is None or initial_sequence == "":
+            self.add_combination()
+        else:
+            for combination in initial_sequence.split(" "):
+                self.add_combination(combination)
+
+        add_combination_button.clicked.connect(lambda: self.add_combination())
+
+        button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        dialog_layout.addWidget(button_box)
+
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+
+        self.show()
+
+    def add_combination(self, combination: str = ""):
+        group_box = QtWidgets.QGroupBox(translate("key_sequence_builder", "Key combination"))
+        layout = QtWidgets.QHBoxLayout()
+        group_box.setLayout(layout)
+        self.layout.insertWidget(self.layout.count() - 1, group_box)
+
+        add_key_button = QtWidgets.QPushButton()
+        add_key_button.setIcon(QtGui.QIcon.fromTheme("list-add"))
+        add_key_button.setToolTip(translate("key_sequence_builder", "Add key to combination"))
+        layout.addWidget(add_key_button)
+
+        remove_combination_button = QtWidgets.QPushButton()
+        remove_combination_button.setIcon(QtGui.QIcon.fromTheme("delete"))
+        remove_combination_button.setToolTip(translate("key_sequence_builder", "Remove this key combination"))
+        layout.addWidget(remove_combination_button)
+
+        if combination == "":
+            self.add_key(layout)
+        else:
+            for key in combination.split("+"):
+                self.add_key(layout, key)
+
+        add_key_button.clicked.connect(lambda: self.add_key(layout))
+        remove_combination_button.clicked.connect(lambda: self.remove_combination(group_box))
+
+    def remove_combination(self, group_box):
+        self.layout.removeWidget(group_box)
+
+    def add_key(self, layout, key: str = ""):
+        input_field = QtWidgets.QLineEdit(key)
+        input_field.setCompleter(QtWidgets.QCompleter(list(XKeys.get_keys())))
+
+        if layout.count() > 2:
+            layout.insertWidget(layout.count() - 2, QtWidgets.QLabel("+"))
+
+        layout.insertWidget(layout.count() - 2, input_field)
+
+    def get_sequence(self):
+        sequence = []
+
+        for combination_index in range(self.layout.count() - 1):
+            group_box = self.layout.itemAt(combination_index).widget()
+            if not isinstance(group_box, QtWidgets.QGroupBox):
+                continue
+
+            combination = []
+
+            group_box_layout = group_box.layout()
+            for key_index in range(group_box_layout.count() - 1):
+                input_field = group_box_layout.itemAt(key_index).widget()
+                if not isinstance(input_field, QtWidgets.QLineEdit):
+                    continue
+
+                text = input_field.text().strip()
+                if text == "":
+                    continue
+
+                combination.append(text)
+
+            if not combination:
+                continue
+
+            sequence.append(combination)
+
+        return sequence
+
+    def get_sequence_as_string(self):
+        sequence = []
+
+        for combination in self.get_sequence():
+            sequence.append("+".join(combination))
+
+        return " ".join(sequence)
 
 
 class SettingsWindow(QtWidgets.QDialog):

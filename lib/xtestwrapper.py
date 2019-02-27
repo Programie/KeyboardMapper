@@ -9,6 +9,14 @@ for module in keysymdef.__all__:
     XK.load_keysym_group(module)
 
 
+class XKeys:
+    @staticmethod
+    def get_keys():
+        for key in XK.__dict__:
+            if key.startswith("XK_"):
+                yield key[3:]
+
+
 class XTestWrapper:
     def __init__(self):
         self.display = Display()
