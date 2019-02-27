@@ -25,8 +25,7 @@ class KeyListenerManager:
         self.restart_threads()
 
     def restart_threads(self):
-        for key_listener in self.key_listener_threads:
-            key_listener.stop()
+        self.stop_threads()
 
         self.key_listener_threads = []
 
@@ -37,6 +36,10 @@ class KeyListenerManager:
             self.key_listener_threads.append(key_listener)
 
         self.use_default_event_handler()
+
+    def stop_threads(self):
+        for key_listener in self.key_listener_threads:
+            key_listener.stop()
 
     def set_event_handler(self, event_handler: callable):
         for key_listener in self.key_listener_threads:

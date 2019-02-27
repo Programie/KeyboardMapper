@@ -1,8 +1,10 @@
 #! /usr/bin/env python3
 import os
 import sys
+import time
 
 from PySide2 import QtWidgets, QtGui, QtCore
+from PySide2.QtCore import QCoreApplication
 from PySide2.QtWidgets import QApplication
 from filelock import FileLock, Timeout
 
@@ -14,7 +16,13 @@ from lib.shortcut import Shortcuts
 
 
 def main():
-    application = QApplication(sys.argv)
+    if "--no-gui" in sys.argv:
+        application = QCoreApplication(sys.argv)
+        gui_mode = False
+    else:
+        application = QApplication(sys.argv)
+        gui_mode = True
+
     application.setApplicationName(APP_NAME)
     application.setApplicationVersion(APP_VERSION)
 
@@ -31,6 +39,8 @@ def main():
     hidden_option = QtCore.QCommandLineOption(["H", "hidden"], "Start hidden")
     parser.addOption(hidden_option)
 
+    parser.addOption(QtCore.QCommandLineOption(["no-gui"], "Start without GUI"))
+
     parser.process(application)
 
     config_dir = parser.value(config_dir_option)
@@ -41,7 +51,8 @@ def main():
     Config.filename = os.path.join(config_dir, "config.ini")
     Config.load()
 
-    application.setWindowIcon(QtGui.QIcon(os.path.join(ICONS_DIR, "appicon-{}.png".format(Config.icons))))
+    if gui_mode:
+        application.setWindowIcon(QtGui.QIcon(os.path.join(ICONS_DIR, "appicon-{}.png".format(Config.icons))))
 
     if Config.single_instance:
         user_run_dir = os.path.join("var", "run", "user", str(os.getuid()))
@@ -55,7 +66,11 @@ def main():
         try:
             lock.acquire()
         except Timeout:
-            QtWidgets.QMessageBox.critical(None, APP_NAME, "Keyboard Mapper is already running!")
+            message = "Keyboard Mapper is already running!"
+            if gui_mode:
+                QtWidgets.QMessageBox.critical(None, APP_NAME, message)
+            else:
+                print(message)
             sys.exit(1)
 
     shortcuts_file = os.path.join(config_dir, "shortcuts.yaml")
@@ -71,12 +86,24 @@ def main():
 
     key_listener_manager = KeyListenerManager(DEVICES_BASE_DIR, shortcuts)
     key_listener_manager.set_device_files(Config.input_devices)
-    main_window = MainWindow(shortcuts, key_listener_manager)
 
-    if not parser.isSet(hidden_option):
-        main_window.show()
+    if gui_mode:
+        main_window = MainWindow(shortcuts, key_listener_manager)
 
-    sys.exit(application.exec_())
+        if not parser.isSet(hidden_option):
+            main_window.show()
+
+        sys.exit(application.exec_())
+    else:
+        print("Listening for keyboard events")
+
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
+
+        key_listener_manager.stop_threads()
 
 
 if __name__ == "__main__":
