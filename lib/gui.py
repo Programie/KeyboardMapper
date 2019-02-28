@@ -664,7 +664,10 @@ class KeySequenceBuilder(QtWidgets.QDialog):
 
     def add_key(self, layout, key: str = ""):
         input_field = QtWidgets.QLineEdit(key)
-        input_field.setCompleter(QtWidgets.QCompleter(list(XKeys.get_keys())))
+
+        completer = QtWidgets.QCompleter(list(XKeys.get_keys()))
+        completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        input_field.setCompleter(completer)
 
         if layout.count() > 2:
             layout.insertWidget(layout.count() - 2, QtWidgets.QLabel("+"))
