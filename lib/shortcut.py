@@ -85,13 +85,29 @@ class Shortcut:
     def execute(self):
         if self.action == Actions.LAUNCH_APPLICATION.name:
             temp_desktop_file = os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper-tmp.desktop")
-            shutil.copy(self.data, temp_desktop_file)
-            subprocess.run(["gtk-launch", os.path.basename(temp_desktop_file)])
+
+            try:
+                shutil.copy(self.data, temp_desktop_file)
+            except Exception as exception:
+                self.show_execution_error(str(exception))
+                return
+
+            try:
+                subprocess.check_output(["gtk-launch", os.path.basename(temp_desktop_file)], stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as exception:
+                self.show_execution_error(exception.output)
+
             os.remove(temp_desktop_file)
         elif self.action == Actions.EXECUTE_COMMAND.name:
-            subprocess.run(self.data, shell=True)
+            try:
+                subprocess.check_output(self.data, shell=True, stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as exception:
+                self.show_execution_error(exception.output)
         elif self.action == Actions.OPEN_FOLDER.name:
-            subprocess.run(["xdg-open", self.data])
+            try:
+                subprocess.check_call(["xdg-open", self.data], stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as exception:
+                self.show_execution_error(exception.output)
         elif self.action == Actions.INPUT_TEXT.name:
             pyperclip.copy(self.data)
             XTestWrapper().send_combination(["Control_L", "V"])
@@ -103,15 +119,34 @@ class Shortcut:
         elif self.action == Actions.LOCK_KEYS.name:
             Shortcuts.instance.lock_keys.emit()
 
+    def show_execution_error(self, error_details: str):
+        message = [
+            translate("shortcut_error", "An error occurred while executing the action for key {} on device {}!").format(self.key, self.device),
+            "",
+            translate("shortcut_error", "Action: {}").format(self.get_action_name())
+        ]
+
+        if error_details is not None and error_details != "":
+            if isinstance(error_details, bytes):
+                error_details = error_details.decode()
+
+            message.append("")
+            message.append(error_details)
+
+        Shortcuts.instance.execution_error.emit("\n".join(message))
+
 
 class Shortcuts(QtCore.QObject):
     instance: "Shortcuts" = None
     lock_keys = QtCore.Signal()
+    execution_error = QtCore.Signal(str)
 
     def __init__(self, filename: str):
         super().__init__()
 
         Shortcuts.instance = self
+
+        self.execution_error.connect(lambda message: print(message))
 
         self.list: Dict[Shortcut] = {}
         self.filename = filename

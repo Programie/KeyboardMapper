@@ -35,6 +35,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Let shortcuts know how to handle the lock keys action (Shortcuts don't know anything about the Key Listener, Main Window, etc)
         Shortcuts.instance.lock_keys.connect(self.toggle_lock_keys)
+        Shortcuts.instance.execution_error.connect(lambda message: QtWidgets.QMessageBox.critical(self, APP_NAME, message))
 
         self.setGeometry(QtWidgets.QStyle.alignedRect(QtCore.Qt.LeftToRight, QtCore.Qt.AlignCenter, self.size(), QtWidgets.QApplication.desktop().availableGeometry()))
 
