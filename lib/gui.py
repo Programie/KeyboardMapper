@@ -17,11 +17,6 @@ from lib.xtestwrapper import XKeys
 translate = QtWidgets.QApplication.translate
 
 
-class LockKeysEvent(QtCore.QEvent):
-    def __init__(self):
-        super().__init__(QtCore.QEvent.Type.User)
-
-
 class ShortcutListHeader(enum.Enum):
     NAME, ACTION, KEY, DEVICE = range(4)
 
@@ -39,7 +34,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.key_listener_manager = key_listener_manager
 
         # Let shortcuts know how to handle the lock keys action (Shortcuts don't know anything about the Key Listener, Main Window, etc)
-        Shortcuts.lock_keys_handler = lambda: QtWidgets.QApplication.postEvent(self, LockKeysEvent())
+        Shortcuts.instance.lock_keys.connect(self.toggle_lock_keys)
 
         self.setGeometry(QtWidgets.QStyle.alignedRect(QtCore.Qt.LeftToRight, QtCore.Qt.AlignCenter, self.size(), QtWidgets.QApplication.desktop().availableGeometry()))
 
@@ -260,12 +255,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.tray_icon:
             self.hide()
             event.ignore()
-
-    def event(self, event: QtCore.QEvent):
-        if isinstance(event, LockKeysEvent):
-            self.toggle_lock_keys()
-
-        return super().event(event)
 
     def toggle_lock_keys(self):
         if self.key_listener_manager.allowed_actions == AllowedActions.ALL:

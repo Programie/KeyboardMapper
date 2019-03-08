@@ -101,14 +101,18 @@ class Shortcut:
             for combination in self.data.split(" "):
                 xtest_wrapper.send_combination(combination.split("+"))
         elif self.action == Actions.LOCK_KEYS.name:
-            if Shortcuts.lock_keys_handler:
-                Shortcuts.lock_keys_handler()
+            Shortcuts.instance.lock_keys.emit()
 
 
-class Shortcuts:
-    lock_keys_handler: callable = None
+class Shortcuts(QtCore.QObject):
+    instance: "Shortcuts" = None
+    lock_keys = QtCore.Signal()
 
     def __init__(self, filename: str):
+        super().__init__()
+
+        Shortcuts.instance = self
+
         self.list: Dict[Shortcut] = {}
         self.filename = filename
 
