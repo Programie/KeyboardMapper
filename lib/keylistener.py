@@ -48,6 +48,7 @@ class KeyListener(Thread):
                 # Wait for input (file.read() would block)
                 r, w, x = select([file], [], [], 0)
                 if not len(r):
+                    time.sleep(0.01)
                     continue
 
                 (time_sec, time_usec, event_type, code, value) = struct.unpack(self.FORMAT, file.read(self.EVENT_SIZE))
