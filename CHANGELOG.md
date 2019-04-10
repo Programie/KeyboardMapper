@@ -1,6 +1,7 @@
-## 2.0 (pending)
+## 2.0 (2019-04-10)
 
-Rewrite in Python with Qt 5
+* Rewrite in Python with Qt 5
+* Added support for multiple languages (currently only English and German)
 
 **Note:** This release uses YAML to store the shortcut configuration. Previously configured shortcuts will be automatically converted to the new format.
 
