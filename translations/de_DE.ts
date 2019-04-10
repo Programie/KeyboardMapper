@@ -295,32 +295,32 @@
 <context>
     <name>shortcut_action</name>
     <message>
-        <location filename="shortcut.py" line="23"/>
+        <location filename="shortcut.py" line="24"/>
         <source>Launch application</source>
         <translation>Anwendungen starten</translation>
     </message>
     <message>
-        <location filename="shortcut.py" line="24"/>
+        <location filename="shortcut.py" line="25"/>
         <source>Execute command</source>
         <translation>Befehl ausführen</translation>
     </message>
     <message>
-        <location filename="shortcut.py" line="25"/>
+        <location filename="shortcut.py" line="26"/>
         <source>Open folder</source>
         <translation>Ordner öffnen</translation>
     </message>
     <message>
-        <location filename="shortcut.py" line="26"/>
+        <location filename="shortcut.py" line="27"/>
         <source>Input text</source>
         <translation>Text eingeben</translation>
     </message>
     <message>
-        <location filename="shortcut.py" line="27"/>
+        <location filename="shortcut.py" line="28"/>
         <source>Input key sequence</source>
         <translation>Tastenfolge eingeben</translation>
     </message>
     <message>
-        <location filename="shortcut.py" line="28"/>
+        <location filename="shortcut.py" line="29"/>
         <source>Lock keys</source>
         <translation>Tasten sperren</translation>
     </message>
@@ -328,12 +328,12 @@
 <context>
     <name>shortcut_error</name>
     <message>
-        <location filename="shortcut.py" line="126"/>
+        <location filename="shortcut.py" line="87"/>
         <source>Action: {}</source>
         <translation>Aktion{} </translation>
     </message>
     <message>
-        <location filename="shortcut.py" line="124"/>
+        <location filename="shortcut.py" line="85"/>
         <source>An error occurred while executing the action for key {} on device {}!</source>
         <translation>Beim Ausführen der Aktion für die Taste {} auf dem Gerät {} ist ein Fehler aufgetreten!</translation>
     </message>
