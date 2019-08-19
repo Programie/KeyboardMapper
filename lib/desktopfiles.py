@@ -1,5 +1,5 @@
+import configparser
 import os
-from configparser import ConfigParser, SectionProxy
 from typing import List
 
 from PySide2.QtGui import QIcon
@@ -7,7 +7,7 @@ from PySide2.QtGui import QIcon
 
 class DesktopFile:
     def __init__(self, filename: str):
-        self.config_parser = ConfigParser()
+        self.config_parser = configparser.ConfigParser()
 
         # Preserve case of property names (https://stackoverflow.com/a/1611877)
         self.config_parser.optionxform = str
@@ -32,7 +32,7 @@ class DesktopFile:
         desktop_file.config_parser.read(filename)
 
         if "Desktop Entry" in desktop_file.config_parser:
-            section: SectionProxy = desktop_file.config_parser["Desktop Entry"]
+            section: configparser.SectionProxy = desktop_file.config_parser["Desktop Entry"]
 
             desktop_file.name = section.get("Name", raw=True)
             desktop_file.comment = section.get("Comment", raw=True)
@@ -134,16 +134,20 @@ class DesktopFile:
 
 class DesktopFilesFinder:
     @staticmethod
-    def load_in_known_paths():
-        yield from DesktopFilesFinder.load_in_path("/usr/share/applications")
-        yield from DesktopFilesFinder.load_in_path("/var/lib/snapd/desktop/applications")
-        yield from DesktopFilesFinder.load_in_path(os.path.join(os.path.expanduser("~"), ".local", "share", "applications"))
+    def load_in_known_paths(skip_on_error: bool = False, exceptions: list = None):
+        yield from DesktopFilesFinder.load_in_path("/usr/share/applications", skip_on_error, exceptions)
+        yield from DesktopFilesFinder.load_in_path("/var/lib/snapd/desktop/applications", skip_on_error, exceptions)
+        yield from DesktopFilesFinder.load_in_path(os.path.join(os.path.expanduser("~"), ".local", "share", "applications"), skip_on_error, exceptions)
 
     @staticmethod
-    def load_in_path(path: str):
+    def load_in_path(path: str, skip_on_error: bool = False, exceptions: list = None):
         for root, dirs, files in os.walk(path):
             for file in files:
                 if os.path.splitext(file)[1] != ".desktop":
                     continue
 
-                yield DesktopFile.read(os.path.join(root, file))
+                try:
+                    yield DesktopFile.read(os.path.join(root, file))
+                except configparser.Error as exception:
+                    if skip_on_error and isinstance(exceptions, list):
+                        exceptions.append(exception)

@@ -360,8 +360,27 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
         self.open_folder_field.setCompleter(dir_completer)
 
-        desktop_files = list(DesktopFilesFinder.load_in_known_paths())
+        desktop_files_exceptions = []
+        desktop_files = list(DesktopFilesFinder.load_in_known_paths(skip_on_error=True, exceptions=desktop_files_exceptions))
         desktop_files.sort(key=lambda item: item.name)
+
+        if desktop_files_exceptions:
+            message = [
+                translate("edit_shortcut", "An error occurred while parsing the desktop files."),
+                "",
+                translate("edit_shortcut", "Errors") + ":",
+            ]
+
+            for exception in desktop_files_exceptions[:5]:
+                message.append(exception.message)
+
+            if len(desktop_files_exceptions) > 5:
+                message.append(translate("edit_shortcut", "And {} more errors".format(len(desktop_files_exceptions))))
+
+            message.append("")
+            message.append(translate("edit_shortcut", "Those files will be skipped."))
+
+            QtWidgets.QMessageBox.critical(self, translate("edit_shortcut", "Loading desktop files failed"), "\n".join(message))
 
         application_items = {}
 

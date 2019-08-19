@@ -1,3 +1,7 @@
+## 2.1 (2019-08-19)
+
+* Skip desktop files which can't be parsed
+
 ## 2.0 (2019-04-10)
 
 * Rewrite in Python with Qt 5
