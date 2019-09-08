@@ -1,5 +1,5 @@
-filelock==3.0.10
+filelock==3.0.12
 pyperclip==1.7.0
-PySide2==5.12.1
-PyYAML==3.13
+PySide2==5.13.1
+PyYAML==5.1.2
 xlib==0.21
