@@ -147,7 +147,10 @@ class DesktopFilesFinder:
                     continue
 
                 try:
-                    yield DesktopFile.read(os.path.join(root, file))
+                    desktop_file = DesktopFile.read(os.path.join(root, file))
+
+                    if desktop_file and desktop_file.name is not None:
+                        yield desktop_file
                 except configparser.Error as exception:
                     if skip_on_error and isinstance(exceptions, list):
                         exceptions.append(exception)
