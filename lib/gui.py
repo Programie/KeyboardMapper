@@ -256,6 +256,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.tray_icon:
             self.hide()
             event.ignore()
+        else:
+            self.quit()
 
     def toggle_lock_keys(self):
         if self.key_listener_manager.allowed_actions == AllowedActions.ALL:

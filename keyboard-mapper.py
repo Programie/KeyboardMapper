@@ -21,6 +21,7 @@ def main():
         gui_mode = False
     else:
         application = QApplication(sys.argv)
+        application.setQuitOnLastWindowClosed(False)
         gui_mode = True
 
     application.setApplicationName(APP_NAME)
