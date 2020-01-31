@@ -56,10 +56,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.remove_shortcut_action.setShortcut(QtGui.QKeySequence("Del"))
         self.remove_shortcut_action.triggered.connect(self.remove_shortcut)
 
+        self.execute_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("system-run"), translate("main_window_menu", "Execute"))
+        self.execute_shortcut_action.triggered.connect(self.execute_shortcut)
+
         self.edit_menu = QtWidgets.QMenu(translate("main_window_menu", "Edit"))
         self.edit_menu.addAction(self.add_shortcut_action)
         self.edit_menu.addAction(self.edit_shortcut_action)
         self.edit_menu.addAction(self.remove_shortcut_action)
+        self.edit_menu.addSeparator()
+        self.edit_menu.addAction(self.execute_shortcut_action)
 
         help_menu = QtWidgets.QMenu(translate("main_window_menu", "Help"))
         help_menu.addAction(translate("main_window_menu", "Help"), self.show_help).setShortcut(QtGui.QKeySequence("F1"))
@@ -237,6 +242,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view_model.removeRow(index.row())
         self.shortcuts.save()
         self.update_status_bar()
+
+    def execute_shortcut(self):
+        selected_indexes: List[QtCore.QModelIndex] = self.shortcut_tree_view.selectedIndexes()
+
+        if len(selected_indexes) == 0:
+            return
+
+        model_index = selected_indexes[0]
+
+        device = model_index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
+        key = model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
+        shortcut = self.shortcuts.get_by_device_key(device, key)
+
+        if shortcut is None:
+            return
+
+        shortcut.execute()
 
     def show_help(self):
         subprocess.run(["xdg-open", APP_WEBSITE])
