@@ -146,11 +146,17 @@ class DesktopFilesFinder:
                 if os.path.splitext(file)[1] != ".desktop":
                     continue
 
+                full_path = os.path.join(root, file)
+
                 try:
-                    desktop_file = DesktopFile.read(os.path.join(root, file))
+                    desktop_file = DesktopFile.read(full_path)
 
                     if desktop_file and desktop_file.name is not None:
                         yield desktop_file
                 except configparser.Error as exception:
                     if skip_on_error and isinstance(exceptions, list):
-                        exceptions.append(exception)
+                        # No need to prefix with full_path, message already contains the filename
+                        exceptions.append(str(exception))
+                except UnicodeDecodeError as exception:
+                    if skip_on_error and isinstance(exceptions, list):
+                        exceptions.append("{}: {}".format(full_path, exception))

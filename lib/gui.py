@@ -396,7 +396,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
             ]
 
             for exception in desktop_files_exceptions[:5]:
-                message.append(exception.message)
+                message.append(exception)
 
             if len(desktop_files_exceptions) > 5:
                 message.append(translate("edit_shortcut", "And {} more errors".format(len(desktop_files_exceptions))))
