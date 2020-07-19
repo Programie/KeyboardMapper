@@ -90,7 +90,7 @@ class DesktopFile:
         return True
 
     def get_icon(self):
-        if self.icon is None:
+        if self.icon is None or len(self.icon) == 0:
             return QIcon()
 
         if self.icon[0] == "/":
