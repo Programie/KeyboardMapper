@@ -6,8 +6,9 @@ from typing import Dict
 
 import pyperclip
 import yaml
-from PySide2 import QtCore
+from PySide2 import QtCore, QtPrintSupport, QtGui
 
+from lib.config import Config
 from lib.desktopfiles import DesktopFile
 from lib.xtestwrapper import XTestWrapper
 
@@ -97,6 +98,14 @@ class ExecThread(Thread):
         Shortcuts.instance.execution_error.emit("\n".join(message))
 
 
+class Label:
+    def __init__(self):
+        self.icon_path: str = None
+        self.width: int = None
+        self.height: int = None
+        self.background_color: str = None
+
+
 class Shortcut:
     def __init__(self):
         self.device: str = None
@@ -104,6 +113,7 @@ class Shortcut:
         self.action: str = None
         self.data: str = None
         self.name: str = None
+        self.label: Label = Label()
 
     def __str__(self):
         return self.name
@@ -117,6 +127,14 @@ class Shortcut:
         shortcut.data = shortcut_properties["data"]
         shortcut.name = shortcut_properties["name"]
 
+        if "label" in shortcut_properties:
+            label_properties = shortcut_properties["label"]
+
+            shortcut.label.icon_path = label_properties.get("icon_path")
+            shortcut.label.width = label_properties.get("width")
+            shortcut.label.height = label_properties.get("height")
+            shortcut.label.background_color = label_properties.get("background_color")
+
         return shortcut
 
     def to_config(self):
@@ -125,7 +143,13 @@ class Shortcut:
             "key": self.key,
             "name": self.name,
             "action": self.action,
-            "data": self.data
+            "data": self.data,
+            "label": {
+                "icon_path": self.label.icon_path,
+                "width": self.label.width,
+                "height": self.label.height,
+                "background_color": self.label.background_color
+            }
         }
 
     def get_action_name(self):
@@ -179,8 +203,70 @@ class Shortcuts(QtCore.QObject):
     def get_list(self):
         return self.list
 
+    def get_shortcuts(self):
+        return self.list.values()
+
     def clear(self):
         self.list.clear()
+
+    def print_labels_to_printer(self, printer: QtPrintSupport.QPrinter):
+        dpi_x = printer.logicalDpiX()
+        dpi_y = printer.logicalDpiY()
+
+        painter = QtGui.QPainter()
+        painter.begin(printer)
+
+        x = 0
+        y = 0
+        max_end_y = 0
+
+        shortcut: Shortcut
+        for shortcut in self.get_shortcuts():
+            icon_path = shortcut.label.icon_path
+            if not icon_path:
+                continue
+
+            label_width_mm = (shortcut.label.width or Config.default_label_width)
+            label_height_mm = (shortcut.label.height or Config.default_label_height)
+
+            label_width_inch = label_width_mm / 25.4
+            label_height_inch = label_height_mm / 25.4
+
+            label_width = int(label_width_inch * dpi_x)
+            label_height = int(label_height_inch * dpi_y)
+
+            end_x = x + label_width
+            end_y = y + label_height
+            max_end_y = max(max_end_y, end_y)
+
+            if end_x > printer.width():
+                x = 0
+                y = max_end_y
+                end_x = x + label_width
+                end_y = y + label_height
+
+            if end_y > printer.height():
+                printer.newPage()
+                x = 0
+                y = 0
+                end_x = x + label_width
+                end_y = y + label_height
+                max_end_y = end_y
+
+            icon = QtGui.QImage(icon_path)
+            scaled_icon: QtGui.QImage = icon.scaled(label_width - 10, label_height - 10, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+
+            if shortcut.label.background_color:
+                painter.fillRect(x, y, label_width, label_height, QtGui.QColor(shortcut.label.background_color))
+
+            icon_width = scaled_icon.width()
+            icon_height = scaled_icon.height()
+
+            painter.drawImage(x + (label_width - icon_width) / 2, y + (label_height - icon_height) / 2, scaled_icon)
+            painter.setPen(QtGui.QColor("gray"))
+            painter.drawRect(x, y, label_width, label_height)
+
+            x = end_x
 
     def load(self):
         if not os.path.exists(self.filename):

@@ -5,7 +5,7 @@ import subprocess
 import sys
 from typing import List, Union
 
-from PySide2 import QtWidgets, QtGui, QtCore
+from PySide2 import QtWidgets, QtGui, QtCore, QtPrintSupport
 
 from lib.config import Config
 from lib.constants import APP_WEBSITE, DEVICES_BASE_DIR, APP_NAME, APP_DESCRIPTION, ICONS_DIR, APP_VERSION, APP_COPYRIGHT
@@ -43,6 +43,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         file_menu = QtWidgets.QMenu(translate("main_window_menu", "File"))
         file_menu.addAction(translate("main_window_menu", "Settings..."), self.show_settings)
+        file_menu.addAction(translate("main_window_menu", "Print labels..."), self.print_labels)
         file_menu.addSeparator()
         file_menu.addAction(translate("main_window_menu", "Quit"), self.quit)
 
@@ -209,6 +210,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def show_settings(self):
         SettingsWindow(self)
 
+    def print_labels(self):
+        print_dialog = QtPrintSupport.QPrintPreviewDialog()
+        print_dialog.paintRequested.connect(self.shortcuts.print_labels_to_printer)
+        print_dialog.exec_()
+
     def quit(self):
         sys.exit()
 
@@ -325,6 +331,14 @@ class EditShortcutWindow(QtWidgets.QDialog):
         self.input_text_field: QtWidgets.QLineEdit = None
         self.input_key_sequence_field: QtWidgets.QLineEdit = None
         self.add_action_options()
+
+        self.label_icon_use_checkbox: QtWidgets.QCheckBox = None
+        self.label_icon_path_field: QtWidgets.QLineEdit = None
+        self.label_icon_browse_button: QtWidgets.QPushButton = None
+        self.label_size_use_specific_checkbox: QtWidgets.QCheckBox = None
+        self.label_size_width_field: QtWidgets.QSpinBox = None
+        self.label_size_height_field: QtWidgets.QSpinBox = None
+        self.add_label_options()
 
         button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         self.dialog_layout.addWidget(button_box)
@@ -462,6 +476,104 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
         self.update_action_states()
 
+    def add_label_options(self):
+        group_box = QtWidgets.QGroupBox(translate("edit_shortcut", "Label options"))
+        self.dialog_layout.addWidget(group_box)
+
+        layout = QtWidgets.QGridLayout()
+        group_box.setLayout(layout)
+
+        self.label_icon_use_checkbox = QtWidgets.QCheckBox(translate("edit_shortcut", "Icon"))
+        self.label_icon_use_checkbox.setChecked(True if self.shortcut.label.icon_path else False)
+        self.label_icon_use_checkbox.stateChanged.connect(self.update_label_widget_states)
+        layout.addWidget(self.label_icon_use_checkbox, 0, 0)
+
+        self.label_size_use_specific_checkbox = QtWidgets.QCheckBox(translate("edit_shortcut", "Size"))
+        self.label_size_use_specific_checkbox.setChecked(True if self.shortcut.label.width or self.shortcut.label.height else False)
+        self.label_size_use_specific_checkbox.stateChanged.connect(self.update_label_widget_states)
+        layout.addWidget(self.label_size_use_specific_checkbox, 1, 0)
+
+        self.label_background_use_checkbox = QtWidgets.QCheckBox(translate("edit_shortcut", "Background"))
+        self.label_background_use_checkbox.setChecked(True if self.shortcut.label.background_color else False)
+        self.label_background_use_checkbox.stateChanged.connect(self.update_label_widget_states)
+        layout.addWidget(self.label_background_use_checkbox, 2, 0)
+
+        layout.addWidget(QtWidgets.QLabel(translate("edit_shortcut", "Preview")), 3, 0)
+
+        self.label_icon_path_field = QtWidgets.QLineEdit()
+        self.label_icon_path_field.setText(self.shortcut.label.icon_path)
+        layout.addWidget(self.label_icon_path_field, 0, 1)
+
+        self.label_icon_browse_button = QtWidgets.QPushButton(translate("edit_shortcut", "Browse..."))
+        self.label_icon_browse_button.clicked.connect(self.select_label_icon)
+        layout.addWidget(self.label_icon_browse_button, 0, 2)
+
+        size_layout = QtWidgets.QHBoxLayout()
+        self.label_size_width_field = QtWidgets.QSpinBox()
+        self.label_size_width_field.setMaximum(10000)
+        self.label_size_width_field.setSuffix("mm")
+
+        if self.shortcut.label.width is None:
+            self.label_size_width_field.setValue(Config.default_label_width)
+        else:
+            self.label_size_width_field.setValue(self.shortcut.label.width)
+
+        size_layout.addWidget(self.label_size_width_field, 1)
+
+        size_layout.addWidget(QtWidgets.QLabel("x"))
+        size_layout.setMargin(0)
+
+        self.label_size_height_field = QtWidgets.QSpinBox()
+        self.label_size_height_field.setMaximum(10000)
+        self.label_size_height_field.setSuffix("mm")
+
+        if self.shortcut.label.height is None:
+            self.label_size_height_field.setValue(Config.default_label_height)
+        else:
+            self.label_size_height_field.setValue(self.shortcut.label.height)
+
+        size_layout.addWidget(self.label_size_height_field, 1)
+
+        layout.addLayout(size_layout, 1, 1, 1, -1)
+
+        self.label_background_field = QtWidgets.QPushButton(translate("edit_shortcut", "Click to change color"))
+        self.label_background_field.setFlat(True)
+        self.label_background_field.setAutoFillBackground(True)
+        self.label_background_field.clicked.connect(self.select_label_background_color)
+
+        if self.shortcut.label.background_color:
+            background_field_palette = self.label_background_field.palette()
+            background_field_palette.setColor(QtGui.QPalette.Button, QtGui.QColor(self.shortcut.label.background_color))
+            self.label_background_field.setPalette(background_field_palette)
+
+        layout.addWidget(self.label_background_field, 2, 1, 1, -1)
+
+        self.label_preview_widget = QtWidgets.QLabel()
+        self.label_preview_widget.setAutoFillBackground(True)
+        self.label_preview_widget.setAlignment(QtCore.Qt.AlignCenter)
+        layout.addWidget(self.label_preview_widget, 3, 1, 1, -1)
+
+        self.update_label_preview()
+        self.update_label_widget_states()
+
+    def select_label_icon(self):
+        filepath = QtWidgets.QFileDialog.getOpenFileName(self, translate("edit_shortcut", "Open label icon"), self.label_icon_path_field.text())[0]
+
+        if filepath:
+            self.label_icon_path_field.setText(filepath)
+            self.update_label_preview()
+
+    def select_label_background_color(self):
+        color_dialog = QtWidgets.QColorDialog(self.label_background_field.palette().color(QtGui.QPalette.Button), self)
+
+        if color_dialog.exec_() != QtWidgets.QDialog.Accepted:
+            return
+
+        palette = self.label_background_field.palette()
+        palette.setColor(QtGui.QPalette.Button, color_dialog.selectedColor())
+        self.label_background_field.setPalette(palette)
+        self.update_label_preview()
+
     def request_shortcut(self):
         shortcut_requester = ShortcutRequester(self, self.main_window.key_listener_manager, self.shortcut)
         shortcut_requester.accepted.connect(self.update_shortcut_button)
@@ -482,6 +594,31 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
             for field in fields:
                 field.setEnabled(enabled)
+
+    def update_label_widget_states(self):
+        self.label_icon_path_field.setEnabled(self.label_icon_use_checkbox.isChecked())
+        self.label_icon_browse_button.setEnabled(self.label_icon_use_checkbox.isChecked())
+        self.label_size_width_field.setEnabled(self.label_size_use_specific_checkbox.isChecked())
+        self.label_size_height_field.setEnabled(self.label_size_use_specific_checkbox.isChecked())
+        self.label_background_field.setEnabled(self.label_background_use_checkbox.isChecked())
+
+        self.update_label_preview()
+
+    def update_label_preview(self):
+        if self.label_icon_use_checkbox.isChecked() and self.label_icon_path_field.text():
+            self.label_preview_widget.setPixmap(QtGui.QPixmap(self.label_icon_path_field.text()).scaled(32, 32))
+
+            if self.label_background_use_checkbox.isChecked():
+                color = self.label_background_field.palette().color(QtGui.QPalette.Button)
+            else:
+                color = QtGui.QColor("white")
+        else:
+            self.label_preview_widget.setPixmap(QtGui.QPixmap().scaled(32, 32))
+            color = QtGui.QColor("white")
+
+        preview_palette = self.label_preview_widget.palette()
+        preview_palette.setColor(QtGui.QPalette.Background, color)
+        self.label_preview_widget.setPalette(preview_palette)
 
     def select_folder(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, translate("edit_shortcut", "Select folder to open"), self.open_folder_field.text(), QtWidgets.QFileDialog.DontUseNativeDialog | QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontResolveSymlinks)
@@ -573,6 +710,23 @@ class EditShortcutWindow(QtWidgets.QDialog):
             self.main_window.shortcut_tree_view_model.removeRow(list_row)
         else:
             list_row = None
+
+        if self.label_icon_use_checkbox.isChecked():
+            self.shortcut.label.icon_path = self.label_icon_path_field.text()
+        else:
+            self.shortcut.label.icon_path = None
+
+        if self.label_size_use_specific_checkbox.isChecked():
+            self.shortcut.label.width = self.label_size_width_field.value()
+            self.shortcut.label.height = self.label_size_height_field.value()
+        else:
+            self.shortcut.label.width = None
+            self.shortcut.label.height = None
+
+        if self.label_background_use_checkbox.isChecked():
+            self.shortcut.label.background_color = self.label_background_field.palette().color(QtGui.QPalette.Button).name()
+        else:
+            self.shortcut.label.background_color = None
 
         self.main_window.add_list_item(self.shortcut, list_row)
         self.main_window.shortcuts.add(self.shortcut)
@@ -765,6 +919,10 @@ class SettingsWindow(QtWidgets.QDialog):
         self.icon_theme_list: QtWidgets.QComboBox = None
         self.add_icon_theme_settings()
 
+        self.labels_default_width_field: QtWidgets.QSpinBox = None
+        self.labels_default_height_field: QtWidgets.QSpinBox = None
+        self.add_labels_settings()
+
         self.use_tray_icon_checkbox = QtWidgets.QCheckBox(translate("settings", "Enable tray icon"))
         self.use_tray_icon_checkbox.setEnabled(QtWidgets.QSystemTrayIcon.isSystemTrayAvailable())
         self.use_tray_icon_checkbox.setChecked(Config.use_tray_icon)
@@ -832,6 +990,39 @@ class SettingsWindow(QtWidgets.QDialog):
         layout.addWidget(self.icon_theme_list)
         group_box.setLayout(layout)
 
+    def add_labels_settings(self):
+        group_box = QtWidgets.QGroupBox(translate("settings", "Labels"))
+        self.dialog_layout.addWidget(group_box)
+
+        layout = QtWidgets.QGridLayout()
+        group_box.setLayout(layout)
+
+        layout.addWidget(QtWidgets.QLabel(translate("settings", "Default size")), 0, 0)
+
+        size_layout = QtWidgets.QHBoxLayout()
+        self.labels_default_width_field = QtWidgets.QSpinBox()
+        self.labels_default_width_field.setMaximum(10000)
+        self.labels_default_width_field.setSuffix("mm")
+
+        if Config.default_label_width is not None:
+            self.labels_default_width_field.setValue(Config.default_label_width)
+
+        size_layout.addWidget(self.labels_default_width_field, 1)
+
+        size_layout.addWidget(QtWidgets.QLabel("x"))
+        size_layout.setMargin(0)
+
+        self.labels_default_height_field = QtWidgets.QSpinBox()
+        self.labels_default_height_field.setMaximum(10000)
+        self.labels_default_height_field.setSuffix("mm")
+
+        if Config.default_label_height is not None:
+            self.labels_default_height_field.setValue(Config.default_label_height)
+
+        size_layout.addWidget(self.labels_default_height_field, 1)
+
+        layout.addLayout(size_layout, 0, 1, 1, -1)
+
     def create_desktop_file(self, filename: str, arguments: List[str]):
         desktop_file = DesktopFile(filename)
 
@@ -863,6 +1054,8 @@ class SettingsWindow(QtWidgets.QDialog):
         Config.icons = self.icon_theme_list.currentText()
         Config.use_tray_icon = self.use_tray_icon_checkbox.checkState() == QtCore.Qt.Checked
         Config.single_instance = self.single_instance_checkbox.checkState() == QtCore.Qt.Checked
+        Config.default_label_width = self.labels_default_width_field.value()
+        Config.default_label_height = self.labels_default_height_field.value()
 
         Config.save()
 
