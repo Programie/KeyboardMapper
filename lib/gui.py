@@ -43,7 +43,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         file_menu = QtWidgets.QMenu(translate("main_window_menu", "File"))
         file_menu.addAction(translate("main_window_menu", "Settings..."), self.show_settings)
-        file_menu.addAction(translate("main_window_menu", "Print labels..."), self.print_labels)
+        file_menu.addAction(translate("main_window_menu", "Print labels..."), self.print_labels, QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_P))
         file_menu.addSeparator()
         file_menu.addAction(translate("main_window_menu", "Quit"), self.quit)
 
