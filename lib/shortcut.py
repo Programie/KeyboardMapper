@@ -10,6 +10,7 @@ from PySide2 import QtCore, QtPrintSupport, QtGui
 
 from lib.config import Config
 from lib.desktopfiles import DesktopFile
+from lib.utils import LengthUnit
 from lib.xtestwrapper import XTestWrapper
 
 translate = QtCore.QCoreApplication.translate
@@ -226,14 +227,10 @@ class Shortcuts(QtCore.QObject):
             if not icon_path:
                 continue
 
-            label_width_mm = (shortcut.label.width or Config.default_label_width)
-            label_height_mm = (shortcut.label.height or Config.default_label_height)
-
-            label_width_inch = label_width_mm / 25.4
-            label_height_inch = label_height_mm / 25.4
-
-            label_width = int(label_width_inch * dpi_x)
-            label_height = int(label_height_inch * dpi_y)
+            label_width = LengthUnit.length_to_pixel(Config.labels_length_unit, shortcut.label.width or Config.default_label_width, dpi_x)
+            label_height = LengthUnit.length_to_pixel(Config.labels_length_unit, shortcut.label.height or Config.default_label_height, dpi_y)
+            icon_margin_x = LengthUnit.length_to_pixel(Config.labels_length_unit, Config.label_icon_margin, dpi_x)
+            icon_margin_y = LengthUnit.length_to_pixel(Config.labels_length_unit, Config.label_icon_margin, dpi_y)
 
             end_x = x + label_width
             end_y = y + label_height
@@ -254,7 +251,7 @@ class Shortcuts(QtCore.QObject):
                 max_end_y = end_y
 
             icon = QtGui.QImage(icon_path)
-            scaled_icon: QtGui.QImage = icon.scaled(label_width - 10, label_height - 10, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+            scaled_icon: QtGui.QImage = icon.scaled(label_width - icon_margin_x, label_height - icon_margin_y, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
 
             if shortcut.label.background_color:
                 painter.fillRect(x, y, label_width, label_height, QtGui.QColor(shortcut.label.background_color))

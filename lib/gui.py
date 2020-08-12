@@ -13,6 +13,7 @@ from lib.desktopfiles import DesktopFilesFinder, DesktopFile
 from lib.keylistener_manager import KeyListenerManager, AllowedActions
 from lib.shortcut import Shortcuts, Shortcut, Actions, Action
 from lib.xtestwrapper import XKeys
+from lib.utils import LengthUnit
 
 translate = QtWidgets.QApplication.translate
 
@@ -919,8 +920,10 @@ class SettingsWindow(QtWidgets.QDialog):
         self.icon_theme_list: QtWidgets.QComboBox = None
         self.add_icon_theme_settings()
 
+        self.labels_length_unit_combobox: QtWidgets.QComboBox = None
         self.labels_default_width_field: QtWidgets.QSpinBox = None
         self.labels_default_height_field: QtWidgets.QSpinBox = None
+        self.labels_icon_margin_field: QtWidgets.QSpinBox = None
         self.add_labels_settings()
 
         self.use_tray_icon_checkbox = QtWidgets.QCheckBox(translate("settings", "Enable tray icon"))
@@ -997,12 +1000,24 @@ class SettingsWindow(QtWidgets.QDialog):
         layout = QtWidgets.QGridLayout()
         group_box.setLayout(layout)
 
-        layout.addWidget(QtWidgets.QLabel(translate("settings", "Default size")), 0, 0)
+        layout.addWidget(QtWidgets.QLabel(translate("settings", "Measure unit")), 0, 0)
+
+        self.labels_length_unit_combobox = QtWidgets.QComboBox()
+
+        for name, unit in LengthUnit.units.items():
+            self.labels_length_unit_combobox.addItem(unit.title, name)
+            if Config.labels_length_unit == name:
+                self.labels_length_unit_combobox.setCurrentIndex(self.labels_length_unit_combobox.count() - 1)
+
+        self.labels_length_unit_combobox.currentIndexChanged.connect(self.update_labels_length_unit)
+
+        layout.addWidget(self.labels_length_unit_combobox, 0, 1, 1, -1)
+
+        layout.addWidget(QtWidgets.QLabel(translate("settings", "Default size")), 1, 0)
 
         size_layout = QtWidgets.QHBoxLayout()
         self.labels_default_width_field = QtWidgets.QSpinBox()
         self.labels_default_width_field.setMaximum(10000)
-        self.labels_default_width_field.setSuffix("mm")
 
         if Config.default_label_width is not None:
             self.labels_default_width_field.setValue(Config.default_label_width)
@@ -1014,14 +1029,31 @@ class SettingsWindow(QtWidgets.QDialog):
 
         self.labels_default_height_field = QtWidgets.QSpinBox()
         self.labels_default_height_field.setMaximum(10000)
-        self.labels_default_height_field.setSuffix("mm")
 
         if Config.default_label_height is not None:
             self.labels_default_height_field.setValue(Config.default_label_height)
 
         size_layout.addWidget(self.labels_default_height_field, 1)
 
-        layout.addLayout(size_layout, 0, 1, 1, -1)
+        layout.addLayout(size_layout, 1, 1, 1, -1)
+
+        layout.addWidget(QtWidgets.QLabel(translate("settings", "Icon margin")), 2, 0)
+
+        self.labels_icon_margin_field = QtWidgets.QSpinBox()
+        self.labels_icon_margin_field.setMaximum(10000)
+        self.labels_icon_margin_field.setValue(Config.label_icon_margin)
+        layout.addWidget(self.labels_icon_margin_field, 2, 1, 1, -1)
+
+        self.update_labels_length_unit()
+
+    def update_labels_length_unit(self):
+        unit_name = self.labels_length_unit_combobox.currentData(QtCore.Qt.UserRole)
+
+        suffix = LengthUnit.units[unit_name].suffix
+
+        self.labels_default_width_field.setSuffix(suffix)
+        self.labels_default_height_field.setSuffix(suffix)
+        self.labels_icon_margin_field.setSuffix(suffix)
 
     def create_desktop_file(self, filename: str, arguments: List[str]):
         desktop_file = DesktopFile(filename)
@@ -1054,8 +1086,10 @@ class SettingsWindow(QtWidgets.QDialog):
         Config.icons = self.icon_theme_list.currentText()
         Config.use_tray_icon = self.use_tray_icon_checkbox.checkState() == QtCore.Qt.Checked
         Config.single_instance = self.single_instance_checkbox.checkState() == QtCore.Qt.Checked
+        Config.labels_length_unit = self.labels_length_unit_combobox.currentData(QtCore.Qt.UserRole)
         Config.default_label_width = self.labels_default_width_field.value()
         Config.default_label_height = self.labels_default_height_field.value()
+        Config.label_icon_margin = self.labels_icon_margin_field.value()
 
         Config.save()
 

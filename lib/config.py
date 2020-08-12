@@ -10,8 +10,10 @@ class Config:
     icons: str = "dark"
     use_tray_icon: bool = True
     single_instance: bool = True
+    labels_length_unit: str = None
     default_label_width: int = None
     default_label_height: int = None
+    label_icon_margin: int = None
 
     @staticmethod
     def load():
@@ -24,8 +26,10 @@ class Config:
         Config.single_instance = Config.to_boolean(str(settings.value("single-instance", defaultValue=True)))
 
         settings.beginGroup("Labels")
+        Config.labels_length_unit = settings.value("length-unit", defaultValue="mm")
         Config.default_label_width = Config.to_integer(settings.value("default-width", defaultValue=None))
         Config.default_label_height = Config.to_integer(settings.value("default-height", defaultValue=None))
+        Config.label_icon_margin = Config.to_integer(settings.value("icon-margin", defaultValue=1))
         settings.endGroup()
 
         if legacy_device != "":
@@ -53,6 +57,8 @@ class Config:
         settings.setValue("single-instance", Config.single_instance)
 
         settings.beginGroup("Labels")
+        settings.setValue("length-unit", Config.labels_length_unit)
         settings.setValue("default-width", Config.default_label_width)
         settings.setValue("default-height", Config.default_label_height)
+        settings.setValue("icon-margin", Config.label_icon_margin)
         settings.endGroup()
