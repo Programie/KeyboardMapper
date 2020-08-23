@@ -297,11 +297,7 @@ class Shortcuts(QtCore.QObject):
             self.add(shortcut)
 
     def save(self):
-        data = []
-
-        for index in self.list:
-            shortcut = self.list[index]
-            data.append(shortcut.to_config())
+        shortcuts = [shortcut.to_config() for shortcut in sorted(self.get_shortcuts(), key=lambda shortcut_item: shortcut_item.name)]
 
         with open(self.filename, "w") as file:
-            yaml.dump(data, file, default_flow_style=False)
+            yaml.dump(shortcuts, file, default_flow_style=False)
