@@ -217,12 +217,14 @@ class Shortcuts(QtCore.QObject):
         painter = QtGui.QPainter()
         painter.begin(printer)
 
+        shortcuts = sorted(self.get_shortcuts(), key=lambda shortcut_item: "{}-{}".format(QtGui.QColor(shortcut_item.label.background_color).rgb() if shortcut_item.label.background_color else 0, shortcut_item.name))
+
         x = 0
         y = 0
         max_end_y = 0
 
         shortcut: Shortcut
-        for shortcut in self.get_shortcuts():
+        for shortcut in shortcuts:
             icon_path = shortcut.label.icon_path
             if not icon_path:
                 continue
