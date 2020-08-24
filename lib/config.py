@@ -11,7 +11,6 @@ class Config:
     use_tray_icon: bool = True
     single_instance: bool = True
     labels_length_unit: str = None
-    labels_resolution: int = 300
     default_label_width: int = None
     default_label_height: int = None
     label_icon_margin: int = None
@@ -28,7 +27,6 @@ class Config:
 
         settings.beginGroup("Labels")
         Config.labels_length_unit = settings.value("length-unit", defaultValue="mm")
-        Config.labels_resolution = Config.to_integer(settings.value("resolution", defaultValue=300))
         Config.default_label_width = Config.to_integer(settings.value("default-width", defaultValue=None))
         Config.default_label_height = Config.to_integer(settings.value("default-height", defaultValue=None))
         Config.label_icon_margin = Config.to_integer(settings.value("icon-margin", defaultValue=1))
@@ -60,7 +58,6 @@ class Config:
 
         settings.beginGroup("Labels")
         settings.setValue("length-unit", Config.labels_length_unit)
-        settings.setValue("resolution", Config.labels_resolution)
         settings.setValue("default-width", Config.default_label_width)
         settings.setValue("default-height", Config.default_label_height)
         settings.setValue("icon-margin", Config.label_icon_margin)

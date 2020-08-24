@@ -212,8 +212,7 @@ class MainWindow(QtWidgets.QMainWindow):
         SettingsWindow(self)
 
     def print_labels(self):
-        printer = QtPrintSupport.QPrinter()
-        printer.setResolution(Config.labels_resolution)
+        printer = QtPrintSupport.QPrinter(QtPrintSupport.QPrinter.HighResolution)
 
         print_dialog = QtPrintSupport.QPrintPreviewDialog(printer)
         print_dialog.paintRequested.connect(self.shortcuts.print_labels_to_printer)
@@ -924,7 +923,6 @@ class SettingsWindow(QtWidgets.QDialog):
         self.add_icon_theme_settings()
 
         self.labels_length_unit_combobox: QtWidgets.QComboBox = None
-        self.labels_resolution_field: QtWidgets.QSpinBox = None
         self.labels_default_width_field: QtWidgets.QSpinBox = None
         self.labels_default_height_field: QtWidgets.QSpinBox = None
         self.labels_icon_margin_field: QtWidgets.QSpinBox = None
@@ -1017,18 +1015,7 @@ class SettingsWindow(QtWidgets.QDialog):
 
         layout.addWidget(self.labels_length_unit_combobox, 0, 1, 1, -1)
 
-        layout.addWidget(QtWidgets.QLabel(translate("settings", "Resolution")), 1, 0)
-
-        self.labels_resolution_field = QtWidgets.QSpinBox()
-        self.labels_resolution_field.setMaximum(10000)
-        self.labels_resolution_field.setSuffix("dpi")
-
-        if Config.labels_resolution is not None:
-            self.labels_resolution_field.setValue(Config.labels_resolution)
-
-        layout.addWidget(self.labels_resolution_field, 1, 1, 1, -1)
-
-        layout.addWidget(QtWidgets.QLabel(translate("settings", "Default size")), 2, 0)
+        layout.addWidget(QtWidgets.QLabel(translate("settings", "Default size")), 1, 0)
 
         size_layout = QtWidgets.QHBoxLayout()
         self.labels_default_width_field = QtWidgets.QSpinBox()
@@ -1050,14 +1037,14 @@ class SettingsWindow(QtWidgets.QDialog):
 
         size_layout.addWidget(self.labels_default_height_field, 1)
 
-        layout.addLayout(size_layout, 2, 1, 1, -1)
+        layout.addLayout(size_layout, 1, 1, 1, -1)
 
-        layout.addWidget(QtWidgets.QLabel(translate("settings", "Icon margin")), 3, 0)
+        layout.addWidget(QtWidgets.QLabel(translate("settings", "Icon margin")), 2, 0)
 
         self.labels_icon_margin_field = QtWidgets.QSpinBox()
         self.labels_icon_margin_field.setMaximum(10000)
         self.labels_icon_margin_field.setValue(Config.label_icon_margin)
-        layout.addWidget(self.labels_icon_margin_field, 3, 1, 1, -1)
+        layout.addWidget(self.labels_icon_margin_field, 2, 1, 1, -1)
 
         self.update_labels_length_unit()
 
@@ -1102,7 +1089,6 @@ class SettingsWindow(QtWidgets.QDialog):
         Config.use_tray_icon = self.use_tray_icon_checkbox.checkState() == QtCore.Qt.Checked
         Config.single_instance = self.single_instance_checkbox.checkState() == QtCore.Qt.Checked
         Config.labels_length_unit = self.labels_length_unit_combobox.currentData(QtCore.Qt.UserRole)
-        Config.labels_resolution = self.labels_resolution_field.value()
         Config.default_label_width = self.labels_default_width_field.value()
         Config.default_label_height = self.labels_default_height_field.value()
         Config.label_icon_margin = self.labels_icon_margin_field.value()
