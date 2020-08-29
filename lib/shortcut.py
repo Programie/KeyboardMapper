@@ -262,7 +262,7 @@ class Shortcuts(QtCore.QObject):
             icon_height = scaled_icon.height()
 
             painter.drawImage(x + (label_width - icon_width) / 2, y + (label_height - icon_height) / 2, scaled_icon)
-            painter.setPen(QtGui.QColor("gray"))
+            painter.setPen(QtGui.QColor("black"))
             painter.drawRect(x, y, label_width, label_height)
 
             x = end_x
