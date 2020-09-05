@@ -54,6 +54,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.edit_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-edit"), translate("main_window_menu", "Edit shortcut..."))
         self.edit_shortcut_action.triggered.connect(self.edit_shortcut)
 
+        self.duplicate_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("edit-copy"), translate("main_window_menu", "Duplicate shortcut..."))
+        self.duplicate_shortcut_action.triggered.connect(self.duplicate_shortcut)
+
         self.remove_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("delete"), translate("main_window_menu", "Remove shortcut..."))
         self.remove_shortcut_action.setShortcut(QtGui.QKeySequence("Del"))
         self.remove_shortcut_action.triggered.connect(self.remove_shortcut)
@@ -64,6 +67,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.edit_menu = QtWidgets.QMenu(translate("main_window_menu", "Edit"))
         self.edit_menu.addAction(self.add_shortcut_action)
         self.edit_menu.addAction(self.edit_shortcut_action)
+        self.edit_menu.addAction(self.duplicate_shortcut_action)
         self.edit_menu.addAction(self.remove_shortcut_action)
         self.edit_menu.addSeparator()
         self.edit_menu.addAction(self.execute_shortcut_action)
@@ -83,6 +87,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         toolbar.addAction(self.add_shortcut_action)
         toolbar.addAction(self.edit_shortcut_action)
+        toolbar.addAction(self.duplicate_shortcut_action)
         toolbar.addAction(self.remove_shortcut_action)
 
         statusbar = QtWidgets.QStatusBar()
@@ -198,7 +203,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.update_status_bar()
 
-    def edit_item(self, model_index: QtCore.QModelIndex = None):
+    def edit_item(self, model_index: QtCore.QModelIndex = None, duplicate: bool = False):
         if model_index is None:
             shortcut = None
         else:
@@ -206,7 +211,7 @@ class MainWindow(QtWidgets.QMainWindow):
             key = model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
             shortcut = self.shortcuts.get_by_device_key(device, key)
 
-        EditShortcutWindow(self, shortcut)
+        EditShortcutWindow(self, shortcut, duplicate)
 
     def show_settings(self):
         SettingsWindow(self)
@@ -231,6 +236,14 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         self.edit_item(selected_indexes[0])
+
+    def duplicate_shortcut(self):
+        selected_indexes: List[QtCore.QModelIndex] = self.shortcut_tree_view.selectedIndexes()
+
+        if len(selected_indexes) == 0:
+            return
+
+        self.edit_item(selected_indexes[0], True)
 
     def remove_shortcut(self):
         selected_indexes: List[QtCore.QModelIndex] = self.shortcut_tree_view.selectedIndexes()
@@ -302,16 +315,23 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class EditShortcutWindow(QtWidgets.QDialog):
-    def __init__(self, main_window: MainWindow, shortcut: Shortcut):
+    def __init__(self, main_window: MainWindow, shortcut: Shortcut, duplicate: bool = False):
         super().__init__(main_window)
 
         self.main_window = main_window
 
-        self.original_shortcut = shortcut
+        # Only store reference to original shortcut if no duplication is requested
+        if duplicate:
+            self.original_shortcut = None
+        else:
+            self.original_shortcut = shortcut
 
         if shortcut:
             self.shortcut = copy.copy(shortcut)
-            self.setWindowTitle(translate("edit_shortcut", "Edit shortcut"))
+            if duplicate:
+                self.setWindowTitle(translate("edit_shortcut", "Add shortcut"))
+            else:
+                self.setWindowTitle(translate("edit_shortcut", "Edit shortcut"))
         else:
             self.shortcut = Shortcut()
             self.setWindowTitle(translate("edit_shortcut", "Add shortcut"))
