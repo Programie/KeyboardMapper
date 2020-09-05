@@ -2,7 +2,7 @@ image: ubuntu:groovy
 
 before_script:
   - apt-get update
-  - apt-get install -y make qtbase5-dev-tools
+  - apt-get install -y make qtbase5-dev-tools zip
 
 stages:
   - build
