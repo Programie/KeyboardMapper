@@ -1,0 +1,16 @@
+image: ubuntu:groovy
+
+before_script:
+  - apt-get update
+  - apt-get install -y make qtbase5-dev-tools
+
+stages:
+  - build
+
+package:
+  stage: build
+  script:
+    - make
+  artifacts:
+    paths:
+      - build/keyboard-mapper
