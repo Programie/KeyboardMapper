@@ -1,3 +1,5 @@
 /.idea/
+/build/
+/lib/resources.py
 /venv/
 __pycache__

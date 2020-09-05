@@ -6,6 +6,13 @@ APP_COPYRIGHT = "© 2018-2019 Michael Wieland"
 APP_WEBSITE = "https://gitlab.com/Programie/KeyboardMapper"
 APP_VERSION = "2.0"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-ICONS_DIR = os.path.join(BASE_DIR, "icons")
-TRANSLATIONS_DIR = os.path.join(BASE_DIR, "translations")
 DEVICES_BASE_DIR = "/dev/input/by-id"
+
+try:
+    from lib import resources
+
+    ICONS_DIR = ":/icons"
+    TRANSLATIONS_DIR = ":/translations"
+except ImportError:
+    ICONS_DIR = os.path.join(BASE_DIR, "icons")
+    TRANSLATIONS_DIR = os.path.join(BASE_DIR, "translations")

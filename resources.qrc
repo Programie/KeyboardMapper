@@ -1,0 +1,10 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <qresource>
+    <file>icons/appicon-bright.png</file>
+    <file>icons/appicon-bright-disabled.png</file>
+    <file>icons/appicon-dark.png</file>
+    <file>icons/appicon-dark-disabled.png</file>
+    <file>translations/de_DE.qm</file>
+  </qresource>
+</RCC>
