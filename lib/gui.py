@@ -224,7 +224,7 @@ class MainWindow(QtWidgets.QMainWindow):
         print_dialog.exec_()
 
     def quit(self):
-        sys.exit()
+        QtGui.QGuiApplication.quit()
 
     def add_shortcut(self):
         self.edit_item(None)
