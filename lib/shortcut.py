@@ -115,6 +115,7 @@ class Shortcut:
         self.data: str = None
         self.name: str = None
         self.label: Label = Label()
+        self.executions: int = 0
 
     def __str__(self):
         return self.name
@@ -127,6 +128,11 @@ class Shortcut:
         shortcut.action = shortcut_properties["action"]
         shortcut.data = shortcut_properties["data"]
         shortcut.name = shortcut_properties["name"]
+
+        if "executions" in shortcut_properties:
+            shortcut.executions = int(shortcut_properties["executions"])
+        else:
+            shortcut.executions = 0
 
         if "label" in shortcut_properties:
             label_properties = shortcut_properties["label"]
@@ -145,6 +151,7 @@ class Shortcut:
             "name": self.name,
             "action": self.action,
             "data": self.data,
+            "executions": self.executions,
             "label": {
                 "icon_path": self.label.icon_path,
                 "width": self.label.width,
@@ -169,6 +176,8 @@ class Shortcut:
             return "{}: {}".format(Actions.get(self.action).title, self.data)
 
     def execute(self):
+        self.executions += 1
+
         thread = ExecThread(self)
 
         # Do not wait for the thread once Keyboard Mapper termination has been requested, just stop it
@@ -176,11 +185,14 @@ class Shortcut:
 
         thread.start()
 
+        Shortcuts.instance.executed.emit(self)
+
 
 class Shortcuts(QtCore.QObject):
     instance: "Shortcuts" = None
     lock_keys = QtCore.Signal()
     execution_error = QtCore.Signal(str)
+    executed = QtCore.Signal(Shortcut)
 
     def __init__(self, filename: str):
         super().__init__()

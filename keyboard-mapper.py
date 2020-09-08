@@ -98,7 +98,12 @@ def main():
         if not parser.isSet(hidden_option):
             main_window.show()
 
-        sys.exit(application.exec_())
+        try:
+            exit_code = application.exec_()
+        finally:
+            shortcuts.save()
+
+        sys.exit(exit_code)
     else:
         print("Listening for keyboard events")
 
@@ -109,6 +114,7 @@ def main():
             pass
 
         key_listener_manager.stop_threads()
+        shortcuts.save()
 
 
 if __name__ == "__main__":

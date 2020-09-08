@@ -19,7 +19,7 @@ translate = QtWidgets.QApplication.translate
 
 
 class ShortcutListHeader(enum.Enum):
-    NAME, ACTION, KEY, DEVICE = range(4)
+    NAME, ACTION, KEY, DEVICE, EXECUTIONS = range(5)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -37,6 +37,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Let shortcuts know how to handle the lock keys action (Shortcuts don't know anything about the Key Listener, Main Window, etc)
         Shortcuts.instance.lock_keys.connect(self.toggle_lock_keys)
         Shortcuts.instance.execution_error.connect(lambda message: QtWidgets.QMessageBox.critical(self, APP_NAME, message))
+        Shortcuts.instance.executed.connect(self.shortcut_executed)
 
         self.setGeometry(QtWidgets.QStyle.alignedRect(QtCore.Qt.LeftToRight, QtCore.Qt.AlignCenter, self.size(), QtWidgets.QApplication.desktop().availableGeometry()))
 
@@ -105,17 +106,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view.setAlternatingRowColors(True)
         self.shortcut_tree_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
-        self.shortcut_tree_view_model = QtGui.QStandardItemModel(0, 4)
+        self.shortcut_tree_view_model = QtGui.QStandardItemModel(0, 5)
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.NAME.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Name"))
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.ACTION.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Action"))
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.KEY.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Key"))
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.DEVICE.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Device"))
+        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.EXECUTIONS.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Executions"))
         self.shortcut_tree_view.setModel(self.shortcut_tree_view_model)
 
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.NAME.value, 300)
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.ACTION.value, 300)
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.KEY.value, 50)
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.DEVICE.value, 100)
+        self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.EXECUTIONS.value, 100)
 
         self.shortcut_tree_view.selectionModel().selectionChanged.connect(self.update_edit_actions)
 
@@ -194,6 +197,15 @@ class MainWindow(QtWidgets.QMainWindow):
         model.setData(model.index(row, ShortcutListHeader.ACTION.value), shortcut.get_action_name())
         model.setData(model.index(row, ShortcutListHeader.KEY.value), shortcut.key)
         model.setData(model.index(row, ShortcutListHeader.DEVICE.value), shortcut.device)
+        model.setData(model.index(row, ShortcutListHeader.EXECUTIONS.value), shortcut.executions)
+
+    def get_list_item_by_shortcut(self, shortcut: Shortcut):
+        list_items: List[QtGui.QStandardItem] = self.shortcut_tree_view_model.findItems(str(shortcut.key), column=ShortcutListHeader.KEY.value)
+        for list_item in list_items:
+            if list_item.index().siblingAtColumn(ShortcutListHeader.DEVICE.value).data() == shortcut.device:
+                return list_item
+
+        return None
 
     def load_from_shortcuts(self):
         self.shortcut_tree_view_model.removeRows(0, self.shortcut_tree_view_model.rowCount())
@@ -302,6 +314,16 @@ class MainWindow(QtWidgets.QMainWindow):
             event.ignore()
         else:
             self.quit()
+
+    def shortcut_executed(self, shortcut: Shortcut):
+        list_item: QtGui.QStandardItem = self.get_list_item_by_shortcut(shortcut)
+
+        if list_item is None:
+            return
+
+        index: QtCore.QModelIndex = list_item.index()
+        item: QtGui.QStandardItem = self.shortcut_tree_view_model.itemFromIndex(index.siblingAtColumn(ShortcutListHeader.EXECUTIONS.value))
+        item.setText(str(shortcut.executions))
 
     def toggle_lock_keys(self):
         if self.key_listener_manager.allowed_actions == AllowedActions.ALL:
@@ -723,12 +745,11 @@ class EditShortcutWindow(QtWidgets.QDialog):
         if self.original_shortcut:
             self.main_window.shortcuts.remove_by_device_key(self.original_shortcut.device, self.original_shortcut.key)
 
-            list_row = None
-            list_items: List[QtGui.QStandardItem] = self.main_window.shortcut_tree_view_model.findItems(str(self.original_shortcut.key), column=ShortcutListHeader.KEY.value)
-            for list_item in list_items:
-                if list_item.index().siblingAtColumn(ShortcutListHeader.DEVICE.value).data() == self.original_shortcut.device:
-                    list_row = list_item.row()
-                    break
+            list_item = self.main_window.get_list_item_by_shortcut(self.original_shortcut)
+            if list_item:
+                list_row = list_item.row()
+            else:
+                list_row = None
 
             self.main_window.shortcut_tree_view_model.removeRow(list_row)
         else:
