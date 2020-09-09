@@ -14,6 +14,8 @@ from lib.gui import MainWindow
 from lib.keylistener_manager import KeyListenerManager
 from lib.shortcut import Shortcuts
 
+translate = QtWidgets.QApplication.translate
+
 
 def main():
     if "--no-gui" in sys.argv:
@@ -87,7 +89,16 @@ def main():
         if len(Config.input_devices):
             shortcuts.load_legacy(legacy_shortcuts_file, Config.input_devices[0])
 
-    shortcuts.load()
+    try:
+        shortcuts.load()
+    except:
+        message = translate("main", "Unable to load shortcuts from config file!")
+        if gui_mode:
+            if QtWidgets.QMessageBox.critical(None, APP_NAME, message, QtWidgets.QMessageBox.Close, QtWidgets.QMessageBox.Ignore) == QtWidgets.QMessageBox.Close:
+                sys.exit(1)
+        else:
+            print(message)
+            sys.exit(1)
 
     key_listener_manager = KeyListenerManager(DEVICES_BASE_DIR, shortcuts)
     key_listener_manager.set_device_files(Config.input_devices)

@@ -226,6 +226,14 @@
     </message>
 </context>
 <context>
+    <name>main</name>
+    <message>
+        <location filename="keyboard-mapper.py" line="96"/>
+        <source>Unable to load shortcuts from config file!</source>
+        <translation>Die Shortcuts konnten von der Konfigurationsdatei nicht geladen werden!</translation>
+    </message>
+</context>
+<context>
     <name>main_window</name>
     <message>
         <location filename="gui.py" line="98"/>
