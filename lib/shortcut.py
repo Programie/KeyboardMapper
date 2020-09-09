@@ -311,5 +311,10 @@ class Shortcuts(QtCore.QObject):
     def save(self):
         shortcuts = [shortcut.to_config() for shortcut in sorted(self.get_shortcuts(), key=lambda shortcut_item: shortcut_item.name)]
 
-        with open(self.filename, "w") as file:
+        temp_file = "{}.tmp".format(self.filename)
+
+        # Write to a temporary file first to prevent data loss in case of a crash while saving
+        with open(temp_file, "w") as file:
             yaml.dump(shortcuts, file, default_flow_style=False)
+
+        os.rename(temp_file, self.filename)
