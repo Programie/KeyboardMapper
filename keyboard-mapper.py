@@ -29,6 +29,10 @@ def main():
     application.setApplicationName(APP_NAME)
     application.setApplicationVersion(APP_VERSION)
 
+    translator = QtCore.QTranslator(application)
+    translator.load(QtCore.QLocale().name(), directory=TRANSLATIONS_DIR)
+    application.installTranslator(translator)
+
     parser = QtCore.QCommandLineParser()
     parser.setApplicationDescription(APP_DESCRIPTION)
     parser.addHelpOption()
@@ -69,16 +73,12 @@ def main():
         try:
             lock.acquire()
         except Timeout:
-            message = "Keyboard Mapper is already running!"
+            message = translate("main", "Keyboard Mapper is already running!")
             if gui_mode:
                 QtWidgets.QMessageBox.critical(None, APP_NAME, message)
             else:
                 print(message)
             sys.exit(1)
-
-    translator = QtCore.QTranslator(application)
-    translator.load(QtCore.QLocale().name(), directory=TRANSLATIONS_DIR)
-    application.installTranslator(translator)
 
     shortcuts_file = os.path.join(config_dir, "shortcuts.yaml")
     legacy_shortcuts_file = os.path.join(config_dir, "shortcuts.ini")

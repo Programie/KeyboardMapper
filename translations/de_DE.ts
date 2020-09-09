@@ -232,6 +232,11 @@
         <source>Unable to load shortcuts from config file!</source>
         <translation>Die Shortcuts konnten von der Konfigurationsdatei nicht geladen werden!</translation>
     </message>
+    <message>
+        <location filename="keyboard-mapper.py" line="77"/>
+        <source>Keyboard Mapper is already running!</source>
+        <translation type="unfinished">Keyboard Mapper läuft bereits!</translation>
+    </message>
 </context>
 <context>
     <name>main_window</name>
