@@ -10,6 +10,8 @@ class Config:
     icons: str = "dark"
     use_tray_icon: bool = True
     single_instance: bool = True
+    list_sort_column: str = None
+    list_sort_order: str = None
     labels_length_unit: str = None
     default_label_width: int = None
     default_label_height: int = None
@@ -24,6 +26,11 @@ class Config:
         Config.icons = settings.value("icons", defaultValue="dark")
         Config.use_tray_icon = Config.to_boolean(str(settings.value("use-tray-icon", defaultValue=True)))
         Config.single_instance = Config.to_boolean(str(settings.value("single-instance", defaultValue=True)))
+
+        settings.beginGroup("List")
+        Config.list_sort_column = settings.value("sort-column", defaultValue="name")
+        Config.list_sort_order = settings.value("sort-order", defaultValue="asc")
+        settings.endGroup()
 
         settings.beginGroup("Labels")
         Config.labels_length_unit = settings.value("length-unit", defaultValue="mm")
@@ -55,6 +62,11 @@ class Config:
         settings.setValue("icons", Config.icons)
         settings.setValue("use-tray-icon", Config.use_tray_icon)
         settings.setValue("single-instance", Config.single_instance)
+
+        settings.beginGroup("List")
+        settings.setValue("sort-column", Config.list_sort_column)
+        settings.setValue("sort-order", Config.list_sort_order)
+        settings.endGroup()
 
         settings.beginGroup("Labels")
         settings.setValue("length-unit", Config.labels_length_unit)

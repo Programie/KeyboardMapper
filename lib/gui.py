@@ -127,6 +127,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.shortcut_tree_view.customContextMenuRequested.connect(self.show_context_menu)
 
+        sort_column = ShortcutListHeader.NAME
+        for list_header in ShortcutListHeader:
+            if list_header.name.lower() == Config.list_sort_column.lower():
+                sort_column = list_header
+                break
+
+        if Config.list_sort_order == "desc":
+            sort_order = QtCore.Qt.DescendingOrder
+        else:
+            sort_order = QtCore.Qt.AscendingOrder
+
+        self.shortcut_tree_view.sortByColumn(sort_column.value, sort_order)
+
+        self.shortcut_tree_view.header().sortIndicatorChanged.connect(self.list_sorting_changed)
+
         self.setCentralWidget(self.shortcut_tree_view)
 
         self.tray_icon: QtWidgets.QSystemTrayIcon = None
@@ -184,6 +199,20 @@ class MainWindow(QtWidgets.QMainWindow):
     def show_context_menu(self, position):
         self.edit_menu.exec_(self.shortcut_tree_view.mapToGlobal(position))
 
+    def update_sorting(self):
+        header: QtWidgets.QHeaderView = self.shortcut_tree_view.header()
+        self.shortcut_tree_view_model.sort(header.sortIndicatorSection(), header.sortIndicatorOrder())
+
+    def list_sorting_changed(self, column_index, order):
+        Config.list_sort_column = ShortcutListHeader(column_index).name.lower()
+
+        if order == QtCore.Qt.DescendingOrder:
+            Config.list_sort_order = "desc"
+        else:
+            Config.list_sort_order = "asc"
+
+        Config.save()
+
     def add_list_item(self, shortcut: Shortcut, row: int = None):
         model = self.shortcut_tree_view_model
 
@@ -208,12 +237,16 @@ class MainWindow(QtWidgets.QMainWindow):
         return None
 
     def load_from_shortcuts(self):
+        self.shortcut_tree_view.setSortingEnabled(False)
+
         self.shortcut_tree_view_model.removeRows(0, self.shortcut_tree_view_model.rowCount())
 
         for shortcut in self.shortcuts.get_list().values():
             self.add_list_item(shortcut)
 
         self.update_status_bar()
+
+        self.shortcut_tree_view.setSortingEnabled(True)
 
     def edit_item(self, model_index: QtCore.QModelIndex = None, duplicate: bool = False):
         if model_index is None:
@@ -324,6 +357,7 @@ class MainWindow(QtWidgets.QMainWindow):
         index: QtCore.QModelIndex = list_item.index()
         item: QtGui.QStandardItem = self.shortcut_tree_view_model.itemFromIndex(index.siblingAtColumn(ShortcutListHeader.EXECUTIONS.value))
         item.setText(str(shortcut.executions))
+        self.update_sorting()
 
     def toggle_lock_keys(self):
         if self.key_listener_manager.allowed_actions == AllowedActions.ALL:
@@ -773,6 +807,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
             self.shortcut.label.background_color = None
 
         self.main_window.add_list_item(self.shortcut, list_row)
+        self.main_window.update_sorting()
         self.main_window.shortcuts.add(self.shortcut)
         self.main_window.update_status_bar()
 
