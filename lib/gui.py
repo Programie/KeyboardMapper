@@ -356,7 +356,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         index: QtCore.QModelIndex = list_item.index()
         item: QtGui.QStandardItem = self.shortcut_tree_view_model.itemFromIndex(index.siblingAtColumn(ShortcutListHeader.EXECUTIONS.value))
-        item.setText(str(shortcut.executions))
+        item.setData(shortcut.executions, QtCore.Qt.DisplayRole)
         self.update_sorting()
 
     def toggle_lock_keys(self):
