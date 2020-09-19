@@ -45,7 +45,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         file_menu = QtWidgets.QMenu(translate("main_window_menu", "File"))
         file_menu.addAction(translate("main_window_menu", "Settings..."), self.show_settings)
-        file_menu.addAction(translate("main_window_menu", "Print labels..."), self.print_labels, QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_P))
+
+        print_labels_menu = QtWidgets.QMenu(translate("main_window_menu", "Print labels"))
+        print_labels_menu.addAction(translate("main_window_menu", "All shortcuts..."), self.print_labels, QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_P))
+        print_labels_menu.addAction(translate("main_window_menu", "Selected shortcuts..."), self.print_selected_labels, QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.SHIFT + QtCore.Qt.Key_P))
+        file_menu.addMenu(print_labels_menu)
+
         file_menu.addSeparator()
         file_menu.addAction(translate("main_window_menu", "Quit"), self.quit)
 
@@ -203,6 +208,20 @@ class MainWindow(QtWidgets.QMainWindow):
         selected_items: List[QtCore.QModelIndex] = self.shortcut_tree_view.selectedIndexes()
         return list(set([item.row() for item in selected_items]))
 
+    def get_selected_shortcuts(self):
+        selected_rows = self.get_selected_rows()
+        selected_indices: List[QtCore.QModelIndex] = [self.shortcut_tree_view_model.index(row, ShortcutListHeader.NAME.value) for row in selected_rows]
+
+        shortcuts = Shortcuts("")
+
+        for index in selected_indices:
+            device = index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
+            key = index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
+
+            shortcuts.add(self.shortcuts.get_by_device_key(device, key))
+
+        return shortcuts
+
     def show_context_menu(self, position):
         self.edit_menu.exec_(self.shortcut_tree_view.mapToGlobal(position))
 
@@ -273,6 +292,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         print_dialog = QtPrintSupport.QPrintPreviewDialog(printer)
         print_dialog.paintRequested.connect(self.shortcuts.print_labels_to_printer)
+        print_dialog.exec_()
+
+    def print_selected_labels(self):
+        printer = QtPrintSupport.QPrinter(QtPrintSupport.QPrinter.HighResolution)
+
+        print_dialog = QtPrintSupport.QPrintPreviewDialog(printer)
+        print_dialog.paintRequested.connect(self.get_selected_shortcuts().print_labels_to_printer)
         print_dialog.exec_()
 
     def quit(self):
