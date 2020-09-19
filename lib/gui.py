@@ -104,6 +104,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.shortcut_tree_view = QtWidgets.QTreeView()
         self.shortcut_tree_view.setAlternatingRowColors(True)
+        self.shortcut_tree_view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
         self.shortcut_tree_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         self.shortcut_tree_view_model = QtGui.QStandardItemModel(0, 5)
@@ -191,10 +192,16 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tray_icon.hide()
 
     def update_edit_actions(self):
-        selected = bool(len(self.shortcut_tree_view.selectedIndexes()))
+        selected_rows = len(self.get_selected_rows())
 
-        self.edit_shortcut_action.setEnabled(selected)
-        self.remove_shortcut_action.setEnabled(selected)
+        self.edit_shortcut_action.setEnabled(selected_rows == 1)
+        self.duplicate_shortcut_action.setEnabled(selected_rows == 1)
+        self.remove_shortcut_action.setEnabled(selected_rows >= 1)
+        self.execute_shortcut_action.setEnabled(selected_rows == 1)
+
+    def get_selected_rows(self):
+        selected_items: List[QtCore.QModelIndex] = self.shortcut_tree_view.selectedIndexes()
+        return list(set([item.row() for item in selected_items]))
 
     def show_context_menu(self, position):
         self.edit_menu.exec_(self.shortcut_tree_view.mapToGlobal(position))
@@ -291,22 +298,31 @@ class MainWindow(QtWidgets.QMainWindow):
         self.edit_item(selected_indexes[0], True)
 
     def remove_shortcut(self):
-        selected_indexes: List[QtCore.QModelIndex] = self.shortcut_tree_view.selectedIndexes()
+        selected_rows = self.get_selected_rows()
 
-        if len(selected_indexes) == 0:
+        if len(selected_rows) == 0:
             return
 
-        response = QtWidgets.QMessageBox.question(self, translate("main_window", "Remove shortcut"), translate("main_window", "Are you sure to remove the shortcut '{}'?").format(selected_indexes[0].siblingAtColumn(ShortcutListHeader.NAME.value).data()))
+        selected_items: List[QtGui.QStandardItem] = [self.shortcut_tree_view_model.item(row, ShortcutListHeader.NAME.value) for row in selected_rows]
+
+        if len(selected_items) > 5:
+            shortcuts_to_remove = "\n".join([item.text() for item in selected_items[:5]]) + "\n\n" + translate("main_window", "And {} more.").format(len(selected_items) - 5)
+        else:
+            shortcuts_to_remove = "\n".join([item.text() for item in selected_items])
+
+        response = QtWidgets.QMessageBox.question(self, translate("main_window", "Remove shortcut"), translate("main_window", "Are you sure to remove the selected shortcuts?\n\n{}").format(shortcuts_to_remove))
 
         if response != QtWidgets.QMessageBox.StandardButton.Yes:
             return
 
-        index = selected_indexes[0]
-        device = index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
-        key = index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
+        for item in selected_items:
+            index: QtCore.QModelIndex = item.index()
+            device = index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
+            key = index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
 
-        self.shortcuts.remove_by_device_key(device, key)
-        self.shortcut_tree_view_model.removeRow(index.row())
+            self.shortcuts.remove_by_device_key(device, key)
+            self.shortcut_tree_view_model.removeRow(index.row())
+
         self.shortcuts.save()
         self.update_status_bar()
 
