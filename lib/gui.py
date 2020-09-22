@@ -19,7 +19,7 @@ translate = QtWidgets.QApplication.translate
 
 
 class ShortcutListHeader(enum.Enum):
-    NAME, ACTION, KEY, DEVICE, EXECUTIONS = range(5)
+    NAME, ACTION, KEY, DEVICE, EXECUTIONS, LAST_EXECUTION = range(6)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -112,12 +112,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
         self.shortcut_tree_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
-        self.shortcut_tree_view_model = QtGui.QStandardItemModel(0, 5)
+        self.shortcut_tree_view_model = QtGui.QStandardItemModel(0, 6)
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.NAME.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Name"))
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.ACTION.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Action"))
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.KEY.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Key"))
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.DEVICE.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Device"))
         self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.EXECUTIONS.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Executions"))
+        self.shortcut_tree_view_model.setHeaderData(ShortcutListHeader.LAST_EXECUTION.value, QtCore.Qt.Horizontal, translate("shortcut_list_column", "Last execution"))
         self.shortcut_tree_view.setModel(self.shortcut_tree_view_model)
 
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.NAME.value, 300)
@@ -125,6 +126,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.KEY.value, 50)
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.DEVICE.value, 100)
         self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.EXECUTIONS.value, 100)
+        self.shortcut_tree_view.setColumnWidth(ShortcutListHeader.LAST_EXECUTION.value, 100)
 
         self.shortcut_tree_view.selectionModel().selectionChanged.connect(self.update_edit_actions)
 
@@ -253,6 +255,7 @@ class MainWindow(QtWidgets.QMainWindow):
         model.setData(model.index(row, ShortcutListHeader.KEY.value), shortcut.key)
         model.setData(model.index(row, ShortcutListHeader.DEVICE.value), shortcut.device)
         model.setData(model.index(row, ShortcutListHeader.EXECUTIONS.value), shortcut.executions)
+        model.setData(model.index(row, ShortcutListHeader.LAST_EXECUTION.value), shortcut.last_execution_string())
 
     def get_list_item_by_shortcut(self, shortcut: Shortcut):
         list_items: List[QtGui.QStandardItem] = self.shortcut_tree_view_model.findItems(str(shortcut.key), column=ShortcutListHeader.KEY.value)
@@ -397,8 +400,13 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         index: QtCore.QModelIndex = list_item.index()
-        item: QtGui.QStandardItem = self.shortcut_tree_view_model.itemFromIndex(index.siblingAtColumn(ShortcutListHeader.EXECUTIONS.value))
-        item.setData(shortcut.executions, QtCore.Qt.DisplayRole)
+
+        executions_item: QtGui.QStandardItem = self.shortcut_tree_view_model.itemFromIndex(index.siblingAtColumn(ShortcutListHeader.EXECUTIONS.value))
+        executions_item.setData(shortcut.executions, QtCore.Qt.DisplayRole)
+
+        last_execution_item: QtGui.QStandardItem = self.shortcut_tree_view_model.itemFromIndex(index.siblingAtColumn(ShortcutListHeader.LAST_EXECUTION.value))
+        last_execution_item.setData(shortcut.last_execution_string(), QtCore.Qt.DisplayRole)
+
         self.update_sorting()
 
     def toggle_lock_keys(self):
@@ -1198,6 +1206,11 @@ class SettingsWindow(QtWidgets.QDialog):
             item = self.input_device_list.item(index)
             if item.checkState() == QtCore.Qt.Checked:
                 selected_input_devices.append(item.text())
+
+        return selected_input_devices
+
+    def save(self):
+        selected_input_devices = self.get_selected_input_devices()
 
         if len(selected_input_devices) == 0:
             QtWidgets.QMessageBox.critical(self, translate("settings", "No keyboard input device selected"), translate("settings", "Please select at least one input device to use!"))

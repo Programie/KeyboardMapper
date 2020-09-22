@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+from datetime import datetime
 from threading import Thread
 from typing import Dict
 
@@ -116,6 +117,7 @@ class Shortcut:
         self.name: str = None
         self.label: Label = Label()
         self.executions: int = 0
+        self.last_execution: datetime = None
 
     def __str__(self):
         return self.name
@@ -134,6 +136,11 @@ class Shortcut:
         else:
             shortcut.executions = 0
 
+        if "last_execution" in shortcut_properties and shortcut_properties["last_execution"]:
+            shortcut.last_execution = datetime.fromtimestamp(int(shortcut_properties["last_execution"]))
+        else:
+            shortcut.last_execution = None
+
         if "label" in shortcut_properties and shortcut_properties["label"]:
             label_properties = shortcut_properties["label"]
 
@@ -145,6 +152,11 @@ class Shortcut:
         return shortcut
 
     def to_config(self):
+        if self.last_execution:
+            last_execution = self.last_execution.timestamp()
+        else:
+            last_execution = None
+
         return {
             "device": self.device,
             "key": self.key,
@@ -152,6 +164,7 @@ class Shortcut:
             "action": self.action,
             "data": self.data,
             "executions": self.executions,
+            "last_execution": last_execution,
             "label": {
                 "icon_path": self.label.icon_path,
                 "width": self.label.width,
@@ -175,8 +188,15 @@ class Shortcut:
         else:
             return "{}: {}".format(Actions.get(self.action).title, self.data)
 
+    def last_execution_string(self):
+        if not self.last_execution:
+            return ""
+
+        return self.last_execution.strftime("%c")
+
     def execute(self):
         self.executions += 1
+        self.last_execution = datetime.now()
 
         thread = ExecThread(self)
 
