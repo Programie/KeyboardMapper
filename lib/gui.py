@@ -426,6 +426,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
         if shortcut:
             self.shortcut = copy.copy(shortcut)
+            self.shortcut.executions = 0
             if duplicate:
                 self.setWindowTitle(translate("edit_shortcut", "Add shortcut"))
             else:
