@@ -91,8 +91,8 @@ def main():
 
     try:
         shortcuts.load()
-    except:
-        message = translate("main", "Unable to load shortcuts from config file!")
+    except Exception as exception:
+        message = translate("main", "Unable to load shortcuts from config file!") + "\n\n" + str(exception)
         if gui_mode:
             if QtWidgets.QMessageBox.critical(None, APP_NAME, message, QtWidgets.QMessageBox.Close, QtWidgets.QMessageBox.Ignore) == QtWidgets.QMessageBox.Close:
                 sys.exit(1)
