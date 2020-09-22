@@ -129,12 +129,12 @@ class Shortcut:
         shortcut.data = shortcut_properties["data"]
         shortcut.name = shortcut_properties["name"]
 
-        if "executions" in shortcut_properties:
+        if "executions" in shortcut_properties and shortcut_properties["executions"]:
             shortcut.executions = int(shortcut_properties["executions"])
         else:
             shortcut.executions = 0
 
-        if "label" in shortcut_properties:
+        if "label" in shortcut_properties and shortcut_properties["label"]:
             label_properties = shortcut_properties["label"]
 
             shortcut.label.icon_path = label_properties.get("icon_path")
