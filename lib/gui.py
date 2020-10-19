@@ -89,12 +89,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setMenuBar(menu_bar)
 
-        toolbar = self.addToolBar(translate("main_window_menu", "Edit"))
+        toolbar: QtWidgets.QToolBar = self.addToolBar(translate("main_window_menu", "Edit"))
 
         toolbar.addAction(self.add_shortcut_action)
         toolbar.addAction(self.edit_shortcut_action)
         toolbar.addAction(self.duplicate_shortcut_action)
         toolbar.addAction(self.remove_shortcut_action)
+
+        spacer = QtWidgets.QWidget()
+        spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        toolbar.addWidget(spacer)
+
+        self.search_field = QtWidgets.QLineEdit()
+        self.search_field.setMaximumWidth(200)
+        self.search_field.setPlaceholderText(translate("main_window_menu", "Search..."))
+        self.search_field.textChanged.connect(self.filter_list)
+        toolbar.addWidget(self.search_field)
 
         statusbar = QtWidgets.QStatusBar()
         self.statusbar_text = QtWidgets.QLabel()
@@ -240,6 +250,21 @@ class MainWindow(QtWidgets.QMainWindow):
             Config.list_sort_order = "asc"
 
         Config.save()
+
+    def filter_list(self):
+        search_text = self.search_field.text().lower()
+
+        for row in range(self.shortcut_tree_view_model.rowCount()):
+            hide = True
+
+            for column in range(self.shortcut_tree_view_model.columnCount()):
+                item: QtGui.QStandardItem = self.shortcut_tree_view_model.item(row, column)
+
+                if search_text in item.text().lower():
+                    hide = False
+                    break
+
+            self.shortcut_tree_view.setRowHidden(row, self.shortcut_tree_view_model.indexFromItem(self.shortcut_tree_view_model.invisibleRootItem()), hide)
 
     def add_list_item(self, shortcut: Shortcut, row: int = None):
         model = self.shortcut_tree_view_model
