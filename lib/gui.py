@@ -106,6 +106,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.search_field.textChanged.connect(self.filter_list)
         toolbar.addWidget(self.search_field)
 
+        reset_search_field_action = QtWidgets.QAction(self.search_field)
+        reset_search_field_action.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape))
+        reset_search_field_action.setShortcutContext(QtCore.Qt.WidgetShortcut)
+        reset_search_field_action.triggered.connect(self.reset_search_field)
+        self.search_field.addAction(reset_search_field_action)
+
         statusbar = QtWidgets.QStatusBar()
         self.statusbar_text = QtWidgets.QLabel()
         self.statusbar_lock_state = QtWidgets.QPushButton()
@@ -144,6 +150,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.shortcut_tree_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.shortcut_tree_view.customContextMenuRequested.connect(self.show_context_menu)
+
+        self.shortcut_tree_view.keyboardSearch = self.keyboard_search
 
         sort_column = ShortcutListHeader.NAME
         for list_header in ShortcutListHeader:
@@ -250,6 +258,14 @@ class MainWindow(QtWidgets.QMainWindow):
             Config.list_sort_order = "asc"
 
         Config.save()
+
+    def keyboard_search(self, key):
+        self.search_field.setFocus()
+        self.search_field.setText(self.search_field.text() + key)
+
+    def reset_search_field(self):
+        self.search_field.setText("")
+        self.shortcut_tree_view.setFocus()
 
     def filter_list(self):
         search_text = self.search_field.text().lower()
