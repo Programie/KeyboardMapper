@@ -178,6 +178,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.update_edit_actions()
 
+        # Without this, the initial focus is in the search field
+        self.shortcut_tree_view.setFocus()
+
     def create_tray_icon(self):
         if self.tray_icon:
             return
