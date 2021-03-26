@@ -1,3 +1,10 @@
+## 2.2 (2020-07-18)
+
+* Fixed throwing exception while sorting desktop files if desktop file can't be read
+* Prevent application quit after showing error message box if only the tray icon is visible
+* Added "Execute" menu item to directly execute shortcut action
+* Catch UnicodeDecodeError while parsing desktop files
+
 ## 2.1 (2019-08-19)
 
 * Skip desktop files which can't be parsed
