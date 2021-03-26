@@ -1,3 +1,14 @@
+## 2.3 (2021-03-26)
+
+* Build single file executable (containing all resources)
+* Translate the message "Keyboard Mapper is already running!"
+* Show error message (instead of throwing an exception) if shortcuts can't be loaded due to an error in the YAML file
+* Store and reload list sorting
+* Track the number of executions as well as the date/time of the last execution per shortcut
+* Allow printing of labels for shortcuts (to glue them on your macro keyboard)
+* Added action to duplicate an existing shortcut
+* Added search field to filter the shortcut list
+
 ## 2.2 (2020-07-18)
 
 * Fixed throwing exception while sorting desktop files if desktop file can't be read
