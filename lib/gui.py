@@ -63,7 +63,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.duplicate_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("edit-copy"), translate("main_window_menu", "Duplicate shortcut..."))
         self.duplicate_shortcut_action.triggered.connect(self.duplicate_shortcut)
 
-        self.remove_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("delete"), translate("main_window_menu", "Remove shortcut..."))
+        self.remove_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("edit-delete"), translate("main_window_menu", "Remove shortcut..."))
         self.remove_shortcut_action.setShortcut(QtGui.QKeySequence("Del"))
         self.remove_shortcut_action.triggered.connect(self.remove_shortcut)
 
