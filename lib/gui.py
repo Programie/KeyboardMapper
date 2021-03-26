@@ -107,10 +107,11 @@ class MainWindow(QtWidgets.QMainWindow):
         toolbar.addWidget(self.search_field)
 
         reset_search_field_action = QtWidgets.QAction(self.search_field)
+        reset_search_field_action.setIcon(QtGui.QIcon.fromTheme("edit-clear-all"))
         reset_search_field_action.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape))
         reset_search_field_action.setShortcutContext(QtCore.Qt.WidgetShortcut)
         reset_search_field_action.triggered.connect(self.reset_search_field)
-        self.search_field.addAction(reset_search_field_action)
+        self.search_field.addAction(reset_search_field_action, QtWidgets.QLineEdit.TrailingPosition)
 
         statusbar = QtWidgets.QStatusBar()
         self.statusbar_text = QtWidgets.QLabel()
