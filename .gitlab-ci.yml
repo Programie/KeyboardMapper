@@ -11,6 +11,11 @@ package:
   stage: build
   script:
     - make
+    - cp build/keyboard-mapper keyboard-mapper
   artifacts:
     paths:
-      - build/keyboard-mapper
+      - keyboard-mapper
+      - CHANGELOG.md
+      - LICENSE
+      - README.md
+      - requirements.txt
