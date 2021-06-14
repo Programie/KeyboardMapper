@@ -1,3 +1,8 @@
+## 2.4 (2021-06-14)
+
+* Do not show tree lines in shortcut list
+* Show icons in shortcut list (if configured for shortcut)
+
 ## 2.3 (2021-03-26)
 
 * Build single file executable (containing all resources)
