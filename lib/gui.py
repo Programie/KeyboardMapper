@@ -41,6 +41,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setGeometry(QtWidgets.QStyle.alignedRect(QtCore.Qt.LeftToRight, QtCore.Qt.AlignCenter, self.size(), QtWidgets.QApplication.desktop().availableGeometry()))
 
+        self.empty_pixmap = QtGui.QPixmap(128, 128)
+        self.empty_pixmap.fill(QtGui.QColor(0, 0, 0, 0))
+        self.empty_icon = QtGui.QIcon(self.empty_pixmap)
+
         menu_bar = QtWidgets.QMenuBar()
 
         file_menu = QtWidgets.QMenu(translate("main_window_menu", "File"))
@@ -302,6 +306,12 @@ class MainWindow(QtWidgets.QMainWindow):
         model.setData(model.index(row, ShortcutListHeader.DEVICE.value), shortcut.device)
         model.setData(model.index(row, ShortcutListHeader.EXECUTIONS.value), shortcut.executions)
         model.setData(model.index(row, ShortcutListHeader.LAST_EXECUTION.value), shortcut.last_execution_string())
+
+        icon = QtGui.QIcon(shortcut.label.icon_path)
+        if icon.isNull():
+            icon = self.empty_icon
+
+        model.item(row, 0).setIcon(icon)
 
     def get_list_item_by_shortcut(self, shortcut: Shortcut):
         list_items: List[QtGui.QStandardItem] = self.shortcut_tree_view_model.findItems(str(shortcut.key), column=ShortcutListHeader.KEY.value)
