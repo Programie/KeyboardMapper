@@ -125,6 +125,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setStatusBar(statusbar)
 
         self.shortcut_tree_view = QtWidgets.QTreeView()
+        self.shortcut_tree_view.setRootIsDecorated(False)
         self.shortcut_tree_view.setAlternatingRowColors(True)
         self.shortcut_tree_view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
         self.shortcut_tree_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
