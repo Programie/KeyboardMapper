@@ -1255,7 +1255,7 @@ class SettingsWindow(QtWidgets.QDialog):
     def create_app_desktop_file(self):
         self.create_desktop_file(os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper.desktop"), [])
 
-    def save(self):
+    def get_selected_input_devices(self):
         selected_input_devices = []
 
         for index in range(self.input_device_list.count()):
