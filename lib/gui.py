@@ -1029,10 +1029,7 @@ class KeySequenceBuilder(QtWidgets.QDialog):
                 self.add_key(layout, key)
 
         add_key_button.clicked.connect(lambda: self.add_key(layout))
-        remove_combination_button.clicked.connect(lambda: self.remove_combination(group_box))
-
-    def remove_combination(self, group_box):
-        self.layout.removeWidget(group_box)
+        remove_combination_button.clicked.connect(lambda: group_box.setParent(None))
 
     def add_key(self, layout, key: str = ""):
         input_field = QtWidgets.QLineEdit(key)
