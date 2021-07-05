@@ -1,3 +1,9 @@
+## 3.0 (2021-07-05)
+
+* Switch from PySide2 to PyQt5 (fixes #3)
+* Fixed not allowing to save settings
+* Fixed not correctly removing group boxes in key sequence builder window when pressing remove button
+
 ## 2.4 (2021-06-14)
 
 * Do not show tree lines in shortcut list
