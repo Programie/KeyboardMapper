@@ -62,12 +62,12 @@ The following actions are available for each shortcut:
 
 ### Application theme is different from other applications
 
-When installing PySide2 using pip, it's possible that the application does not use the native desktop theme. In that case, simply install PySide2 using your package manager.
+When installing PyQt5 using pip, it's possible that the application does not use the native desktop theme. In that case, simply install PyQt5 using your package manager.
 
-In case of Debian based Linux distributions (e.g. Ubuntu, Mint, etc.) install PySide2 using the following command:
+In case of Debian based Linux distributions (e.g. Ubuntu, Mint, etc.) install PyQt5 using the following command:
 
 ```
-sudo apt-get install python3-pyside2.qtcore python3-pyside2.qtgui python3-pyside2.qtwidgets
+sudo apt-get install python3-pyqt5
 ```
 
-After that you should remove PySide2 which has been installed by pip using `pip3 uninstall PySide2`. Otherwise the application continues to use PySide installed with pip.
+After that you should remove PyQt5 which has been installed by pip using `pip3 uninstall PyQt5`. Otherwise, the application continues to use PyQt5 installed with pip.

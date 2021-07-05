@@ -2,7 +2,7 @@ import configparser
 import os
 from typing import List
 
-from PySide2.QtGui import QIcon
+from PyQt5.QtGui import QIcon
 
 
 class DesktopFile:

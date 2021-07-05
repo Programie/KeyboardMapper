@@ -7,7 +7,7 @@ from typing import Dict
 
 import pyperclip
 import yaml
-from PySide2 import QtCore, QtPrintSupport, QtGui
+from PyQt5 import QtCore, QtPrintSupport, QtGui
 
 from lib.config import Config
 from lib.desktopfiles import DesktopFile
@@ -210,9 +210,9 @@ class Shortcut:
 
 class Shortcuts(QtCore.QObject):
     instance: "Shortcuts" = None
-    lock_keys = QtCore.Signal()
-    execution_error = QtCore.Signal(str)
-    executed = QtCore.Signal(Shortcut)
+    lock_keys = QtCore.pyqtSignal()
+    execution_error = QtCore.pyqtSignal(str)
+    executed = QtCore.pyqtSignal(Shortcut)
 
     def __init__(self, filename: str):
         super().__init__()

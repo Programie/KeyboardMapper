@@ -5,7 +5,7 @@ import subprocess
 import sys
 from typing import List, Union
 
-from PySide2 import QtWidgets, QtGui, QtCore, QtPrintSupport
+from PyQt5 import QtWidgets, QtGui, QtCore, QtPrintSupport
 
 from lib.config import Config
 from lib.constants import APP_WEBSITE, DEVICES_BASE_DIR, APP_NAME, APP_DESCRIPTION, ICONS_DIR, APP_VERSION, APP_COPYRIGHT
@@ -47,16 +47,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         menu_bar = QtWidgets.QMenuBar()
 
-        file_menu = QtWidgets.QMenu(translate("main_window_menu", "File"))
-        file_menu.addAction(translate("main_window_menu", "Settings..."), self.show_settings)
+        self.file_menu = QtWidgets.QMenu(translate("main_window_menu", "File"))
+        self.file_menu.addAction(translate("main_window_menu", "Settings..."), self.show_settings)
 
-        print_labels_menu = QtWidgets.QMenu(translate("main_window_menu", "Print labels"))
-        print_labels_menu.addAction(translate("main_window_menu", "All shortcuts..."), self.print_labels, QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_P))
-        print_labels_menu.addAction(translate("main_window_menu", "Selected shortcuts..."), self.print_selected_labels, QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.SHIFT + QtCore.Qt.Key_P))
-        file_menu.addMenu(print_labels_menu)
+        self.print_labels_menu = QtWidgets.QMenu(translate("main_window_menu", "Print labels"))
+        self.print_labels_menu.addAction(translate("main_window_menu", "All shortcuts..."), self.print_labels, QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_P))
+        self.print_labels_menu.addAction(translate("main_window_menu", "Selected shortcuts..."), self.print_selected_labels, QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.SHIFT + QtCore.Qt.Key_P))
+        self.file_menu.addMenu(self.print_labels_menu)
 
-        file_menu.addSeparator()
-        file_menu.addAction(translate("main_window_menu", "Quit"), self.quit)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(translate("main_window_menu", "Quit"), self.quit)
 
         self.add_shortcut_action = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"), translate("main_window_menu", "Add shortcut..."))
         self.add_shortcut_action.triggered.connect(self.add_shortcut)
@@ -82,14 +82,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.edit_menu.addSeparator()
         self.edit_menu.addAction(self.execute_shortcut_action)
 
-        help_menu = QtWidgets.QMenu(translate("main_window_menu", "Help"))
-        help_menu.addAction(translate("main_window_menu", "Help"), self.show_help).setShortcut(QtGui.QKeySequence("F1"))
-        help_menu.addSeparator()
-        help_menu.addAction(translate("main_window_menu", "About"), self.show_about)
+        self.help_menu = QtWidgets.QMenu(translate("main_window_menu", "Help"))
+        self.help_menu.addAction(translate("main_window_menu", "Help"), self.show_help).setShortcut(QtGui.QKeySequence("F1"))
+        self.help_menu.addSeparator()
+        self.help_menu.addAction(translate("main_window_menu", "About"), self.show_about)
 
-        menu_bar.addMenu(file_menu)
+        menu_bar.addMenu(self.file_menu)
         menu_bar.addMenu(self.edit_menu)
-        menu_bar.addMenu(help_menu)
+        menu_bar.addMenu(self.help_menu)
 
         self.setMenuBar(menu_bar)
 
@@ -707,7 +707,6 @@ class EditShortcutWindow(QtWidgets.QDialog):
         size_layout.addWidget(self.label_size_width_field, 1)
 
         size_layout.addWidget(QtWidgets.QLabel("x"))
-        size_layout.setMargin(0)
 
         self.label_size_height_field = QtWidgets.QSpinBox()
         self.label_size_height_field.setMaximum(10000)
@@ -1210,7 +1209,6 @@ class SettingsWindow(QtWidgets.QDialog):
         size_layout.addWidget(self.labels_default_width_field, 1)
 
         size_layout.addWidget(QtWidgets.QLabel("x"))
-        size_layout.setMargin(0)
 
         self.labels_default_height_field = QtWidgets.QSpinBox()
         self.labels_default_height_field.setMaximum(10000)
@@ -1302,7 +1300,6 @@ class AboutDialog(QtWidgets.QDialog):
         self.setModal(True)
 
         layout = QtWidgets.QVBoxLayout()
-        layout.setMargin(20)
         layout.setSpacing(10)
         self.setLayout(layout)
 

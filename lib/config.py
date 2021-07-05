@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from PySide2.QtCore import QSettings
+from PyQt5.QtCore import QSettings
 
 
 class Config:

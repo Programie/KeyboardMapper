@@ -3,9 +3,9 @@ import os
 import sys
 import time
 
-from PySide2 import QtWidgets, QtGui, QtCore
-from PySide2.QtCore import QCoreApplication
-from PySide2.QtWidgets import QApplication
+from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtWidgets import QApplication
 from filelock import FileLock, Timeout
 
 from lib.config import Config

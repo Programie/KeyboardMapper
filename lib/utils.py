@@ -1,6 +1,6 @@
 from typing import Dict
 
-from PySide2 import QtWidgets
+from PyQt5 import QtWidgets
 
 translate = QtWidgets.QApplication.translate
 
