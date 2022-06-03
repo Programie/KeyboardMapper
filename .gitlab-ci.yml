@@ -1,4 +1,4 @@
-image: ubuntu:focal
+image: ubuntu:jammy
 
 before_script:
   - ln -snf /usr/share/zoneinfo/UTC /etc/localtime && echo UTC > /etc/timezone
