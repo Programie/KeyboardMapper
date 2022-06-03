@@ -1,6 +1,7 @@
 image: ubuntu:focal
 
 before_script:
+  - ln -snf /usr/share/zoneinfo/UTC /etc/localtime && echo UTC > /etc/timezone
   - apt-get update
   - apt-get install -y make qtbase5-dev-tools zip
 
