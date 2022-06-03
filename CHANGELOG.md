@@ -1,3 +1,7 @@
+## 3.1 (2022-06-03)
+
+* Keep input devices no longer connected while saving settings (i.e. useful for devices which can be used wireless and wired). Previously added devices must now be manually removed from the list of added devices.
+
 ## 3.0 (2021-07-05)
 
 * Switch from PySide2 to PyQt5 (fixes #3)

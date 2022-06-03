@@ -1081,6 +1081,51 @@ class KeySequenceBuilder(QtWidgets.QDialog):
         return " ".join(sequence)
 
 
+class DeviceSelectionWindow(QtWidgets.QDialog):
+    selected_devices = QtCore.pyqtSignal(list)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.setWindowTitle(translate("settings", "Select devices"))
+        self.setModal(True)
+
+        layout = QtWidgets.QVBoxLayout()
+        self.setLayout(layout)
+
+        self.input_device_list = QtWidgets.QListWidget()
+        self.input_device_list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        layout.addWidget(self.input_device_list)
+
+        self.button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        layout.addWidget(self.button_box)
+
+        self.button_box.accepted.connect(self.add_devices)
+        self.button_box.rejected.connect(self.close)
+
+        file_list: List[QtCore.QFileInfo] = QtCore.QDir(DEVICES_BASE_DIR).entryInfoList()
+        for item in file_list:
+            if item.isDir():
+                continue
+
+            self.input_device_list.addItem(item.baseName())
+
+        self.input_device_list.itemSelectionChanged.connect(self.update_buttons)
+        self.update_buttons()
+
+        self.show()
+        self.setFixedSize(self.size())
+
+    def add_devices(self):
+        devices = [item.text() for item in self.input_device_list.selectedItems()]
+
+        self.selected_devices.emit(devices)
+        self.close()
+
+    def update_buttons(self):
+        self.button_box.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(len(self.input_device_list.selectedItems()) > 0)
+
+
 class SettingsWindow(QtWidgets.QDialog):
     def __init__(self, parent: MainWindow):
         super().__init__(parent)
@@ -1096,6 +1141,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.setLayout(self.dialog_layout)
 
         self.input_device_list: QtWidgets.QListWidget = None
+        self.remove_device_button: QtWidgets.QPushButton = None
         self.add_keyboard_input_device_settings()
 
         self.icon_theme_list: QtWidgets.QComboBox = None
@@ -1138,27 +1184,28 @@ class SettingsWindow(QtWidgets.QDialog):
         self.dialog_layout.addWidget(group_box)
 
         self.input_device_list = QtWidgets.QListWidget()
+        self.input_device_list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
-        layout = QtWidgets.QVBoxLayout()
+        button_layout = QtWidgets.QVBoxLayout()
+
+        add_device_button = QtWidgets.QPushButton(translate("settings", "Add device"))
+        add_device_button.clicked.connect(self.add_device)
+        button_layout.addWidget(add_device_button)
+
+        self.remove_device_button = QtWidgets.QPushButton(translate("settings", "Remove device"))
+        self.remove_device_button.clicked.connect(self.remove_device)
+        button_layout.addWidget(self.remove_device_button)
+
+        layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.input_device_list)
+        layout.addLayout(button_layout)
         group_box.setLayout(layout)
 
-        file_list: List[QtCore.QFileInfo] = QtCore.QDir(DEVICES_BASE_DIR).entryInfoList()
-        for item in file_list:
-            if item.isDir():
-                continue
+        for device in Config.input_devices:
+            self.input_device_list.addItem(device)
 
-            name = item.baseName()
-
-            list_item = QtWidgets.QListWidgetItem(name)
-            list_item.setFlags(list_item.flags() | QtCore.Qt.ItemIsUserCheckable)
-
-            if name in Config.input_devices:
-                list_item.setCheckState(QtCore.Qt.Checked)
-            else:
-                list_item.setCheckState(QtCore.Qt.Unchecked)
-
-            self.input_device_list.addItem(list_item)
+        self.input_device_list.itemSelectionChanged.connect(self.update_device_buttons)
+        self.update_device_buttons()
 
     def add_icon_theme_settings(self):
         group_box = QtWidgets.QGroupBox(translate("settings", "Icon theme"))
@@ -1226,6 +1273,29 @@ class SettingsWindow(QtWidgets.QDialog):
 
         self.update_labels_length_unit()
 
+    def add_device(self):
+        dialog = DeviceSelectionWindow(self)
+        dialog.selected_devices.connect(self.add_devices_from_list)
+
+    def add_devices_from_list(self, device_list: list):
+        new_devices = set()
+
+        for row in range(self.input_device_list.count()):
+            new_devices.add(self.input_device_list.item(row).text())
+
+        for device in device_list:
+            new_devices.add(device)
+
+        self.input_device_list.clear()
+        self.input_device_list.addItems(sorted(new_devices))
+
+    def remove_device(self):
+        for item in self.input_device_list.selectedItems():
+            self.input_device_list.takeItem(self.input_device_list.row(item))
+
+    def update_device_buttons(self):
+        self.remove_device_button.setEnabled(len(self.input_device_list.selectedItems()) > 0)
+
     def update_labels_length_unit(self):
         unit_name = self.labels_length_unit_combobox.currentData(QtCore.Qt.UserRole)
 
@@ -1250,24 +1320,22 @@ class SettingsWindow(QtWidgets.QDialog):
     def create_app_desktop_file(self):
         self.create_desktop_file(os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper.desktop"), [])
 
-    def get_selected_input_devices(self):
-        selected_input_devices = []
+    def get_added_input_devices(self):
+        input_devices = set()
 
         for index in range(self.input_device_list.count()):
-            item = self.input_device_list.item(index)
-            if item.checkState() == QtCore.Qt.Checked:
-                selected_input_devices.append(item.text())
+            input_devices.add(self.input_device_list.item(index).text())
 
-        return selected_input_devices
+        return list(sorted(input_devices))
 
     def save(self):
-        selected_input_devices = self.get_selected_input_devices()
+        input_devices = self.get_added_input_devices()
 
-        if len(selected_input_devices) == 0:
-            QtWidgets.QMessageBox.critical(self, translate("settings", "No keyboard input device selected"), translate("settings", "Please select at least one input device to use!"))
+        if len(input_devices) == 0:
+            QtWidgets.QMessageBox.critical(self, translate("settings", "No keyboard input device added"), translate("settings", "Please add at least one input device to use!"))
             return
 
-        Config.input_devices = selected_input_devices
+        Config.input_devices = input_devices
         Config.icons = self.icon_theme_list.currentText()
         Config.use_tray_icon = self.use_tray_icon_checkbox.checkState() == QtCore.Qt.Checked
         Config.single_instance = self.single_instance_checkbox.checkState() == QtCore.Qt.Checked
