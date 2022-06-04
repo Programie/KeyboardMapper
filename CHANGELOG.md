@@ -1,4 +1,4 @@
-## 3.1 (2022-06-04)
+## 3.2 (2022-06-04)
 
 * Removed large space between "Add device" and "Remove device" buttons in settings
 * Allow to resize settings window
