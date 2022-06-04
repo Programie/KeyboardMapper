@@ -1,3 +1,8 @@
+## 3.1 (2022-06-04)
+
+* Removed large space between "Add device" and "Remove device" buttons in settings
+* Allow to resize settings window
+
 ## 3.1 (2022-06-03)
 
 * Keep input devices no longer connected while saving settings (i.e. useful for devices which can be used wireless and wired). Previously added devices must now be manually removed from the list of added devices.
