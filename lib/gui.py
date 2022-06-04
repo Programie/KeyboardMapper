@@ -1188,6 +1188,8 @@ class SettingsWindow(QtWidgets.QDialog):
 
         button_layout = QtWidgets.QVBoxLayout()
 
+        button_layout.addStretch(0)
+
         add_device_button = QtWidgets.QPushButton(translate("settings", "Add device"))
         add_device_button.clicked.connect(self.add_device)
         button_layout.addWidget(add_device_button)
@@ -1195,6 +1197,8 @@ class SettingsWindow(QtWidgets.QDialog):
         self.remove_device_button = QtWidgets.QPushButton(translate("settings", "Remove device"))
         self.remove_device_button.clicked.connect(self.remove_device)
         button_layout.addWidget(self.remove_device_button)
+
+        button_layout.addStretch(0)
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.input_device_list)
