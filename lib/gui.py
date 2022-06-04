@@ -1114,7 +1114,6 @@ class DeviceSelectionWindow(QtWidgets.QDialog):
         self.update_buttons()
 
         self.show()
-        self.setFixedSize(self.size())
 
     def add_devices(self):
         devices = [item.text() for item in self.input_device_list.selectedItems()]
@@ -1177,7 +1176,6 @@ class SettingsWindow(QtWidgets.QDialog):
         button_box.rejected.connect(self.close)
 
         self.show()
-        self.setFixedSize(self.size())
 
     def add_keyboard_input_device_settings(self):
         group_box = QtWidgets.QGroupBox(translate("settings", "Keyboard input device"))
