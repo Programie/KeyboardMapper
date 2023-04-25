@@ -1,4 +1,5 @@
 import configparser
+import glob
 import os
 from typing import List
 
@@ -136,27 +137,29 @@ class DesktopFilesFinder:
     @staticmethod
     def load_in_known_paths(skip_on_error: bool = False, exceptions: list = None):
         yield from DesktopFilesFinder.load_in_path("/usr/share/applications", skip_on_error, exceptions)
+        yield from DesktopFilesFinder.load_in_path("/var/lib/flatpak/app/*/current/active/export/share/applications", skip_on_error, exceptions)
         yield from DesktopFilesFinder.load_in_path("/var/lib/snapd/desktop/applications", skip_on_error, exceptions)
-        yield from DesktopFilesFinder.load_in_path(os.path.join(os.path.expanduser("~"), ".local", "share", "applications"), skip_on_error, exceptions)
+        yield from DesktopFilesFinder.load_in_path("~/.local/share/applications", skip_on_error, exceptions)
 
     @staticmethod
     def load_in_path(path: str, skip_on_error: bool = False, exceptions: list = None):
-        for root, dirs, files in os.walk(path):
-            for file in files:
-                if os.path.splitext(file)[1] != ".desktop":
-                    continue
+        for single_path in glob.glob(path):
+            for root, dirs, files in os.walk(os.path.expanduser(single_path)):
+                for file in files:
+                    if os.path.splitext(file)[1] != ".desktop":
+                        continue
 
-                full_path = os.path.join(root, file)
+                    full_path = os.path.join(root, file)
 
-                try:
-                    desktop_file = DesktopFile.read(full_path)
+                    try:
+                        desktop_file = DesktopFile.read(full_path)
 
-                    if desktop_file and desktop_file.name is not None:
-                        yield desktop_file
-                except configparser.Error as exception:
-                    if skip_on_error and isinstance(exceptions, list):
-                        # No need to prefix with full_path, message already contains the filename
-                        exceptions.append(str(exception))
-                except UnicodeDecodeError as exception:
-                    if skip_on_error and isinstance(exceptions, list):
-                        exceptions.append("{}: {}".format(full_path, exception))
+                        if desktop_file and desktop_file.name is not None:
+                            yield desktop_file
+                    except configparser.Error as exception:
+                        if skip_on_error and isinstance(exceptions, list):
+                            # No need to prefix with full_path, message already contains the filename
+                            exceptions.append(str(exception))
+                    except UnicodeDecodeError as exception:
+                        if skip_on_error and isinstance(exceptions, list):
+                            exceptions.append("{}: {}".format(full_path, exception))
