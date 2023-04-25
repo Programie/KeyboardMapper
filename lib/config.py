@@ -58,7 +58,7 @@ class Config:
     def save():
         settings = QSettings(Config.filename, QSettings.IniFormat)
 
-        settings.setValue("input-devices", ",".join(Config.input_devices))
+        settings.setValue("input-devices", ",".join(sorted(Config.input_devices)))
         settings.setValue("icons", Config.icons)
         settings.setValue("use-tray-icon", Config.use_tray_icon)
         settings.setValue("single-instance", Config.single_instance)
