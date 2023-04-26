@@ -241,7 +241,7 @@ class MainWindow(QtWidgets.QMainWindow):
         selected_rows = self.get_selected_rows()
         selected_indices: List[QtCore.QModelIndex] = [self.shortcut_tree_view_model.index(row, ShortcutListHeader.NAME.value) for row in selected_rows]
 
-        shortcuts = Shortcuts("")
+        shortcuts = Shortcuts("", "")
 
         for index in selected_indices:
             device = index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()

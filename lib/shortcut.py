@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import uuid
 from datetime import datetime
 from threading import Thread
 from typing import Dict
@@ -110,6 +111,7 @@ class Label:
 
 class Shortcut:
     def __init__(self):
+        self.uuid: str = str(uuid.uuid1())
         self.device: str = None
         self.key: int = None
         self.action: str = None
@@ -125,17 +127,20 @@ class Shortcut:
     @staticmethod
     def new_from_config(shortcut_properties):
         shortcut = Shortcut()
+        shortcut.uuid = shortcut_properties.get("uuid", str(uuid.uuid1()))
         shortcut.device = shortcut_properties["device"]
         shortcut.key = int(shortcut_properties["key"])
         shortcut.action = shortcut_properties["action"]
         shortcut.data = shortcut_properties["data"]
         shortcut.name = shortcut_properties["name"]
 
+        # Deprecated, just loaded from old config format
         if "executions" in shortcut_properties and shortcut_properties["executions"]:
             shortcut.executions = int(shortcut_properties["executions"])
         else:
             shortcut.executions = 0
 
+        # Deprecated, just loaded from old config format
         if "last_execution" in shortcut_properties and shortcut_properties["last_execution"]:
             shortcut.last_execution = datetime.fromtimestamp(int(shortcut_properties["last_execution"]))
         else:
@@ -151,26 +156,41 @@ class Shortcut:
 
         return shortcut
 
-    def to_config(self):
-        if self.last_execution:
-            last_execution = self.last_execution.timestamp()
-        else:
-            last_execution = None
+    def add_tracking_data(self, data):
+        if not data:
+            return
 
+        self.executions = int(data.get("executions", 0))
+
+        last_execution = data.get("last_execution")
+        if last_execution:
+            self.last_execution = datetime.fromtimestamp(int(last_execution))
+
+    def to_config(self):
         return {
+            "uuid": self.uuid,
             "device": self.device,
             "key": self.key,
             "name": self.name,
             "action": self.action,
             "data": self.data,
-            "executions": self.executions,
-            "last_execution": last_execution,
             "label": {
                 "icon_path": self.label.icon_path,
                 "width": self.label.width,
                 "height": self.label.height,
                 "background_color": self.label.background_color
             }
+        }
+
+    def to_tracking_data(self):
+        if self.last_execution:
+            last_execution = self.last_execution.timestamp()
+        else:
+            last_execution = None
+
+        return {
+            "executions": self.executions,
+            "last_execution": last_execution
         }
 
     def get_action_name(self):
@@ -214,7 +234,7 @@ class Shortcuts(QtCore.QObject):
     execution_error = QtCore.pyqtSignal(str)
     executed = QtCore.pyqtSignal(Shortcut)
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, tracking_file: str):
         super().__init__()
 
         Shortcuts.instance = self
@@ -223,6 +243,7 @@ class Shortcuts(QtCore.QObject):
 
         self.list: Dict[Shortcut] = {}
         self.filename = filename
+        self.tracking_file = tracking_file
 
     def add(self, shortcut: Shortcut):
         self.list[(shortcut.device, shortcut.key)] = shortcut
@@ -306,10 +327,20 @@ class Shortcuts(QtCore.QObject):
         with open(self.filename, "r") as file:
             data = yaml.safe_load(file)
 
+        tracking_data = {}
+        try:
+            with open(self.tracking_file, "r") as tracking_file:
+                tracking_data = yaml.safe_load(tracking_file)
+        except FileNotFoundError:
+            pass
+
         self.clear()
 
-        for shortcut in data:
-            self.add(Shortcut.new_from_config(shortcut))
+        for shortcut_data in data:
+            shortcut = Shortcut.new_from_config(shortcut_data)
+            shortcut.add_tracking_data(tracking_data.get(shortcut.uuid, {}))
+
+            self.add(shortcut)
 
     def load_legacy(self, filename, device):
         if not os.path.exists(filename):
@@ -329,7 +360,12 @@ class Shortcuts(QtCore.QObject):
             self.add(shortcut)
 
     def save(self):
-        shortcuts = [shortcut.to_config() for shortcut in sorted(self.get_shortcuts(), key=lambda shortcut_item: shortcut_item.name)]
+        shortcuts = []
+        tracking_data = {}
+
+        for shortcut in sorted(self.get_shortcuts(), key=lambda shortcut_item: shortcut_item.name):
+            shortcuts.append(shortcut.to_config())
+            tracking_data[shortcut.uuid] = shortcut.to_tracking_data()
 
         temp_file = "{}.tmp".format(self.filename)
 
@@ -338,3 +374,8 @@ class Shortcuts(QtCore.QObject):
             yaml.dump(shortcuts, file, default_flow_style=False)
 
         os.rename(temp_file, self.filename)
+
+        with open(temp_file, "w") as file:
+            yaml.dump(tracking_data, file, default_flow_style=False)
+
+        os.rename(temp_file, self.tracking_file)

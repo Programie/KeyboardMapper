@@ -81,9 +81,10 @@ def main():
             sys.exit(1)
 
     shortcuts_file = os.path.join(config_dir, "shortcuts.yaml")
+    tracking_file = os.path.join(config_dir, "tracking.yaml")
     legacy_shortcuts_file = os.path.join(config_dir, "shortcuts.ini")
 
-    shortcuts = Shortcuts(shortcuts_file)
+    shortcuts = Shortcuts(shortcuts_file, tracking_file)
 
     if os.path.exists(legacy_shortcuts_file) and not os.path.exists(shortcuts_file):
         if len(Config.input_devices):
