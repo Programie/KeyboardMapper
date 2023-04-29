@@ -1,5 +1,7 @@
 import os
 import struct
+from pathlib import Path
+
 import sys
 import time
 from select import select
@@ -10,7 +12,7 @@ class KeyListener(Thread):
     FORMAT = "llHHI"
     EVENT_SIZE = struct.calcsize(FORMAT)
 
-    def __init__(self, device_file: str, event_handler: callable = None):
+    def __init__(self, device_file: Path, event_handler: callable = None):
         super().__init__()
 
         self.device_file = device_file
@@ -22,7 +24,7 @@ class KeyListener(Thread):
 
     def run(self):
         while True:
-            if not os.path.exists(self.device_file) or not os.access(self.device_file, os.R_OK):
+            if not self.device_file.exists() or not os.access(self.device_file, os.R_OK):
                 time.sleep(1)
                 continue
 
@@ -40,7 +42,7 @@ class KeyListener(Thread):
         self.do_stop = True
 
     def read_file(self):
-        with open(self.device_file, "rb", buffering=0) as file:
+        with self.device_file.open("rb", buffering=0) as file:
             while True:
                 if self.do_stop:
                     break

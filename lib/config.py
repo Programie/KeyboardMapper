@@ -1,11 +1,12 @@
 import os
+from pathlib import Path
 from typing import List
 
 from PyQt5.QtCore import QSettings
 
 
 class Config:
-    filename: str = None
+    filename: Path = None
     input_devices: List[str] = []
     icons: str = "dark"
     use_tray_icon: bool = True
@@ -19,7 +20,7 @@ class Config:
 
     @staticmethod
     def load():
-        settings = QSettings(Config.filename, QSettings.IniFormat)
+        settings = QSettings(str(Config.filename), QSettings.IniFormat)
 
         legacy_device = os.path.basename(str(settings.value("keyboard-input-device"))).strip()
         Config.input_devices = list(set(filter(None, str(settings.value("input-devices", defaultValue=legacy_device)).split(","))))
@@ -56,7 +57,7 @@ class Config:
 
     @staticmethod
     def save():
-        settings = QSettings(Config.filename, QSettings.IniFormat)
+        settings = QSettings(str(Config.filename), QSettings.IniFormat)
 
         settings.setValue("input-devices", ",".join(sorted(Config.input_devices)))
         settings.setValue("icons", Config.icons)

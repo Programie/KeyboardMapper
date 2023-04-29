@@ -1,13 +1,14 @@
 import configparser
 import glob
 import os
+from pathlib import Path
 from typing import List
 
 from PyQt5.QtGui import QIcon
 
 
 class DesktopFile:
-    def __init__(self, filename: str):
+    def __init__(self, filename: Path):
         self.config_parser = configparser.ConfigParser()
 
         # Preserve case of property names (https://stackoverflow.com/a/1611877)
@@ -27,7 +28,7 @@ class DesktopFile:
         self.not_show_in: List[str] = None
 
     @staticmethod
-    def read(filename: str):
+    def read(filename: Path):
         desktop_file = DesktopFile(filename)
 
         desktop_file.config_parser.read(filename)
@@ -67,7 +68,7 @@ class DesktopFile:
         DesktopFile.add_dict(properties, "OnlyShowIn", self.only_show_in, self.list_to_string)
         DesktopFile.add_dict(properties, "NotShowIn", self.not_show_in, self.list_to_string)
 
-        with open(self.filename, "w") as file:
+        with self.filename.open("w") as file:
             self.config_parser.write(file)
 
     def is_visible(self):
@@ -146,13 +147,12 @@ class DesktopFilesFinder:
         for single_path in glob.glob(path):
             for root, dirs, files in os.walk(os.path.expanduser(single_path)):
                 for file in files:
-                    if os.path.splitext(file)[1] != ".desktop":
+                    file = Path(root).joinpath(file)
+                    if file.suffix != ".desktop":
                         continue
 
-                    full_path = os.path.join(root, file)
-
                     try:
-                        desktop_file = DesktopFile.read(full_path)
+                        desktop_file = DesktopFile.read(file)
 
                         if desktop_file and desktop_file.name is not None:
                             yield desktop_file
@@ -162,4 +162,4 @@ class DesktopFilesFinder:
                             exceptions.append(str(exception))
                     except UnicodeDecodeError as exception:
                         if skip_on_error and isinstance(exceptions, list):
-                            exceptions.append("{}: {}".format(full_path, exception))
+                            exceptions.append("{}: {}".format(file, exception))

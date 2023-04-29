@@ -2,6 +2,8 @@ import copy
 import enum
 import os
 import subprocess
+from pathlib import Path
+
 import sys
 from typing import List, Union
 
@@ -220,7 +222,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 icon_name.append("disabled")
 
             self.create_tray_icon()
-            self.tray_icon.setIcon(QtGui.QIcon(os.path.join(ICONS_DIR, "{}.png".format("-".join(icon_name)))))
+            self.tray_icon.setIcon(QtGui.QIcon(str(ICONS_DIR.joinpath("{}.png".format("-".join(icon_name))))))
             self.tray_icon.show()
         elif self.tray_icon:
             self.tray_icon.hide()
@@ -615,7 +617,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
 
             self.action_launch_application_list.addItem(desktop_file.get_icon(), desktop_file.name, desktop_file)
 
-            application_items[desktop_file.filename] = index
+            application_items[str(desktop_file.filename)] = index
 
             index += 1
 
@@ -852,7 +854,7 @@ class EditShortcutWindow(QtWidgets.QDialog):
                 QtWidgets.QMessageBox.critical(self, translate("edit_shortcut", "Missing application"), translate("edit_shortcut", "Please select the application to launch!"))
                 return
 
-            self.shortcut.data = desktop_file.filename
+            self.shortcut.data = str(desktop_file.filename)
         elif action == Actions.EXECUTE_COMMAND:
             command = self.execute_command_field.text().strip()
             if command == "":
@@ -1103,12 +1105,11 @@ class DeviceSelectionWindow(QtWidgets.QDialog):
         self.button_box.accepted.connect(self.add_devices)
         self.button_box.rejected.connect(self.close)
 
-        file_list: List[QtCore.QFileInfo] = QtCore.QDir(DEVICES_BASE_DIR).entryInfoList()
-        for item in file_list:
-            if item.isDir():
+        for device_file in DEVICES_BASE_DIR.iterdir():
+            if device_file.is_dir():
                 continue
 
-            self.input_device_list.addItem(item.baseName())
+            self.input_device_list.addItem(device_file.name)
 
         self.input_device_list.itemSelectionChanged.connect(self.update_buttons)
         self.update_buttons()
@@ -1131,7 +1132,7 @@ class SettingsWindow(QtWidgets.QDialog):
 
         self.main_window = parent
 
-        self.autostart_file = os.path.join(os.path.expanduser("~"), ".config", "autostart", "keyboard-mapper.desktop")
+        self.autostart_file = Path("~/.config/autostart/keyboard-mapper.desktop").expanduser()
 
         self.setWindowTitle(translate("settings", "Settings"))
         self.setModal(True)
@@ -1162,7 +1163,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.dialog_layout.addWidget(self.single_instance_checkbox)
 
         self.autostart_checkbox = QtWidgets.QCheckBox(translate("settings", "Start on login"))
-        self.autostart_checkbox.setChecked(os.path.exists(self.autostart_file))
+        self.autostart_checkbox.setChecked(self.autostart_file.exists())
         self.dialog_layout.addWidget(self.autostart_checkbox)
 
         create_desktop_file_button = QtWidgets.QPushButton(translate("settings", "Create desktop file"))
@@ -1307,7 +1308,7 @@ class SettingsWindow(QtWidgets.QDialog):
         self.labels_default_height_field.setSuffix(suffix)
         self.labels_icon_margin_field.setSuffix(suffix)
 
-    def create_desktop_file(self, filename: str, arguments: List[str]):
+    def create_desktop_file(self, filename: Path, arguments: List[str]):
         desktop_file = DesktopFile(filename)
 
         desktop_file.name = APP_NAME
@@ -1315,12 +1316,12 @@ class SettingsWindow(QtWidgets.QDialog):
         desktop_file.type = "Application"
         desktop_file.categories = ["System"]
         desktop_file.exec = " ".join([os.path.realpath(sys.argv[0])] + arguments)
-        desktop_file.icon = os.path.join(ICONS_DIR, "appicon-{}.png".format(Config.icons))
+        desktop_file.icon = str(ICONS_DIR.joinpath("appicon-{}.png".format(Config.icons)))
 
         desktop_file.write()
 
     def create_app_desktop_file(self):
-        self.create_desktop_file(os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper.desktop"), [])
+        self.create_desktop_file(Path("~/.local/share/applications/keyboard-mapper.desktop").expanduser(), [])
 
     def get_added_input_devices(self):
         input_devices = set()
@@ -1350,8 +1351,8 @@ class SettingsWindow(QtWidgets.QDialog):
 
         if self.autostart_checkbox.checkState() == QtCore.Qt.Checked:
             self.create_desktop_file(self.autostart_file, ["--hidden"])
-        elif os.path.exists(self.autostart_file):
-            os.remove(self.autostart_file)
+        elif self.autostart_file.exists():
+            self.autostart_file.unlink()
 
         self.main_window.update_tray_icon()
         self.main_window.key_listener_manager.set_device_files(Config.input_devices)
@@ -1370,7 +1371,7 @@ class AboutDialog(QtWidgets.QDialog):
         layout.setSpacing(10)
         self.setLayout(layout)
 
-        icon_pixmap = QtGui.QPixmap(os.path.join(ICONS_DIR, "appicon-{}.png".format(Config.icons)))
+        icon_pixmap = QtGui.QPixmap(str(ICONS_DIR.joinpath("appicon-{}.png".format(Config.icons))))
         icon_pixmap = icon_pixmap.scaledToHeight(64)
 
         icon = QtWidgets.QLabel()

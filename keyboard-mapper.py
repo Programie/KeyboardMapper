@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 import os
+from pathlib import Path
+
 import sys
 import time
 
@@ -30,7 +32,7 @@ def main():
     application.setApplicationVersion(APP_VERSION)
 
     translator = QtCore.QTranslator(application)
-    translator.load(QtCore.QLocale().name(), directory=TRANSLATIONS_DIR)
+    translator.load(QtCore.QLocale().name(), directory=str(TRANSLATIONS_DIR))
     application.installTranslator(translator)
 
     parser = QtCore.QCommandLineParser()
@@ -38,9 +40,9 @@ def main():
     parser.addHelpOption()
     parser.addVersionOption()
 
-    config_dir = os.path.join(os.path.expanduser("~"), ".config", "keyboard-mapper")
+    config_dir = Path("~/.config/keyboard-mapper").expanduser()
 
-    config_dir_option = QtCore.QCommandLineOption(["c", "config-dir"], "Path to the config dir (default: {})".format(config_dir), defaultValue=config_dir)
+    config_dir_option = QtCore.QCommandLineOption(["c", "config-dir"], "Path to the config dir (default: {})".format(str(config_dir)), defaultValue=str(config_dir))
     parser.addOption(config_dir_option)
 
     hidden_option = QtCore.QCommandLineOption(["H", "hidden"], "Start hidden")
@@ -50,23 +52,23 @@ def main():
 
     parser.process(application)
 
-    config_dir = parser.value(config_dir_option)
+    config_dir = Path(parser.value(config_dir_option))
 
-    if not os.path.isdir(config_dir):
-        os.mkdir(config_dir)
+    if not config_dir.is_dir():
+        config_dir.mkdir()
 
-    Config.filename = os.path.join(config_dir, "config.ini")
+    Config.filename = config_dir.joinpath("config.ini")
     Config.load()
 
     if gui_mode:
-        application.setWindowIcon(QtGui.QIcon(os.path.join(ICONS_DIR, "appicon-{}.png".format(Config.icons))))
+        application.setWindowIcon(QtGui.QIcon(str(ICONS_DIR.joinpath("appicon-{}.png".format(Config.icons)))))
 
     if Config.single_instance:
-        user_run_dir = os.path.join("var", "run", "user", str(os.getuid()))
-        if os.path.exists(user_run_dir):
-            lock_file = os.path.join(user_run_dir, "keyboard-mapper.lock")
+        user_run_dir = Path("/var/run/user").joinpath(str(os.getuid()))
+        if user_run_dir.is_dir():
+            lock_file = user_run_dir.joinpath("keyboard-mapper.lock")
         else:
-            lock_file = os.path.join(config_dir, "app.lock")
+            lock_file = config_dir.joinpath("app.lock")
 
         lock = FileLock(lock_file, timeout=1)
 
@@ -80,13 +82,13 @@ def main():
                 print(message)
             sys.exit(1)
 
-    shortcuts_file = os.path.join(config_dir, "shortcuts.yaml")
-    tracking_file = os.path.join(config_dir, "tracking.yaml")
-    legacy_shortcuts_file = os.path.join(config_dir, "shortcuts.ini")
+    shortcuts_file = config_dir.joinpath("shortcuts.yaml")
+    tracking_file = config_dir.joinpath("tracking.yaml")
+    legacy_shortcuts_file = config_dir.joinpath("shortcuts.ini")
 
     shortcuts = Shortcuts(shortcuts_file, tracking_file)
 
-    if os.path.exists(legacy_shortcuts_file) and not os.path.exists(shortcuts_file):
+    if legacy_shortcuts_file.is_file() and not shortcuts_file.is_file():
         if len(Config.input_devices):
             shortcuts.load_legacy(legacy_shortcuts_file, Config.input_devices[0])
 

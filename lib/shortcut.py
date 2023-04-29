@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import uuid
 from datetime import datetime
+from pathlib import Path
 from threading import Thread
 from typing import Dict
 
@@ -49,7 +50,7 @@ class ExecThread(Thread):
 
     def run(self):
         if self.shortcut.action == Actions.LAUNCH_APPLICATION.name:
-            temp_desktop_file = os.path.join(os.path.expanduser("~"), ".local", "share", "applications", "keyboard-mapper-tmp.desktop")
+            temp_desktop_file = Path("~/.local/share/applications/keyboard-mapper-tmp.desktop").expanduser()
 
             try:
                 shutil.copy(self.shortcut.data, temp_desktop_file)
@@ -58,7 +59,7 @@ class ExecThread(Thread):
                 return
 
             try:
-                subprocess.check_output(["gtk-launch", os.path.basename(temp_desktop_file)], stderr=subprocess.STDOUT)
+                subprocess.check_output(["gtk-launch", temp_desktop_file.name], stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as exception:
                 self.show_execution_error(exception.output)
 
@@ -195,7 +196,7 @@ class Shortcut:
 
     def get_action_name(self):
         if self.action == Actions.LAUNCH_APPLICATION.name:
-            desktop_file = DesktopFile.read(self.data)
+            desktop_file = DesktopFile.read(Path(self.data))
 
             if desktop_file.name is None:
                 application_name = self.data
@@ -234,7 +235,7 @@ class Shortcuts(QtCore.QObject):
     execution_error = QtCore.pyqtSignal(str)
     executed = QtCore.pyqtSignal(Shortcut)
 
-    def __init__(self, filename: str, tracking_file: str):
+    def __init__(self, filename: Path, tracking_file: Path):
         super().__init__()
 
         Shortcuts.instance = self
@@ -321,15 +322,15 @@ class Shortcuts(QtCore.QObject):
             x = end_x
 
     def load(self):
-        if not os.path.exists(self.filename):
+        if not self.filename.is_file():
             return
 
-        with open(self.filename, "r") as file:
+        with self.filename.open("r") as file:
             data = yaml.safe_load(file)
 
         tracking_data = {}
         try:
-            with open(self.tracking_file, "r") as tracking_file:
+            with self.tracking_file.open("r") as tracking_file:
                 tracking_data = yaml.safe_load(tracking_file)
         except FileNotFoundError:
             pass
@@ -342,11 +343,11 @@ class Shortcuts(QtCore.QObject):
 
             self.add(shortcut)
 
-    def load_legacy(self, filename, device):
-        if not os.path.exists(filename):
+    def load_legacy(self, filename: Path, device):
+        if not filename.is_file():
             return
 
-        settings = QtCore.QSettings(filename, QtCore.QSettings.IniFormat)
+        settings = QtCore.QSettings(str(filename), QtCore.QSettings.IniFormat)
 
         for section in settings.childGroups():
             settings.beginGroup(section)
@@ -367,15 +368,17 @@ class Shortcuts(QtCore.QObject):
             shortcuts.append(shortcut.to_config())
             tracking_data[shortcut.uuid] = shortcut.to_tracking_data()
 
-        temp_file = "{}.tmp".format(self.filename)
+        temp_file = Path("{}.tmp".format(self.filename))
 
         # Write to a temporary file first to prevent data loss in case of a crash while saving
-        with open(temp_file, "w") as file:
+        with temp_file.open("w") as file:
             yaml.dump(shortcuts, file, default_flow_style=False)
 
-        os.rename(temp_file, self.filename)
+        temp_file.rename(self.filename)
 
-        with open(temp_file, "w") as file:
+        temp_file = Path("{}.tmp".format(self.tracking_file))
+
+        with temp_file.open("w") as file:
             yaml.dump(tracking_data, file, default_flow_style=False)
 
-        os.rename(temp_file, self.tracking_file)
+        temp_file.rename(self.tracking_file)

@@ -1,5 +1,5 @@
 import enum
-import os
+from pathlib import Path
 from typing import List
 
 from lib.keylistener import KeyListener
@@ -13,7 +13,7 @@ class AllowedActions(enum.Enum):
 
 
 class KeyListenerManager:
-    def __init__(self, devices_base_dir: str, shortcuts: Shortcuts):
+    def __init__(self, devices_base_dir: Path, shortcuts: Shortcuts):
         self.devices_base_dir = devices_base_dir
         self.input_devices: List[str] = []
         self.key_listener_threads: List[KeyListener] = []
@@ -30,7 +30,7 @@ class KeyListenerManager:
         self.key_listener_threads = []
 
         for input_device in self.input_devices:
-            key_listener = KeyListener(os.path.join(self.devices_base_dir, input_device))
+            key_listener = KeyListener(self.devices_base_dir.joinpath(input_device))
             key_listener.setDaemon(True)
             key_listener.start()
             self.key_listener_threads.append(key_listener)
@@ -50,7 +50,7 @@ class KeyListenerManager:
 
     @staticmethod
     def get_event_handler_function(key_listener, event_handler):
-        return lambda key_code: event_handler(os.path.basename(key_listener.device_file), key_code)
+        return lambda key_code: event_handler(key_listener.device_file.name, key_code)
 
     def handle_key_press(self, input_device_name, key_code):
         # Skip if disabled
