@@ -1,3 +1,8 @@
+## 3.3 (pending)
+
+* Load desktop files from Flatpak apps
+* Use separate file "tracking.yaml" for shortcut execution tracking/counting
+
 ## 3.2 (2022-06-04)
 
 * Removed large space between "Add device" and "Remove device" buttons in settings
