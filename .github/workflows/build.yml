@@ -9,3 +9,9 @@ jobs:
       - uses: actions/checkout@v4
       - run: sudo apt-get install -y qtbase5-dev-tools
       - run: make
+      - run: cp build/keyboard-mapper keyboard-mapper
+      - uses: programie/Workflows/.github/worflows/package-zip-release.yml@main
+        with:
+          checkout: false
+          path: .
+          files: keyboard-mapper requirements.txt CHANGELOG.md LICENSE README.md
