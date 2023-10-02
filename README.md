@@ -25,7 +25,7 @@ Settings:
 
 ## Installation
 
-* Download the latest release from the [release page on GitLab](https://gitlab.com/Programie/KeyboardMapper/tags)
+* Download the [latest release](https://github.com/Programie/KeyboardMapper/releases/latest)
 * Install Python modules using pip: `pip3 install -r requirements.txt`
 
 ## Initial configuration
