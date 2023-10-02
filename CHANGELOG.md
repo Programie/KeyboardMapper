@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.3.0] - pending
+## [3.3.0] - 2023-10-02
 
 * Load desktop files from Flatpak apps
 * Use separate file "tracking.yaml" for shortcut execution tracking/counting
