@@ -1,4 +1,4 @@
-rebuild: clean build
+rebuild: clean package
 
 build:
 	mkdir build
@@ -10,6 +10,11 @@ build:
 	cat build/keyboard-mapper.zip >> build/keyboard-mapper
 	chmod +x build/keyboard-mapper
 	rm build/keyboard-mapper.zip build/__main__.py
+
+package: build
+	cp CHANGELOG.md LICENSE README.md build/
+	cd build
+	zip keyboard-mapper.zip keyboard-mapper CHANGELOG.md LICENSE README.md
 
 install: build
 	cp build/keyboard-mapper /usr/local/bin/keyboard-mapper
