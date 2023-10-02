@@ -1396,7 +1396,7 @@ class AboutDialog(QtWidgets.QDialog):
         copyright_label = QtWidgets.QLabel(APP_COPYRIGHT)
         layout.addWidget(copyright_label, alignment=QtCore.Qt.AlignCenter)
 
-        website_label = QtWidgets.QLabel("<a href='{}'>{}</a>".format(APP_WEBSITE, translate("about", "View on GitLab")))
+        website_label = QtWidgets.QLabel("<a href='{}'>{}</a>".format(APP_WEBSITE, translate("about", "View on GitHub")))
         website_label.setTextFormat(QtCore.Qt.RichText)
         website_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
         website_label.setOpenExternalLinks(True)
