@@ -157,6 +157,11 @@ class Shortcut:
 
         return shortcut
 
+    def reinit(self):
+        self.uuid = str(uuid.uuid1())
+        self.executions = 0
+        self.last_execution = None
+
     def add_tracking_data(self, data):
         if not data:
             return
