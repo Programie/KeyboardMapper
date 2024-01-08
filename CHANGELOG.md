@@ -3,7 +3,7 @@
 ## [3.4.0] - 2024-01-08
 
 * **Fixed:** Empty page while printing labels due to throwing an exception while drawing the labels to the page
-* **Fixed:** duplicating a shortcut and changing its label also changes the label for the original shortcut
+* **Fixed:** Duplicating a shortcut and changing its label also changes the label for the original shortcut
 * **Fixed:** Not generating a new UUID for duplicated shortcuts resulting in using the same count of executions as well as time of last execution for both shortcuts
 
 ## [3.3.0] - 2023-10-02
