@@ -25,3 +25,8 @@ jobs:
         with:
           body: ${{ steps.extract-release-notes.outputs.release_notes }}
           files: build/keyboard-mapper.zip
+
+      - name: Update project on website
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          curl --fail -X POST -d repository=${{ github.repository }} -H "X-Update-Token: ${{ secrets.WEBSITE_UPDATE_TOKEN }}" https://selfcoders.com/update-project
