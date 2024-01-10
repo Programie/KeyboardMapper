@@ -7,13 +7,13 @@ from pathlib import Path
 import sys
 from typing import List, Union
 
-from PyQt5 import QtWidgets, QtGui, QtCore, QtPrintSupport
+from PyQt5 import QtWidgets, QtGui, QtCore
 
 from lib.config import Config
 from lib.constants import APP_WEBSITE, DEVICES_BASE_DIR, APP_NAME, APP_DESCRIPTION, ICONS_DIR, APP_VERSION, APP_COPYRIGHT
 from lib.desktopfiles import DesktopFilesFinder, DesktopFile
 from lib.keylistener_manager import KeyListenerManager, AllowedActions
-from lib.shortcut import Shortcuts, Shortcut, Actions, Action
+from lib.shortcut import Shortcuts, Shortcut, Actions, Action, ShortcutLabelPrinter
 from lib.xtestwrapper import XKeys
 from lib.utils import LengthUnit
 
@@ -243,13 +243,13 @@ class MainWindow(QtWidgets.QMainWindow):
         selected_rows = self.get_selected_rows()
         selected_indices: List[QtCore.QModelIndex] = [self.shortcut_tree_view_model.index(row, ShortcutListHeader.NAME.value) for row in selected_rows]
 
-        shortcuts = Shortcuts("", "")
+        shortcuts = []
 
         for index in selected_indices:
             device = index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
             key = index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
 
-            shortcuts.add(self.shortcuts.get_by_device_key(device, key))
+            shortcuts.append(self.shortcuts.get_by_device_key(device, key))
 
         return shortcuts
 
@@ -349,18 +349,10 @@ class MainWindow(QtWidgets.QMainWindow):
         SettingsWindow(self)
 
     def print_labels(self):
-        printer = QtPrintSupport.QPrinter(QtPrintSupport.QPrinter.HighResolution)
-
-        print_dialog = QtPrintSupport.QPrintPreviewDialog(printer)
-        print_dialog.paintRequested.connect(self.shortcuts.print_labels_to_printer)
-        print_dialog.exec_()
+        ShortcutLabelPrinter(self.shortcuts.get_shortcuts()).print_with_preview()
 
     def print_selected_labels(self):
-        printer = QtPrintSupport.QPrinter(QtPrintSupport.QPrinter.HighResolution)
-
-        print_dialog = QtPrintSupport.QPrintPreviewDialog(printer)
-        print_dialog.paintRequested.connect(self.get_selected_shortcuts().print_labels_to_printer)
-        print_dialog.exec_()
+        ShortcutLabelPrinter(self.get_selected_shortcuts()).print_with_preview()
 
     def quit(self):
         QtGui.QGuiApplication.quit()

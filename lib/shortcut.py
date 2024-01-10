@@ -269,63 +269,6 @@ class Shortcuts(QtCore.QObject):
     def clear(self):
         self.list.clear()
 
-    def print_labels_to_printer(self, printer: QtPrintSupport.QPrinter):
-        dpi_x = printer.logicalDpiX()
-        dpi_y = printer.logicalDpiY()
-
-        painter = QtGui.QPainter()
-        painter.begin(printer)
-
-        shortcuts = sorted(self.get_shortcuts(), key=lambda shortcut_item: "{}-{}".format(QtGui.QColor(shortcut_item.label.background_color).rgb() if shortcut_item.label.background_color else 0, shortcut_item.name))
-
-        x = 0
-        y = 0
-        max_end_y = 0
-
-        shortcut: Shortcut
-        for shortcut in shortcuts:
-            icon_path = shortcut.label.icon_path
-            if not icon_path:
-                continue
-
-            label_width = LengthUnit.length_to_pixel(Config.labels_length_unit, shortcut.label.width or Config.default_label_width, dpi_x)
-            label_height = LengthUnit.length_to_pixel(Config.labels_length_unit, shortcut.label.height or Config.default_label_height, dpi_y)
-            icon_margin_x = LengthUnit.length_to_pixel(Config.labels_length_unit, Config.label_icon_margin, dpi_x)
-            icon_margin_y = LengthUnit.length_to_pixel(Config.labels_length_unit, Config.label_icon_margin, dpi_y)
-
-            end_x = x + label_width
-            end_y = y + label_height
-            max_end_y = max(max_end_y, end_y)
-
-            if end_x > printer.width():
-                x = 0
-                y = max_end_y
-                end_x = x + label_width
-                end_y = y + label_height
-
-            if end_y > printer.height():
-                printer.newPage()
-                x = 0
-                y = 0
-                end_x = x + label_width
-                end_y = y + label_height
-                max_end_y = end_y
-
-            icon = QtGui.QImage(icon_path)
-            scaled_icon: QtGui.QImage = icon.scaled(label_width - icon_margin_x, label_height - icon_margin_y, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-
-            if shortcut.label.background_color:
-                painter.fillRect(x, y, label_width, label_height, QtGui.QColor(shortcut.label.background_color))
-
-            icon_width = scaled_icon.width()
-            icon_height = scaled_icon.height()
-
-            painter.drawImage(int(x + (label_width - icon_width) / 2), int(y + (label_height - icon_height) / 2), scaled_icon)
-            painter.setPen(QtGui.QColor("black"))
-            painter.drawRect(x, y, label_width, label_height)
-
-            x = end_x
-
     def load(self):
         if not self.filename.is_file():
             return
@@ -387,3 +330,71 @@ class Shortcuts(QtCore.QObject):
             yaml.dump(tracking_data, file, default_flow_style=False)
 
         temp_file.rename(self.tracking_file)
+
+
+class ShortcutLabelPrinter(QtPrintSupport.QPrinter):
+    def __init__(self, shortcuts: list[Shortcut]):
+        super().__init__(QtPrintSupport.QPrinter.HighResolution)
+
+        self.shortcuts = shortcuts
+
+    def print_with_preview(self):
+        print_dialog = QtPrintSupport.QPrintPreviewDialog(self)
+        print_dialog.paintRequested.connect(self.print)
+        print_dialog.exec_()
+
+    def print(self):
+        dpi_x = self.logicalDpiX()
+        dpi_y = self.logicalDpiY()
+
+        painter = QtGui.QPainter()
+        painter.begin(self)
+
+        shortcuts = sorted(self.shortcuts, key=lambda shortcut_item: "{}-{}".format(QtGui.QColor(shortcut_item.label.background_color).rgb() if shortcut_item.label.background_color else 0, shortcut_item.name))
+
+        x = 0
+        y = 0
+        max_end_y = 0
+
+        for shortcut in shortcuts:
+            icon_path = shortcut.label.icon_path
+            if not icon_path:
+                continue
+
+            label_width = LengthUnit.length_to_pixel(Config.labels_length_unit, shortcut.label.width or Config.default_label_width, dpi_x)
+            label_height = LengthUnit.length_to_pixel(Config.labels_length_unit, shortcut.label.height or Config.default_label_height, dpi_y)
+            icon_margin_x = LengthUnit.length_to_pixel(Config.labels_length_unit, Config.label_icon_margin, dpi_x)
+            icon_margin_y = LengthUnit.length_to_pixel(Config.labels_length_unit, Config.label_icon_margin, dpi_y)
+
+            end_x = x + label_width
+            end_y = y + label_height
+            max_end_y = max(max_end_y, end_y)
+
+            if end_x > self.width():
+                x = 0
+                y = max_end_y
+                end_x = x + label_width
+                end_y = y + label_height
+
+            if end_y > self.height():
+                self.newPage()
+                x = 0
+                y = 0
+                end_x = x + label_width
+                end_y = y + label_height
+                max_end_y = end_y
+
+            icon = QtGui.QImage(icon_path)
+            scaled_icon: QtGui.QImage = icon.scaled(label_width - icon_margin_x, label_height - icon_margin_y, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+
+            if shortcut.label.background_color:
+                painter.fillRect(x, y, label_width, label_height, QtGui.QColor(shortcut.label.background_color))
+
+            icon_width = scaled_icon.width()
+            icon_height = scaled_icon.height()
+
+            painter.drawImage(int(x + (label_width - icon_width) / 2), int(y + (label_height - icon_height) / 2), scaled_icon)
+            painter.setPen(QtGui.QColor("black"))
+            painter.drawRect(x, y, label_width, label_height)
+
+            x = end_x
