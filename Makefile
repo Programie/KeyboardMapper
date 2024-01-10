@@ -2,7 +2,7 @@ rebuild: clean package
 
 build:
 	mkdir build
-	rcc -g python -o lib/resources.py --format-version 1 resources.qrc
+	pyrcc5 -o lib/resources.py resources.qrc
 	cp keyboard-mapper.py build/__main__.py
 	zip -j build/keyboard-mapper.zip build/__main__.py
 	zip -r build/keyboard-mapper.zip lib
