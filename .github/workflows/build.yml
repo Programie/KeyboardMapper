@@ -6,12 +6,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: sudo apt-get install -y pyqt5-dev-tools
-      - run: make package
-      - id: extract-release-notes
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PyQt5 dev tools
+        run: sudo apt-get install -y pyqt5-dev-tools
+
+      - name: Build package
+        run: make package
+
+      - name: Extract release notes
+        id: extract-release-notes
         uses: ffurrer2/extract-release-notes@v1
-      - uses: softprops/action-gh-release@v1
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           body: ${{ steps.extract-release-notes.outputs.release_notes }}
