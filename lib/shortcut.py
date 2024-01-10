@@ -227,7 +227,7 @@ class Shortcut:
         thread = ExecThread(self)
 
         # Do not wait for the thread once Keyboard Mapper termination has been requested, just stop it
-        thread.setDaemon(True)
+        thread.daemon = True
 
         thread.start()
 

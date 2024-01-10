@@ -31,7 +31,7 @@ class KeyListenerManager:
 
         for input_device in self.input_devices:
             key_listener = KeyListener(self.devices_base_dir.joinpath(input_device))
-            key_listener.setDaemon(True)
+            key_listener.daemon = True
             key_listener.start()
             self.key_listener_threads.append(key_listener)
 
