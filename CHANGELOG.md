@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.4.1] - 2024-01-10
+
+* **Fixed:** Non-working translation and not showing tray icon due to incompatible resource file in built release binary
+
 ## [3.4.0] - 2024-01-10
 
 * **Fixed:** Empty page while printing labels due to throwing an exception while drawing the labels to the page

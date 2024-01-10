@@ -4,7 +4,7 @@ APP_NAME = "Keyboard Mapper"
 APP_DESCRIPTION = "A tool for Linux desktops to map keys of dedicated keyboards to specific actions."
 APP_COPYRIGHT = "© 2018-2024 Michael Wieland"
 APP_WEBSITE = "https://github.com/Programie/KeyboardMapper"
-APP_VERSION = "3.4.0"
+APP_VERSION = "3.4.1"
 BASE_DIR = Path(__file__).parent.parent
 DEVICES_BASE_DIR = Path("/dev/input/by-id")
 
