@@ -2,7 +2,7 @@
 
 ## [3.5.0] - 2024-02-15
 
-* Allow to use multiple keys in combination to execute a shortcuts (i.e. Ctrl+F1 instead of just Ctrl or F1)
+* Allow to use multiple keys in combination to execute shortcuts (i.e. Ctrl+F1 instead of just Ctrl or F1)
 
 ## [3.4.1] - 2024-01-10
 
