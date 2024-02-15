@@ -2,4 +2,5 @@
 /build/
 /lib/resources.py
 /venv/
+/.venv/
 __pycache__
