@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 
 import sys
-from typing import List, Union
+from typing import List, Union, Set
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
@@ -13,7 +13,7 @@ from lib.config import Config
 from lib.constants import APP_WEBSITE, DEVICES_BASE_DIR, APP_NAME, APP_DESCRIPTION, ICONS_DIR, APP_VERSION, APP_COPYRIGHT
 from lib.desktopfiles import DesktopFilesFinder, DesktopFile
 from lib.keylistener_manager import KeyListenerManager, AllowedActions
-from lib.shortcut import Shortcuts, Shortcut, Actions, Action, ShortcutLabelPrinter
+from lib.shortcut import Shortcuts, Shortcut, Actions, Action, ShortcutLabelPrinter, ShortcutKey
 from lib.xtestwrapper import XKeys
 from lib.utils import LengthUnit
 
@@ -247,7 +247,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         for index in selected_indices:
             device = index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
-            key = index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
+            key = ShortcutKey.from_string(index.siblingAtColumn(ShortcutListHeader.KEY.value).data())
 
             shortcuts.append(self.shortcuts.get_by_device_key(device, key))
 
@@ -304,7 +304,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         model.setData(model.index(row, ShortcutListHeader.NAME.value), shortcut.name)
         model.setData(model.index(row, ShortcutListHeader.ACTION.value), shortcut.get_action_name())
-        model.setData(model.index(row, ShortcutListHeader.KEY.value), shortcut.key)
+        model.setData(model.index(row, ShortcutListHeader.KEY.value), str(shortcut.key))
         model.setData(model.index(row, ShortcutListHeader.DEVICE.value), shortcut.device)
         model.setData(model.index(row, ShortcutListHeader.EXECUTIONS.value), shortcut.executions)
         model.setData(model.index(row, ShortcutListHeader.LAST_EXECUTION.value), shortcut.last_execution_string())
@@ -340,7 +340,7 @@ class MainWindow(QtWidgets.QMainWindow):
             shortcut = None
         else:
             device = model_index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
-            key = model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
+            key = ShortcutKey.from_string(model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data())
             shortcut = self.shortcuts.get_by_device_key(device, key)
 
         EditShortcutWindow(self, shortcut, duplicate)
@@ -397,7 +397,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for item in selected_items:
             index: QtCore.QModelIndex = item.index()
             device = index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
-            key = index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
+            key = ShortcutKey.from_string(index.siblingAtColumn(ShortcutListHeader.KEY.value).data())
 
             self.shortcuts.remove_by_device_key(device, key)
             self.shortcut_tree_view_model.removeRow(index.row())
@@ -414,7 +414,7 @@ class MainWindow(QtWidgets.QMainWindow):
         model_index = selected_indexes[0]
 
         device = model_index.siblingAtColumn(ShortcutListHeader.DEVICE.value).data()
-        key = model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data()
+        key = ShortcutKey.from_string(model_index.siblingAtColumn(ShortcutListHeader.KEY.value).data())
         shortcut = self.shortcuts.get_by_device_key(device, key)
 
         if shortcut is None:
@@ -927,6 +927,7 @@ class ShortcutRequester(QtWidgets.QDialog):
 
         self.key_listener_manager = key_listener_manager
         self.shortcut = shortcut
+        self.key_codes: Set[int] = set()
 
         self.setWindowTitle(translate("shortcut_requester", "Configure key"))
         self.setModal(True)
@@ -945,9 +946,13 @@ class ShortcutRequester(QtWidgets.QDialog):
 
         self.key_listener_manager.set_event_handler(self.handle_key_press)
 
-    def handle_key_press(self, device_name, key_code):
+    def handle_key_press(self, device_name: str, key_codes: Set[int], pressed: bool):
+        if pressed:
+            self.key_codes = set(key_codes)
+            return
+
         self.shortcut.device = device_name
-        self.shortcut.key = key_code
+        self.shortcut.key = ShortcutKey(self.key_codes)
         self.accept()
 
     def accept(self):

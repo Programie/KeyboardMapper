@@ -43,7 +43,7 @@ Add your first entry by clicking the "Add shortcut" button in the toolbar or sel
 
 ![](screenshots/Edit_Shortcut.png)
 
-Click the "Click to set shortcut" button which will prompt you to press the key on the input device to use for your shortcut.
+Click the "Click to set shortcut" button which will prompt you to press the key (or multiple keys in combination) on the input device to use for your shortcut.
 
 After that, select one of the following actions to do once you press the key:
 

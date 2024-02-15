@@ -110,11 +110,30 @@ class Label:
         self.background_color: str = None
 
 
+class ShortcutKey(set):
+    @staticmethod
+    def from_string(string: str):
+        key = ShortcutKey()
+
+        for key_code in string.split("+"):
+            key_code = key_code.strip()
+
+            if not key_code:
+                continue
+
+            key.add(key_code)
+
+        return key
+
+    def __str__(self):
+        return "+".join([str(key) for key in sorted(self)])
+
+
 class Shortcut:
     def __init__(self):
         self.uuid: str = str(uuid.uuid1())
         self.device: str = None
-        self.key: int = None
+        self.key: ShortcutKey = ShortcutKey()
         self.action: str = None
         self.data: str = None
         self.name: str = None
@@ -130,7 +149,7 @@ class Shortcut:
         shortcut = Shortcut()
         shortcut.uuid = shortcut_properties.get("uuid", str(uuid.uuid1()))
         shortcut.device = shortcut_properties["device"]
-        shortcut.key = int(shortcut_properties["key"])
+        shortcut.key = ShortcutKey.from_string(str(shortcut_properties["key"]))
         shortcut.action = shortcut_properties["action"]
         shortcut.data = shortcut_properties["data"]
         shortcut.name = shortcut_properties["name"]
@@ -176,7 +195,7 @@ class Shortcut:
         return {
             "uuid": self.uuid,
             "device": self.device,
-            "key": self.key,
+            "key": str(self.key),
             "name": self.name,
             "action": self.action,
             "data": self.data,
@@ -247,18 +266,18 @@ class Shortcuts(QtCore.QObject):
 
         self.execution_error.connect(lambda message: print(message))
 
-        self.list: Dict[Shortcut] = {}
+        self.list: Dict[(str, str), Shortcut] = {}
         self.filename = filename
         self.tracking_file = tracking_file
 
     def add(self, shortcut: Shortcut):
-        self.list[(shortcut.device, shortcut.key)] = shortcut
+        self.list[(shortcut.device, str(shortcut.key))] = shortcut
 
-    def remove_by_device_key(self, device_name: str, key):
-        self.list.pop((device_name, key), None)
+    def remove_by_device_key(self, device_name: str, key: ShortcutKey):
+        self.list.pop((device_name, str(key)), None)
 
-    def get_by_device_key(self, device_name: str, key):
-        return self.list.get((device_name, key))
+    def get_by_device_key(self, device_name: str, key: ShortcutKey):
+        return self.list.get((device_name, str(key)))
 
     def get_list(self):
         return self.list
@@ -301,7 +320,7 @@ class Shortcuts(QtCore.QObject):
             settings.beginGroup(section)
             shortcut = Shortcut()
             shortcut.device = device
-            shortcut.key = int(section)
+            shortcut.key = ShortcutKey.from_string(section)
             shortcut.name = settings.value("name")
             shortcut.action = settings.value("action")
             shortcut.data = settings.value("data")

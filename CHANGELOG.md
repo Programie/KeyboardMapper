@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.0] - 2024-02-15
+
+* Allow to use multiple keys in combination to execute a shortcuts (i.e. Ctrl+F1 instead of just Ctrl or F1)
+
 ## [3.4.1] - 2024-01-10
 
 * **Fixed:** Non-working translation and not showing tray icon due to incompatible resource file in built release binary

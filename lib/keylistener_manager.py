@@ -1,9 +1,9 @@
 import enum
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
 from lib.keylistener import KeyListener
-from lib.shortcut import Shortcuts, Actions, Shortcut
+from lib.shortcut import Shortcuts, Actions, Shortcut, ShortcutKey
 
 
 class AllowedActions(enum.Enum):
@@ -50,15 +50,19 @@ class KeyListenerManager:
 
     @staticmethod
     def get_event_handler_function(key_listener, event_handler):
-        return lambda key_code: event_handler(key_listener.device_file.name, key_code)
+        return lambda key_codes, pressed: event_handler(key_listener.device_file.name, key_codes, pressed)
 
-    def handle_key_press(self, input_device_name, key_code):
+    def handle_key_press(self, input_device_name: str, key_codes: Set[int], pressed: bool):
+        # Skip key release events
+        if not pressed:
+            return
+
         # Skip if disabled
         if self.allowed_actions == AllowedActions.NONE:
             return
 
         # Skip if shortcut not configured
-        shortcut: Shortcut = self.shortcuts.get_by_device_key(input_device_name, key_code)
+        shortcut: Shortcut = self.shortcuts.get_by_device_key(input_device_name, ShortcutKey(key_codes))
         if shortcut is None:
             return
 

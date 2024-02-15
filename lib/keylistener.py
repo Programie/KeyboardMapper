@@ -18,6 +18,7 @@ class KeyListener(Thread):
         self.device_file = device_file
         self.event_handler = event_handler
         self.do_stop = False
+        self.pressed_keys = set()
 
     def set_event_handler(self, event_handler: callable):
         self.event_handler = event_handler
@@ -59,11 +60,20 @@ class KeyListener(Thread):
                 if event_type != 1:
                     continue
 
-                # Only handle key releases
                 # value 0 = key released
                 # value 1 = key pressed
-                if value != 0:
-                    continue
+                self.handle_key(code, bool(value))
 
-                if self.event_handler:
-                    self.event_handler(code)
+    def handle_key(self, code: int, pressed: bool):
+        if pressed:
+            if code in self.pressed_keys:
+                # handle_key() is executed multiple times while the key is still pressed due to non-blocking file read
+                # Therefore, prevent triggering event handler multiple times if key code was already added to pressed keys
+                return
+
+            self.pressed_keys.add(code)
+        else:
+            self.pressed_keys.remove(code)
+
+        if self.event_handler:
+            self.event_handler(self.pressed_keys, pressed)
