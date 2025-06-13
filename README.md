@@ -16,7 +16,9 @@ A tool for Linux desktops to map keys of dedicated keyboards to specific actions
 
 ## Initial configuration
 
-In order to let the X server ignore the input from the device used dedicated for your actions, you have to configure the following in your X server configuration:
+Usually, you want your desktop session to ignore any input from the device you want to use for Keyboard Mapper.
+
+In case of X11, just add a new InputClass section to your X server configuration:
 
 ```
 Section "InputClass"
@@ -27,7 +29,13 @@ Section "InputClass"
 EndSection
 ```
 
-Also make sure, your user has the permission to access the device files (located in `/dev/input`).
+For Wayland, the easiest way to ignore the device is to assign it to a different seat using a udev rule (for example using seat1 instead of seat0):
+
+```
+ACTION=="add", SUBSYSTEM=="input", KERNEL=="event*", ATTRS{idVendor}=="ID_OF_THE_VENDOR", ATTRS{idProduct}=="ID_OF_THE_PRODUCT", ENV{ID_SEAT}="seat1"
+```
+
+In both cases, also make sure your user has the permission to access the device files (located in `/dev/input`). This can be done by adding your user to the `input` group or set ACLs on the used input devices to allow your user to read them.
 
 After that, you can start the application and select the input devices to use in the settings as shown bellow.
 
