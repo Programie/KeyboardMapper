@@ -1,4 +1,4 @@
-filelock==3.0.12
+filelock==3.20.1
 pyperclip==1.8.2
 PyQt5>=5.0.0,<6.0.0
 PyYAML==5.4.1
